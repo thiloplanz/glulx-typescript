@@ -14,8 +14,9 @@ module FyreVM{
 		
 		function testReadWriteInt16(test: nodeunit.Test){
 			this.writeInt16(0, 0xffff);
+			this.writeInt16(2, 0xaaaa)
     		test.equals(this.readInt16(0), 0xffff, "read back");
-    		test.equals(this.readInt16(1), 0xff00, "read back shifted by one");
+    		test.equals(this.readInt16(1), 0xffaa, "read back shifted by one");
   			test.done();
 		};
 		

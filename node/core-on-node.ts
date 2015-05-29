@@ -13,7 +13,6 @@ module FyreVM{
 		
 		constructor(size: number){
 			this.buffer = new Buffer(size);
-			this.buffer.fill(0);
 		}
 		
 		readInt16(offset: number){
