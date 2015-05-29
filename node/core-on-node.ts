@@ -24,6 +24,11 @@ module FyreVM{
 			this.buffer.writeUInt16BE(value, offset);
 		}
 		
+		setEndMem(newEndMem: number) : boolean {
+			if (newEndMem > this.buffer.length)
+				return false;
+			return true;
+		}
 		
 	}
 	

@@ -12,11 +12,6 @@ module FyreVM{
 	
 	export module NodeUnit {
 		
-		let requestor = function(endMem: number){
-			return endMem <= 1000;
-		}
-		
-		
 		function testReadWriteInt16(test: nodeunit.Test){
 			this.writeInt16(0, 0xffff);
     		test.equals(this.readInt16(0), 0xffff, "read back");
@@ -25,7 +20,7 @@ module FyreVM{
 		};
 		
 		function testAlloc(test: nodeunit.Test){
-			let allocator = new HeapAllocator(0, requestor);
+			let allocator = new HeapAllocator(0, this);
 			test.equals(allocator.blockCount(), 0, "initially no blocks");
 			test.equals(allocator.alloc(100), 0, "could alloc 100 bytes");
 			test.equals(allocator.blockCount(), 1, "allocated the first block");
@@ -38,7 +33,7 @@ module FyreVM{
 		}
 		
 		function testFree(test: nodeunit.Test){
-			let allocator = new HeapAllocator(0, requestor);
+			let allocator = new HeapAllocator(0, this);
 			let a = allocator.alloc(500);
 			let b = allocator.alloc(500);
 			test.equals(allocator.blockCount(), 2);
@@ -65,8 +60,8 @@ module FyreVM{
 		
 		export function addMemoryTests(tests, m: MemoryAccess){
 			tests.testReadWriteInt16 = testReadWriteInt16.bind(m);
-			tests.testAlloc = testAlloc;
-			tests.testFree = testFree;
+			tests.testAlloc = testAlloc.bind(m);
+			tests.testFree = testFree.bind(m);
 		}
 		
 	}

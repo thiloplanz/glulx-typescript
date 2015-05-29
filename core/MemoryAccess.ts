@@ -20,6 +20,11 @@ module FyreVM {
 		 * Writes an unsigned, big-endian, 16-bit number
 		 */
 		 writeInt16(offset: number, value: number);
+		 
+		 /**
+		  * Resizes the available memory
+		  */
+		 setEndMem(newEndMem: number): boolean;
 	}
 	
 	/**
@@ -34,15 +39,7 @@ module FyreVM {
 			this.length = length;
 		}
 	}
-	
-	/**
-	 * abstraction to resize the available memory
-	 */
-	
-	export interface MemoryRequester {
-		(newEndMem: number) : boolean
-	}
-	
+
 	/**
 	 * Manages the heap size and block allocation for the malloc/mfree opcodes.
 	 * 
@@ -56,14 +53,14 @@ module FyreVM {
 		private endMem: number;
 		private heapExtent = 0;
 		private maxHeapExtent = 0
-		private requester: MemoryRequester;
+		private memory: MemoryAccess;
 		private blocks: HeapEntry[] = [];
 		private freeList: HeapEntry[] = [];
 		
 		
-		constructor(heapAddress: number, requester: MemoryRequester){
+		constructor(heapAddress: number, memory: MemoryAccess){
 			this.heapAddress = heapAddress;
-			this.requester = requester;
+			this.memory = memory;
 			this.endMem = heapAddress;
 		}
 		
@@ -121,7 +118,7 @@ module FyreVM {
 		
 		private setEndMem(newHeapAllocation: number) : boolean{
 			let newEndMem = this.heapAddress + newHeapAllocation;
-			if (this.requester(newEndMem)){
+			if (this.memory.setEndMem(newEndMem)){
 				this.endMem = newEndMem;
 				return true;
 			}
