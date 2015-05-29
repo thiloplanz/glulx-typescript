@@ -5,7 +5,10 @@
 
 // Imported from: https://github.com/soywiz/typescript-node-definitions/nodeunit.d.ts
 
-declare module 'nodeunit' {
+
+// changed to declare as "internal module",
+// see http://stackoverflow.com/q/30519662/14955
+declare module nodeunit {
 	export interface Test {
 		done: ICallbackFunction;
 		expect(num: number): void;
