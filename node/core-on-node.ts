@@ -23,10 +23,33 @@ module FyreVM{
 			this.buffer.writeUInt16BE(value, offset);
 		}
 		
+		readInt32(offset: number){
+			return this.buffer.readUInt32BE(offset);
+		}
+		
+		writeInt32(offset: number, value: number){
+			this.buffer.writeUInt32BE(value, offset);
+		}
+		
+		readASCII(offset: number, length: number): string{
+			return this.buffer.toString('ascii', offset, offset+length);
+		}
+		
+		writeASCII(offset: number, value: string){
+			this.buffer.write(value, offset, value.length, 'ascii');
+		}
+		 		 
 		setEndMem(newEndMem: number) : boolean {
 			if (newEndMem > this.buffer.length)
 				return false;
 			return true;
+		}
+		
+		copy(offset: number, length: number) : BufferMemoryAccess {
+			// TODO: range check
+			let result = new BufferMemoryAccess(length);
+			this.buffer.copy(result.buffer, 0, offset, offset+length);
+			return result;
 		}
 		
 	}

@@ -5,7 +5,10 @@
 
 /// <reference path='../../node/core-on-node.ts' />
 /// <reference path='../core/MemoryAccessTest.ts' />
+/// <reference path='../core/UlxImageTest.ts' />
 
 let buffer = new FyreVM.BufferMemoryAccess(1000);
 
 FyreVM.NodeUnit.addMemoryTests(exports, buffer);
+
+FyreVM.NodeUnit.addImageTests(exports, buffer);

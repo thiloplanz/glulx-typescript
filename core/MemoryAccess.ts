@@ -21,10 +21,43 @@ module FyreVM {
 		 */
 		 writeInt16(offset: number, value: number);
 		 
+		 
+		 /**
+		 * Reads an unsigned, big-endian, 32-bit number
+		 */
+		 readInt32(offset: number) : number;
+		
+		/**
+		 * Writes an unsigned, big-endian, 32-bit number
+		 */
+		 writeInt32(offset: number, value: number);
+		 
+		 /**
+		  * Converts part of the buffer into a String,
+		  * assumes that the data is valid ASCII
+		  */
+		 readASCII(offset: number, length: number): String;
+		 
+		 /**
+		  * Writes an ASCII String
+		  */
+		 writeASCII(offset: number, value: String);
+		 
 		 /**
 		  * Resizes the available memory
 		  */
 		 setEndMem(newEndMem: number): boolean;
+		 
+		 /**
+		  * Copy a part of the memory into a new buffer.
+		  * 
+		  * The length can be more than there is data
+		  * in the original buffer. In this case the
+		  * new buffer will contain unspecified data
+		  * at the end.
+		  */
+		  copy(offset: number, length: number): MemoryAccess;
+		  
 	}
 	
 	/**
