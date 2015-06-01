@@ -15,12 +15,20 @@ module FyreVM{
 			this.buffer = new Buffer(size);
 		}
 		
+		readByte(offset: number){
+			return this.buffer.readUInt8(offset);
+		}
+		
+		writeByte(offset: number, value:number){
+			this.buffer.writeUInt8(value, offset);
+		}
+		
 		readInt16(offset: number){
 			return this.buffer.readUInt16BE(offset);
 		}
 		
 		writeInt16(offset: number, value: number){
-			this.buffer.writeUInt16BE(value, offset);
+			this.buffer.writeUInt16BE(value, offset || 0);
 		}
 		
 		readInt32(offset: number){
@@ -28,7 +36,7 @@ module FyreVM{
 		}
 		
 		writeInt32(offset: number, value: number){
-			this.buffer.writeUInt32BE(value, offset);
+			this.buffer.writeUInt32BE(value, offset || 0);
 		}
 		
 		readASCII(offset: number, length: number): string{

@@ -12,12 +12,24 @@ module FyreVM {
 	
 	export interface MemoryAccess {
 		/**
+		 * Reads a single byte (unsigned)
+		 */
+		 readByte(offset: number) : number;
+		 
+		 /**
+		 * Writes a single byte (unsigned).
+		 * Writes 0 when value is undefined or null.
+		 */
+		 writeByte(offset: number, value: number);
+		
+		/**
 		 * Reads an unsigned, big-endian, 16-bit number
 		 */
 		 readInt16(offset: number) : number;
 		
 		/**
-		 * Writes an unsigned, big-endian, 16-bit number
+		 * Writes an unsigned, big-endian, 16-bit number.
+		 * Writes 0 when value is undefined or null.
 		 */
 		 writeInt16(offset: number, value: number);
 		 
@@ -29,6 +41,7 @@ module FyreVM {
 		
 		/**
 		 * Writes an unsigned, big-endian, 32-bit number
+		 * Writes 0 when value is undefined or null.
 		 */
 		 writeInt32(offset: number, value: number);
 		 

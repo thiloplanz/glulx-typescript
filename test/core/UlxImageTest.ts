@@ -12,11 +12,6 @@
 module FyreVM{
 	
 	export module NodeUnit {
-	
-		let headerFields = {
-			endMem: 10 * 1204,
-			ramStart: 50
-		}
 		
 		function testImage(test: nodeunit.Test){
 			let m: MemoryAccess = this;
@@ -26,12 +21,17 @@ module FyreVM{
 				let image = new UlxImage(m);
 			}, null, "wrong magic");
 			
-			UlxImage.writeImageHeader(m, headerFields);
+			UlxImage.writeHeader({
+		 			endMem: 10*1024,
+					ramStart: 50,
+					version: 0x00030100
+				}, m);
 			let image = new UlxImage(m);
 			
+			test.equals(image.getMajorVersion(), 3, "major version");
+			test.equals(image.getMinorVersion(), 1, "minor version");
+			
 			test.done();
-			
-			
 			
 		};
 		

@@ -1,10 +1,10 @@
 ## Glulx VM in TypeScript with Channel IO (work in progess)
 
-Glulx is a specification for a 32-bit virtual machine that runs Inform 6 and [Inform 7 story files](http://inform7.com).
+[Glulx](http://en.wikipedia.org/wiki/Glulx) is a specification for a 32-bit virtual machine that runs Inform 6 and [Inform 7 story files](http://inform7.com).
 
 This project is an attempt to implement Glulx in TypeScript.
 
-It is based heavily on the FyreVM (a C# implementation). In particular, it also makes use of the contextual Channel IO layer introduced in FyreVM.
+It is based heavily on the [FyreVM](https://github.com/ChicagoDave/FyreVM) (a C# implementation). In particular, it also makes use of the contextual Channel IO layer introduced in FyreVM.
 
 -----
 
