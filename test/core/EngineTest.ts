@@ -11,7 +11,7 @@ module FyreVM{
 	
 	export module NodeUnit {
 
-		function makeTestImage(m: MemoryAccess, ...code : number[]): UlxImage{
+		export function makeTestImage(m: MemoryAccess, ...code : number[]): UlxImage{
 			let c = 256;
 			UlxImage.writeHeader({
 				endMem: 10*1024,
@@ -30,7 +30,7 @@ module FyreVM{
 		
 		let opcodes = Opcodes.initOpcodes();
 
-		function op(name: string) : number{
+		export function op(name: string) : number{
 			for (var c in opcodes) {
 				if (opcodes[c].name === name){
 					return opcodes[c].code;
@@ -39,15 +39,15 @@ module FyreVM{
 			throw `unknown opcode ${name}`
 		}
 
-		function p_in(a:LoadOperandType, b:LoadOperandType = 0){
+		export function p_in(a:LoadOperandType, b:LoadOperandType = 0){
 			return a + (b << 4);
 		}
 
-		function p_out(a: StoreOperandType, b:StoreOperandType = 0){
+		export function p_out(a: StoreOperandType, b:StoreOperandType = 0){
 			return  a + (b << 4);
 		}
 		
-		function runImage(gameImage: UlxImage){
+		export function stepImage(gameImage: UlxImage){
 			let engine = new Engine(gameImage);
 			engine.bootstrap();
 			engine.step();
@@ -63,7 +63,7 @@ module FyreVM{
 					1, 1, 
 					0x03, 0xA0
 			);
-			runImage(gameImage);
+			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 2, "1+1=2");
 			test.done();	
 		}
@@ -79,7 +79,7 @@ module FyreVM{
 					0x03, 0xA0
 			);
 	
-			runImage(gameImage);
+			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 0x03FF, "0x010F+0x02F0=0x03FF");
 			test.done();	
 		}
@@ -96,7 +96,7 @@ module FyreVM{
 					0x03, 0xA0
 			);
 	
-			runImage(gameImage);
+			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 0x010F02F0, "0x010F02F0+0");
 			test.done();	
 		}
@@ -111,7 +111,7 @@ module FyreVM{
 					1, 1, 
 					0x00, 0x00, 0x03, 0xA0
 			);
-			runImage(gameImage);
+			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 2, "1+1=2");
 			test.done();	
 		}
@@ -124,7 +124,6 @@ module FyreVM{
 				testLoadOperandTypeInt32 : testLoadOperandTypeInt32.bind(m),
 				testStoreOperandTypePtr_32 : testStoreOperandTypePtr_32.bind(m)
 			}
-				
 		}
 
 	}

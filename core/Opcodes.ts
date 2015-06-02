@@ -40,9 +40,60 @@ module FyreVM {
 			opcode(0x00, 'nop', 0, 0, 
 				function(){ });
 			
-		
 			opcode(0x10, 'add', 2, 1,
-				function(a,b){ return a+b});				
+				function(a,b){ return a+b});
+				
+			opcode(0x11, 'sub', 2, 1,
+				function(a,b){ return a-b});				
+		
+			opcode(0x12, 'mul', 2, 1,
+				function(a,b){ return a*b});
+		
+			opcode(0x13, 'div', 2, 1,
+				function(a,b){ return Math.floor(a / b)});
+		
+			opcode(0x14, 'mod', 2, 1,
+				function(a,b){ return a % b});
+	
+			// TODO: check the specs
+			opcode(0x15, 'neg', 1, 1,
+				function(x){ return 0xFFFFFFFF - x });
+	
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x18, 'bitand', 2, 1,
+				function(a,b){ return a & b});
+		
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x19, 'bitor', 2, 1,
+				function(a,b){ return a | b});
+		
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x1A, 'bitxor', 2, 1,
+				function(a,b){ return a ^ b});
+			
+			// TODO: check if it works, JS has signed ints, we want uint	
+			opcode(0x1B, 'bitnot', 1, 1,
+				function(x){ x = ~x; if (x<0) return 1 + x + 0xFFFFFFFF; return x; });
+	
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x1C, 'shiftl', 2, 1,
+				function(a,b){ 
+					if (b >= 32) return 0;
+					return a << b});
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x1D, 'sshiftr', 2, 1,
+				function(a,b){ 
+					if (b >= 32) return (a & 0x80000000) ? 0 : 0xFFFFFFFF;
+					return a >> b});
+			
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x1E, 'ushiftr', 2, 1,
+				function(a,b){ 
+					if (b >= 32) return 0;
+					return a >> b});
+	
+		
 		
 			return opcodes;
 		}

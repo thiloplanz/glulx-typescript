@@ -9,6 +9,7 @@
 		"core/UlxImage.ts",
 		"node/core-on-node.ts",
 		"test/core/EngineTest.ts",
+		"test/core/OpcodesTest.ts",
 		"test/core/MemoryAccessTest.ts",
 		"test/core/UlxImageTest.ts",
 		"test/node/core-tests-on-node.ts"
