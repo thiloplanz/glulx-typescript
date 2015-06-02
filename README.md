@@ -10,12 +10,13 @@ It is based heavily on the [FyreVM](https://github.com/ChicagoDave/FyreVM) (a C#
 
 Right now, all you can do is run some unit tests for core engine functionality.
 
-You need Node.js and nodeunit installed (as well as a TypeScript compiler).
+You need Node.js and nodeunit installed (as well as a TypeScript 1.5 compiler).
 
-Then you can compile everything in this project
+Then you can compile everything in this project and run the test suite:
 
-    $ tsc --out test.js core/*.ts node/*.ts test/core/*.ts test/node/*.ts 
+    $ tsc  
     $ nodeunit test.js 
    
-   
+Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.
+
 

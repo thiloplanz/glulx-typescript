@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"out": "test.js"
+	},
+	"files": [
+		"core/Engine.ts",
+		"core/MemoryAccess.ts",
+		"core/Opcodes.ts",
+		"core/UlxImage.ts",
+		"node/core-on-node.ts",
+		"test/core/EngineTest.ts",
+		"test/core/MemoryAccessTest.ts",
+		"test/core/UlxImageTest.ts",
+		"test/node/core-tests-on-node.ts"
+	]
+}
