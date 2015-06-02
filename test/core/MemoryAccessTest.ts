@@ -60,11 +60,11 @@ module FyreVM{
 		
 		
 		export function addMemoryTests(tests, m: MemoryAccess){
-			tests.testReadWriteInt16 = testReadWriteInt16.bind(m);
-			tests.testAlloc = testAlloc.bind(m);
-			tests.testFree = testFree.bind(m);
+			tests.MemoryAccess = { 
+				testReadWriteInt16 : testReadWriteInt16.bind(m),
+				testAlloc : testAlloc.bind(m),
+				testFree : testFree.bind(m)
+			};
 		}
-		
 	}
-	
 }

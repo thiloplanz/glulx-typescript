@@ -37,7 +37,9 @@ module FyreVM{
 		
 		
 		export function addImageTests(tests, m: MemoryAccess){
-			tests.testImage = testImage.bind(m);
+			tests.UlxImage = {
+				testImage : testImage.bind(m)
+			}
 		}
 		
 	}
