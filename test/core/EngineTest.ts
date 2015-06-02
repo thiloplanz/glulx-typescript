@@ -47,10 +47,13 @@ module FyreVM{
 			return  a + (b << 4);
 		}
 		
-		export function stepImage(gameImage: UlxImage){
+		export function stepImage(gameImage: UlxImage, stepCount = 1) : Engine{
 			let engine = new Engine(gameImage);
 			engine.bootstrap();
-			engine.step();
+			while(stepCount--){
+				engine.step();
+			}
+			return engine;
 		}
 	
 		function testLoadOperandTypeByte(test: nodeunit.Test){

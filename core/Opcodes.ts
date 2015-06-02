@@ -92,8 +92,116 @@ module FyreVM {
 				function(a,b){ 
 					if (b >= 32) return 0;
 					return a >> b});
-	
-		
+					
+					
+			opcode(0x20, 'jump', 1, 0, 
+				function(jumpVector){
+					this.takeBranch(jumpVector);
+				}
+			);
+			
+			opcode(0x022, 'jz', 2, 0, 
+				function(condition, jumpVector){
+					if (condition === 0)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			opcode(0x023, 'jnz', 2, 0, 
+				function(condition, jumpVector){
+					if (condition !== 0)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+
+			opcode(0x024, 'jeq', 3, 0, 
+				function(a, b, jumpVector){
+					if (a === b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			opcode(0x025, 'jne', 3, 0, 
+				function(a, b, jumpVector){
+					if (a !== b)
+						this.takeBranch(jumpVector);
+				}
+			);
+			
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x026, 'jlt', 3, 0, 
+				function(a, b, jumpVector){
+					if (a < b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x027, 'jge', 3, 0, 
+				function(a, b, jumpVector){
+					if (a >= b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x028, 'jgt', 3, 0, 
+				function(a, b, jumpVector){
+					if (a > b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x029, 'jle', 3, 0, 
+				function(a, b, jumpVector){
+					if (a <= b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x02A, 'jltu', 3, 0, 
+				function(a, b, jumpVector){
+					if (a < b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x02B, 'jgeu', 3, 0, 
+				function(a, b, jumpVector){
+					if (a >= b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x02C, 'jgtu', 3, 0, 
+				function(a, b, jumpVector){
+					if (a > b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			// TODO: check if it works, JS has signed ints, we want uint
+			opcode(0x02D, 'jleu', 3, 0, 
+				function(a, b, jumpVector){
+					if (a <= b)
+						this.takeBranch(jumpVector);
+				}
+			);
+
+			
+			opcode(0x0104, 'jumpabs', 1, 0, 
+				function(address){
+					this.PC = address;
+				}
+			);
+			
+			
+
 		
 			return opcodes;
 		}

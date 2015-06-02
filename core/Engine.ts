@@ -223,7 +223,7 @@ module FyreVM {
 					let opcount = opcode.loadArgs + opcode.storeArgs;
 					let operands = [];
 					// TODO: implement DelayedStore and Catch
-					let operandPos = this.PC + (opcount+1) / 2;
+					let operandPos = Math.floor( this.PC + (opcount+1) / 2);
 					for (let i=0; i<opcode.loadArgs; i++){
 						let type;
 						if (i%2 == 0){
@@ -248,12 +248,13 @@ module FyreVM {
 						resultTypes[i] = type;
 						operandPos += this.decodeStoreOperand(opcode, type, resultAddrs, operandPos);
 					}
-					
+				
+//					console.info(opcode.name, operands, this.PC, operandPos);
+	
 					// TODO: implement DelayedStore and Catch
-					
 					// call opcode implementation
-					this.PC = operandPos; // after the last operanc
-					let result = opcode.handler.apply(null, operands);
+					this.PC = operandPos; // after the last operanc				
+					let result = opcode.handler.apply(this, operands);
 					if (resultTypes.length == 1){
 						result = [ result ];
 					}
@@ -315,6 +316,19 @@ module FyreVM {
 					  default: throw `unsupported store result mode ${type}`
 				  }	
 			  }
+		  }
+		  
+		  private leaveFunction(x){
+				// TODO
+				throw "LeaveFunction not yet implemented";
+		  }
+		  
+		  takeBranch(jumpVector: number){
+				if (jumpVector === 0 || jumpVector === 1){
+					this.leaveFunction(jumpVector);
+				}else{
+					this.PC += jumpVector - 2;
+				}
 		  }
 	}
 		

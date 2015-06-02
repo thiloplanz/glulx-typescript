@@ -4,6 +4,7 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../../core/MemoryAccess.ts' />
+/// <reference path='../../core/UlxImage.ts' />
 /// <reference path='EngineTest.ts' />
 
 
@@ -64,7 +65,7 @@ module FyreVM{
 		}
 		
 		export function addOpcodeTests(tests, m: MemoryAccess){
-			tests.Opcodes = { Arithmetics: {} }
+			tests.Opcodes = { Arithmetics: {}, Branching:{} }
 			
 		
 		tests.Opcodes.Arithmetics.testAdd = 
@@ -152,6 +153,305 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'ushiftr', 5, 1, 2);
 			test.done();	
 		}
+		
+		function writeAddFunction(image: UlxImage, address: number){
+			image.writeBytes(address, 
+				op('add'),
+				p_in(LoadOperandType.byte, LoadOperandType.byte), 
+				p_out(StoreOperandType.ptr_16),
+				10, 20, 
+				0x03, 0xA0);
+		}
+		
+		tests.Opcodes.Branching.testJump =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 263 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jump'), 
+				    p_in(LoadOperandType.int16, 0), 
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJumpAbs =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				0x81, 0x04, // double-byte opcode 0x0104
+				    p_in(LoadOperandType.int16, 0), 
+					label >> 8, label & 0xFF
+			);
+			
+			writeAddFunction(image, label);
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJz =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 263 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jz'), 
+				    p_in(LoadOperandType.zero, LoadOperandType.int16), 
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJnz =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 264 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jnz'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.int16),
+					12, 
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+
+		tests.Opcodes.Branching.testJeq =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jeq'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 12,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+
+		tests.Opcodes.Branching.testJne =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jne'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 10,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJlt =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jlt'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 15,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+
+		tests.Opcodes.Branching.testJge =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jge'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 10,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJgt =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jgt'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 10,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJle =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jle'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 12,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		
+		tests.Opcodes.Branching.testJltu =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jltu'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 15,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+
+		tests.Opcodes.Branching.testJgeu =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jgeu'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 10,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJgtu =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jgtu'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 10,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+		
+		tests.Opcodes.Branching.testJleu =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 266 + 2;
+			
+			let image = makeTestImage(m,
+				0x00, 0x00, 0x00,  // type C0, no args
+				op('jleu'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					12, 12,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
+
 		
 		}
 	}

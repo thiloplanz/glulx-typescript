@@ -118,6 +118,12 @@ module FyreVM {
 				throw `Writing into ROM! offset: ${address}`;
 			this.memory.writeInt32(address, value);
 		}
+		
+		writeBytes(address: number, ...bytes: number[]){
+			for (let i=0; i<bytes.length; i++){
+				this.memory.writeByte(address+i, bytes[i]);
+			}
+		}
 	
 	
 		static writeHeader(fields: GlulxHeader, m: MemoryAccess, offset=0){
