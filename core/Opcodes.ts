@@ -241,7 +241,50 @@ module FyreVM {
 				OpcodeRule.DelayedStore
 			)
 
-
+			opcode(0x31, 'return', 1, 0,
+				function(retVal:number){
+					this.leaveFunction(retVal);
+				})
+				
+			opcode(0x32, "catch", 0, 0,
+				function(destType:number, destAddr:number, address:number){
+					this.pushCallStub(destType, destAddr, this.PC, this.FP);
+					 // the catch token is the value of sp after pushing that stub
+           			this.performDelayedStore(destType, destAddr, this.SP);
+					this.takeBranch(address)		
+				},
+				OpcodeRule.Catch
+			)
+			
+			opcode(0x33, "throw", 2, 0,
+				function(ex, catchToken){
+					if (catchToken > this.SP)
+						throw "invalid catch token";
+					// pop the stack back down to the stub pushed by catch
+					this.SP = catchToken;
+					
+					// restore from the stub
+					let stub = this.popCallStub();
+					this.PC = stub.PC;
+					this.FP = stub.framePtr;
+					this.frameLen = this.stack.readInt32(this.FP);
+					this.localsPos = this.stack.readInt32(this.FP + 4);
+					
+					// store the thrown value and resume after the catch opcode
+					this.performDelayedStore(stub.destType, stub.destAddr, ex);
+					
+				}
+			)
+			
+			opcode(0x34, "tailcall", 2, 0,
+				function(address: number, argc: number){
+					let argv = [];
+					while(argc--){
+						argv.push(this.pop());
+					}
+					this.performCall(address, argv, 0, 0, 0, true);
+				});
+			
 			return opcodes;
 		}
 	}

@@ -160,7 +160,10 @@ module FyreVM{
 				p_in(LoadOperandType.byte, LoadOperandType.byte), 
 				p_out(StoreOperandType.ptr_16),
 				10, 20, 
-				0x03, 0xA0);
+				0x03, 0xA0,
+				op('return'),
+				p_in(LoadOperandType.byte),
+				155);
 		}
 		
 		tests.Opcodes.Branching.testJump =
@@ -469,6 +472,7 @@ module FyreVM{
 			writeAddFunction(image, label + 3);		
 			let engine = stepImage(image, 2);
 			test.equal(image.readInt32(label), 30);	
+			test.equal(engine['SP'], 44);
 			test.done();	
 		}
 		
@@ -617,7 +621,48 @@ module FyreVM{
 		}
 		
 		
-
+		tests.Opcodes.Functions.testReturn =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('call'), 
+				    p_in(LoadOperandType.int16, LoadOperandType.zero),
+					p_out(StoreOperandType.ptr_16), // Store result in memory
+					label >> 8, label & 0xFF,
+					label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		// this returns 155
+			let engine = stepImage(image, 3, test);  // .. on cycle 3
+			test.equal(image.readInt32(label), 155);	
+			test.done();	
+		}
+		
+		// TODO: testCatch  testThrow
+		
+		tests.Opcodes.Functions.testTailCall =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('tailcall'), 
+				    p_in(LoadOperandType.int16, LoadOperandType.zero),
+					label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		
+			let engine = stepImage(image, 2, test);
+			test.equal(image.readInt32(label), 30);	
+			test.equal(engine['SP'], 16);
+			test.done();	
+		}
 		
 		}
 	}

@@ -121,6 +121,7 @@ module FyreVM {
 		private localsPos: number;
 		private execMode: ExecutionMode;
 		private opcodes: Opcode[];
+		private running: boolean;
 		
 		constructor(gameFile: UlxImage){
 			let major = gameFile.getMajorVersion();
@@ -251,8 +252,6 @@ module FyreVM {
 		 }
 		 
 		 private pop(): number {
-			 if (this.SP <= this.FP + this.frameLen)
-			 	throw "Stack underflow";
 			 this.SP -= 4;
 			 return this.stack.readInt32(this.SP);
 		 }
@@ -266,6 +265,15 @@ module FyreVM {
 			 this.push(destAddr);
 			 this.push(PC);
 			 this.push(framePtr);
+		 }
+		 
+		 private popCallStub(): CallStub{
+			 let stub = new CallStub();
+			 stub.framePtr = this.pop();
+			 stub.PC = this.pop();
+			 stub.destAddr = this.pop();
+			 stub.destType = this.pop();
+			 return stub;
 		 }
 		 
 		 
@@ -304,7 +312,7 @@ module FyreVM {
 					let operandPos = Math.floor( this.PC + (opcount+1) / 2);
 					for (let i=0; i<opcode.loadArgs; i++){
 						let type;
-						if (i%2 == 0){
+						if (i%2 === 0){
 							type = image.readByte(this.PC) & 0xF;
 						}else{
 							type = (image.readByte(this.PC++) >> 4) & 0xF;
@@ -318,7 +326,7 @@ module FyreVM {
 					let resultAddrs = [];
 					for(let i=0; i<opcode.storeArgs; i++){
 						let type = i + opcode.loadArgs;
-						if (type%2 == 0){
+						if (type%2 === 0){
 							type = image.readByte(this.PC) & 0xF;
 						}else{
 							type = (image.readByte(this.PC++) >> 4) & 0xF;
@@ -330,7 +338,7 @@ module FyreVM {
 
 					if(opcode.rule === OpcodeRule.DelayedStore || opcode.rule === OpcodeRule.Catch){
 						let type = opcode.loadArgs + opcode.storeArgs;
-						if (type%2 == 0){
+						if (type%2 === 0){
 							type = image.readByte(this.PC) & 0xF;
 						}else{
 							type = (image.readByte(this.PC++) >> 4) & 0xF;
@@ -338,10 +346,21 @@ module FyreVM {
 						operandPos += this.decodeDelayedStoreOperand(opcode, type, operands, operandPos);							
 					}
 
+					if (opcode.rule === OpcodeRule.Catch){
+						// decode final load operand for @catch
+						let type = opcode.loadArgs + opcode.storeArgs + 1;
+						if (type%2 === 0){
+							type = image.readByte(this.PC) & 0xF;
+						}else{
+							type = (image.readByte(this.PC++) >> 4) & 0xF;
+						}
+						operandPos += this.decodeLoadOperand(opcode, type, operands, operandPos);
+					}
+
+
 //					console.info(opcode.name, operands, this.PC, operandPos);
 
 	
-					// TODO: implement Catch
 					// call opcode implementation
 					this.PC = operandPos; // after the last operanc				
 					let result = opcode.handler.apply(this, operands);
@@ -384,7 +403,11 @@ module FyreVM {
 				  case LoadOperandType.ptr_16: operands.push(loadIndirect(image.readInt16(operandPos))); return 2;
 				  case LoadOperandType.ptr_32: operands.push(loadIndirect(image.readInt32(operandPos))); return 4;
 				  // stack
-				  case LoadOperandType.stack: operands.push(this.pop()); return 0;
+				  case LoadOperandType.stack: 
+				  	 if (this.SP <= this.FP + this.frameLen)
+			 				throw "Stack underflow";
+				  	operands.push(this.pop()); 
+					return 0;
 				  default: throw `unsupported load operand type ${type}`;
 			  }
 			  
@@ -431,6 +454,17 @@ module FyreVM {
 		  }
 		  
 		  
+		  private performDelayedStore(type:number, address: number, value: number){
+			  switch(type){
+				  case GLUXLX_STUB.STORE_NULL: return;
+				  case GLUXLX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
+				  case GLUXLX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
+				  case GLUXLX_STUB.STORE_STACK: this.push(value); return;
+				  default: throw `unsupported delayed store mode ${type}`;
+			  }
+		  }
+		  
+		  
 		  private storeResults(resultTypes: number[], resultAddrs: number[], results: number[]){
 		  	  for (let i=0; i<results.length; i++){
 				  let value = results[i];
@@ -451,10 +485,40 @@ module FyreVM {
 			  }
 		  }
 		  
-		  private leaveFunction(x){
-				// TODO
-				throw "LeaveFunction not yet implemented";
+		  private leaveFunction(retVal: number){
+				if (this.FP === 0){
+					// top-level function
+					this.running = false;
+					return;
+				}
+				this.SP = this.FP;
+				this.resumeFromCallStub(retVal);
 		  }
+		  
+		  private resumeFromCallStub(result: number){
+			  let stub = this.popCallStub();
+			  
+			  this.PC = stub.PC;
+			  this.execMode = ExecutionMode.Code;
+			  
+			  let newFP = stub.framePtr;
+			  let newFrameLen = this.stack.readInt32(newFP);
+			  let newLocalsPos = this.stack.readInt32(newFP+4);
+			  
+			  switch(stub.destType){
+				  case GLUXLX_STUB.STORE_NULL: break;
+				  case GLUXLX_STUB.STORE_MEM:
+				  		this.image.writeInt32(stub.destAddr, result);
+						break;
+				// TODO: the other return modes
+				  default:
+				  		throw `unsupported return mode ${stub.destType}`
+			  }
+			  
+			  this.FP = newFP;
+			  this.frameLen = newFrameLen;
+			  this.localsPos = newLocalsPos;
+		  }		  
 		  
 		  takeBranch(jumpVector: number){
 				if (jumpVector === 0 || jumpVector === 1){
