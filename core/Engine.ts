@@ -48,6 +48,59 @@ module FyreVM {
 		ptr_16 = 6,
 		ptr_32 = 7
 	}
+	
+	export const enum CallType {
+		stack = 0xC0,
+		localStorage = 0xC1
+	}
+	
+	// Call stub
+	const enum GLUXLX_STUB {
+		// DestType values for function calls
+		STORE_NULL = 0,
+		STORE_MEM = 1,
+		STORE_LOCAL = 2,
+		STORE_STACK = 3,
+		// DestType values for string printing
+		RESUME_HUFFSTR = 10,
+		RESUME_FUNC = 11,
+		RESUME_NUMBER = 12,
+		RESUME_CSTR = 13,
+		RESUME_UNISTR = 14
+	}
+	
+	export const enum OpcodeRule {
+		// No special treatment
+		None,
+		// Indirect operands work with single bytes
+		Indirect8Bit,
+		// Indirect operands work with 16-bit words
+		Indirect16Bit,
+		// Has an additional operand that resembles a store, but which
+        // is not actually passed out by the opcode handler. Instead, the
+        // handler receives two values, DestType and DestAddr, which may
+        // be written into a call stub so the result can be stored later.
+		DelayedStore,
+		// Special case for op_catch. This opcode has a load operand 
+        // (the branch offset) and a delayed store, but the store comes first.
+        // args[0] and [1] are the delayed store, and args[2] is the load.
+		Catch
+	}
+		
+	class CallStub {
+		    /// The type of storage location (for function calls) or the
+            /// previous task (for string printing).
+            destType : number
+            /// The storage address (for function calls) or the digit
+            /// being examined (for string printing).
+            destAddr : number
+            /// The address of the opcode or character at which to resume.
+            PC : number
+            /// The stack frame in which the function call or string printing
+            /// was performed.
+            framePtr : number
+	}
+		
 					
 	export class Engine{
 		
@@ -190,8 +243,20 @@ module FyreVM {
 			 this.SP += 4;
 		 }
 		 
+		 private pop(): number {
+			 this.SP -= 4;
+			 return this.stack.readInt32(this.SP);
+		 }
+		 
 		 private pushByte(value: number){
 			 this.stack.writeByte(this.SP++, value);
+		 }
+		 
+		 private pushCallStub(destType: number, destAddr: number, PC: number, framePtr: number){
+			 this.push(destType);
+			 this.push(destAddr);
+			 this.push(PC);
+			 this.push(framePtr);
 		 }
 		 
 		 
@@ -222,7 +287,11 @@ module FyreVM {
 					// decode load-operands
 					let opcount = opcode.loadArgs + opcode.storeArgs;
 					let operands = [];
-					// TODO: implement DelayedStore and Catch
+					if (opcode.rule === OpcodeRule.DelayedStore)
+						opcount++;
+					else if (opcode.rule === OpcodeRule.Catch)
+						opcount+= 2;
+					
 					let operandPos = Math.floor( this.PC + (opcount+1) / 2);
 					for (let i=0; i<opcode.loadArgs; i++){
 						let type;
@@ -249,9 +318,21 @@ module FyreVM {
 						operandPos += this.decodeStoreOperand(opcode, type, resultAddrs, operandPos);
 					}
 				
+
+					if(opcode.rule === OpcodeRule.DelayedStore || opcode.rule === OpcodeRule.Catch){
+						let type = opcode.loadArgs + opcode.storeArgs;
+						if (type%2 == 0){
+							type = image.readByte(this.PC) & 0xF;
+						}else{
+							type = (image.readByte(this.PC++) >> 4) & 0xF;
+						}
+						operandPos += this.decodeDelayedStoreOperand(opcode, type, operands, operandPos);							
+					}
+
 //					console.info(opcode.name, operands, this.PC, operandPos);
+
 	
-					// TODO: implement DelayedStore and Catch
+					// TODO: implement Catch
 					// call opcode implementation
 					this.PC = operandPos; // after the last operanc				
 					let result = opcode.handler.apply(this, operands);
@@ -299,6 +380,33 @@ module FyreVM {
 			  return operandPos;
 		  }
 		  
+		  /**
+		   * @return how many extra bytes were read (so that operandPos can be advanced)
+		   */
+		  private decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
+			  switch(type){
+				  case StoreOperandType.discard: 
+				  	operands.push(GLUXLX_STUB.STORE_NULL);
+					operands.push(0);
+				  	return 0;
+				  case StoreOperandType.ptr_8: 
+				  	operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.readByte(operandPos));
+				  	return 1;
+				  case StoreOperandType.ptr_16: 
+				  	operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.readInt16(operandPos));
+				  	return 2;
+				  case StoreOperandType.ptr_32: 
+				  	operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.readInt32(operandPos)); 
+					return 4;
+				  default: throw `unsupported delayed store operand type ${type}`;
+			  }
+			  return operandPos;
+		  }
+		  
+		  
 		  private storeResults(resultTypes: number[], resultAddrs: number[], results: number[]){
 		  	  for (let i=0; i<results.length; i++){
 				  let value = results[i];
@@ -329,6 +437,35 @@ module FyreVM {
 				}else{
 					this.PC += jumpVector - 2;
 				}
+		  }
+		  
+		  performCall(address: number, args: number[], destType:number, destAddr: number, stubPC: number, tailCall = false){
+			  	// TODO: veneer.InterceptCall
+				
+				if (tailCall){
+					// pop the current frame and use the call stub below it
+					this.SP = this.FP;
+				}else{
+					// use a new call stub
+					this.pushCallStub(destType, destAddr, stubPC, this.FP);
+				}
+			
+				let type = this.image.readByte(address);
+				if (type === CallType.stack){
+					this.enterFunction(address);
+					if (!args){
+						this.push(0);
+					}else{
+						for(let i=args.length-1; i>=0; i--)
+							this.push(args[i]);
+						this.push(args.length);
+					}
+				} else if (type === CallType.localStorage){
+					this.enterFunction(address, ...args);
+				} else {
+					throw `Invalid function call type ${type}`;
+				}
+				
 		  }
 	}
 		

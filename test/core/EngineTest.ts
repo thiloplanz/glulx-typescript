@@ -59,7 +59,7 @@ module FyreVM{
 		function testLoadOperandTypeByte(test: nodeunit.Test){
 			
 			let gameImage = makeTestImage(this,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
 					p_out(StoreOperandType.ptr_16),
@@ -74,7 +74,7 @@ module FyreVM{
 		function testLoadOperandTypeInt16(test: nodeunit.Test){
 			
 			let gameImage = makeTestImage(this,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.int16, LoadOperandType.int16), 
 					p_out(StoreOperandType.ptr_16),
@@ -91,7 +91,7 @@ module FyreVM{
 		function testLoadOperandTypeInt32(test: nodeunit.Test){
 			
 			let gameImage = makeTestImage(this,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.int32, LoadOperandType.zero), 
 					p_out(StoreOperandType.ptr_16),
@@ -107,7 +107,7 @@ module FyreVM{
 		function testStoreOperandTypePtr_32(test: nodeunit.Test){
 			
 			let gameImage = makeTestImage(this,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
 					p_out(StoreOperandType.ptr_32),

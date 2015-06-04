@@ -19,12 +19,14 @@ module FyreVM {
 		loadArgs: number;
 		storeArgs: number;
 		handler:OpcodeHandler;
-		constructor(code: number, name: string, loadArgs: number, storeArgs: number, handler:OpcodeHandler){
+		rule:OpcodeRule;
+		constructor(code: number, name: string, loadArgs: number, storeArgs: number, handler:OpcodeHandler, rule?:OpcodeRule){
 			this.code = code;
 			this.name = name;
 			this.loadArgs = loadArgs;
 			this.storeArgs = storeArgs;
 			this.handler = handler;
+			this.rule = rule;
 		}
 	}
 	
@@ -33,8 +35,8 @@ module FyreVM {
 		export function initOpcodes(){
 			let opcodes: Opcode[] = [];
 			
-			function opcode(code: number, name: string, loadArgs: number, storeArgs: number, handler:OpcodeHandler){
-				opcodes[code] = new Opcode(code, name, loadArgs, storeArgs, handler);
+			function opcode(code: number, name: string, loadArgs: number, storeArgs: number, handler:OpcodeHandler, rule?:OpcodeRule){
+				opcodes[code] = new Opcode(code, name, loadArgs, storeArgs, handler, rule);
 			}
 			
 			opcode(0x00, 'nop', 0, 0, 
@@ -200,7 +202,16 @@ module FyreVM {
 				}
 			);
 			
-			
+			opcode(0x30, 'call', 2, 0,
+				function(address:number, argc:number, destType:number, destAddr:number){
+					let args = [];
+					while(argc--){
+						args.push(this.pop())
+					}
+					this.performCall(address, args, destType, destAddr, this.PC);
+				},
+				OpcodeRule.DelayedStore
+			)
 
 		
 			return opcodes;

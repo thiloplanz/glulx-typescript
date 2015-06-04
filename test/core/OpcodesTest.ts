@@ -14,7 +14,7 @@ module FyreVM{
 		
 		function makeOpcodeImage_byte_byte_store(m: MemoryAccess, opcode: string, a: number, b: number){
 			return makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op(opcode), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
 					p_out(StoreOperandType.ptr_16),
@@ -25,7 +25,7 @@ module FyreVM{
 		
 		function makeOpcodeImage_byte_store(m: MemoryAccess, opcode: string, x: number){
 			return makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op(opcode), 
 				    LoadOperandType.byte + StoreOperandType.ptr_16 * 0x10,
 					x, 
@@ -65,7 +65,7 @@ module FyreVM{
 		}
 		
 		export function addOpcodeTests(tests, m: MemoryAccess){
-			tests.Opcodes = { Arithmetics: {}, Branching:{} }
+			tests.Opcodes = { Arithmetics: {}, Branching: {}, Functions: {} }
 			
 		
 		tests.Opcodes.Arithmetics.testAdd = 
@@ -171,7 +171,7 @@ module FyreVM{
 			let jumpTarget = label - 263 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jump'), 
 				    p_in(LoadOperandType.int16, 0), 
 					jumpTarget >> 8, jumpTarget & 0xFF
@@ -189,7 +189,7 @@ module FyreVM{
 			let label = 0x03A0;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				0x81, 0x04, // double-byte opcode 0x0104
 				    p_in(LoadOperandType.int16, 0), 
 					label >> 8, label & 0xFF
@@ -209,7 +209,7 @@ module FyreVM{
 			let jumpTarget = label - 263 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jz'), 
 				    p_in(LoadOperandType.zero, LoadOperandType.int16), 
 					jumpTarget >> 8, jumpTarget & 0xFF
@@ -228,7 +228,7 @@ module FyreVM{
 			let jumpTarget = label - 264 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jnz'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.int16),
 					12, 
@@ -249,7 +249,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jeq'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -270,7 +270,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jne'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -291,7 +291,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jlt'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -312,7 +312,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jge'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -333,7 +333,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jgt'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -354,7 +354,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jle'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -376,7 +376,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jltu'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -397,7 +397,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jgeu'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -418,7 +418,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jgtu'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -439,7 +439,7 @@ module FyreVM{
 			let jumpTarget = label - 266 + 2;
 			
 			let image = makeTestImage(m,
-				0x00, 0x00, 0x00,  // type C0, no args
+				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('jleu'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					p_in(LoadOperandType.int16),
@@ -451,6 +451,26 @@ module FyreVM{
 			test.equal(image.readInt32(label), 30);	
 			test.done();	
 		} 
+
+		tests.Opcodes.Functions.testCall_no_args =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('call'), 
+				    p_in(LoadOperandType.int16, LoadOperandType.zero),
+					0, // void
+					label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		}
 
 		
 		}
