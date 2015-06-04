@@ -471,6 +471,35 @@ module FyreVM{
 			test.equal(image.readInt32(label), 30);	
 			test.done();	
 		}
+		
+		tests.Opcodes.Functions.testCall_stack_args =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('call'), 
+				    p_in(LoadOperandType.int16, LoadOperandType.byte),
+					0, // void
+					label >> 8, label & 0xFF,
+					2 // two args
+			);
+			image.writeBytes(label,
+				CallType.stack, 0, 0,
+				// pop the number of arguments
+				op('add'), p_in(LoadOperandType.stack, LoadOperandType.zero),
+				p_out(StoreOperandType.discard),
+				// add the two arguments on the stack
+				op('add'),
+				p_in(LoadOperandType.stack, LoadOperandType.stack), 
+				p_out(StoreOperandType.ptr_16),
+				0x03, 0xA0);
+			let engine = stepImage(image, 3, test, [ 39, 3 ]);
+			test.equal(image.readInt32(label), 42);	
+			test.done();	
+		}
 
 		
 		}

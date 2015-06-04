@@ -47,18 +47,35 @@ module FyreVM{
 			return  a + (b << 4);
 		}
 		
-		export function stepImage(gameImage: UlxImage, stepCount = 1) : Engine{
-			let engine = new Engine(gameImage);
-			engine.bootstrap();
-			while(stepCount--){
-				engine.step();
+		export function stepImage(gameImage: UlxImage, stepCount = 1, test?: nodeunit.Test, initialStack? : number[]) : Engine{
+			try{
+				let engine:any = new Engine(gameImage);
+				engine.bootstrap();
+				if (initialStack){
+					for (let i=initialStack.length -1 ; i>=0; i--){
+						engine.push(initialStack[i]);
+					}
+				}
+				while(stepCount--){
+					engine.step();
+				}
+				return engine;
 			}
-			return engine;
+			catch(e){
+				if (!test)
+					throw e;
+				test.strictEqual(null, e, e);
+			}
 		}
 	
-		function testLoadOperandTypeByte(test: nodeunit.Test){
+		export function addEngineTests(tests, m: MemoryAccess){
+			tests.Engine = { }
+	
+	
+		tests.Engine.testLoadOperandTypeByte =
+		function(test: nodeunit.Test){
 			
-			let gameImage = makeTestImage(this,
+			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
@@ -71,9 +88,10 @@ module FyreVM{
 			test.done();	
 		}
 
-		function testLoadOperandTypeInt16(test: nodeunit.Test){
+		tests.Engine.testLoadOperandTypeInt16 =
+		function (test: nodeunit.Test){
 			
-			let gameImage = makeTestImage(this,
+			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.int16, LoadOperandType.int16), 
@@ -87,10 +105,10 @@ module FyreVM{
 			test.done();	
 		}
 
-
-		function testLoadOperandTypeInt32(test: nodeunit.Test){
+		tests.Engine.testLoadOperandTypeInt32 =
+		function (test: nodeunit.Test){
 			
-			let gameImage = makeTestImage(this,
+			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.int32, LoadOperandType.zero), 
@@ -103,10 +121,47 @@ module FyreVM{
 			test.equals(gameImage.readInt32(0x03A0), 0x010F02F0, "0x010F02F0+0");
 			test.done();	
 		}
-
-		function testStoreOperandTypePtr_32(test: nodeunit.Test){
+		
+		tests.Engine.testLoadOperandTypePtr_32 =
+		function (test: nodeunit.Test){
 			
-			let gameImage = makeTestImage(this,
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('add'), 
+				    p_in(LoadOperandType.ptr_16, LoadOperandType.ptr_32), 
+					p_out(StoreOperandType.ptr_16),
+					0x03, 0xA0, 
+					0x00, 0x00, 0x03, 0xA0, 
+					0x03, 0xA0
+			);
+	
+			gameImage.writeInt32(0x03A0, 0x01020304);
+			stepImage(gameImage);
+			test.equals(gameImage.readInt32(0x03A0), 0x02040608, "ramStart := add ramStart, ramStart");
+			test.done();	
+		}
+		
+		tests.Engine.testLoadOperandTypeStack =
+		function (test: nodeunit.Test){
+			
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('add'), 
+				    p_in(LoadOperandType.stack, LoadOperandType.stack), 
+					p_out(StoreOperandType.ptr_16),
+					0x03, 0xA0
+			);
+	
+			gameImage.writeInt32(0x03A0, 0x01020304);
+			stepImage(gameImage,1, test, [12, 19]);
+			test.equals(gameImage.readInt32(0x03A0), 31, "ramStart := add 12, 19");
+			test.done();	
+		}
+
+		tests.Engine.testStoreOperandTypePtr_32 =
+		function (test: nodeunit.Test){
+			
+			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
 				op('add'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
@@ -119,15 +174,8 @@ module FyreVM{
 			test.done();	
 		}
 
-
-		export function addEngineTests(tests, m: MemoryAccess){
-			tests.Engine = {
-				testLoadOperandTypeByte : testLoadOperandTypeByte.bind(m),
-				testLoadOperandTypeInt16 : testLoadOperandTypeInt16.bind(m),
-				testLoadOperandTypeInt32 : testLoadOperandTypeInt32.bind(m),
-				testStoreOperandTypePtr_32 : testStoreOperandTypePtr_32.bind(m)
-			}
 		}
+		
 
 	}
 }

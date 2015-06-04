@@ -39,7 +39,14 @@ module FyreVM {
 		zero = 0,
 		byte = 1,
 		int16 = 2,
-		int32 = 3
+		int32 = 3,
+		ptr_8 = 5,
+		ptr_16 = 6,
+		ptr_32 = 7,
+		stack = 8,
+		local_8 = 9,
+		local_16 = 10,
+		local_32 = 11
 	}
 	
 	export const enum StoreOperandType {
@@ -198,7 +205,7 @@ module FyreVM {
 							 offset += (size - (offset % size));
 						 }
 					 }
-					 // seo any padding space between locals
+					 // zero any padding space between locals
 					 for (let i=lastOffset; i<offset; i++){
 						 stack.writeByte(sp+i, 0);
 					 }
@@ -244,6 +251,8 @@ module FyreVM {
 		 }
 		 
 		 private pop(): number {
+			 if (this.SP <= this.FP + this.frameLen)
+			 	throw "Stack underflow";
 			 this.SP -= 4;
 			 return this.stack.readInt32(this.SP);
 		 }
@@ -355,12 +364,27 @@ module FyreVM {
 		   * @return how many extra bytes were read (so that operandPos can be advanced)
 		   */
 		  private decodeLoadOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
+			  let {image} = this;
+			  function loadIndirect(address: number){
+					switch(opcode.rule){
+						case OpcodeRule.Indirect8Bit: return image.readByte(address);
+						case OpcodeRule.Indirect16Bit: return image.readInt16(address);
+						default: return image.readInt32(address);
+					}			  
+			  }
+
 			  switch(type){
 				  // immediates
 				  case LoadOperandType.zero: operands.push(0); return 0;
-				  case LoadOperandType.byte: operands.push(this.image.readByte(operandPos)); return 1;
-				  case LoadOperandType.int16: operands.push(this.image.readInt16(operandPos)); return 2;
-				  case LoadOperandType.int32: operands.push(this.image.readInt32(operandPos)); return 4;
+				  case LoadOperandType.byte: operands.push(image.readByte(operandPos)); return 1;
+				  case LoadOperandType.int16: operands.push(image.readInt16(operandPos)); return 2;
+				  case LoadOperandType.int32: operands.push(image.readInt32(operandPos)); return 4;
+				  // indirect
+				  case LoadOperandType.ptr_8: operands.push(loadIndirect(image.readByte(operandPos))); return 1;
+				  case LoadOperandType.ptr_16: operands.push(loadIndirect(image.readInt16(operandPos))); return 2;
+				  case LoadOperandType.ptr_32: operands.push(loadIndirect(image.readInt32(operandPos))); return 4;
+				  // stack
+				  case LoadOperandType.stack: operands.push(this.pop()); return 0;
 				  default: throw `unsupported load operand type ${type}`;
 			  }
 			  
@@ -412,6 +436,7 @@ module FyreVM {
 				  let value = results[i];
 				  let type = resultTypes[i];
 				  switch(type){
+					  case StoreOperandType.discard: return;
 					  case 5: case 6: case 7: case 13: case 14: case 15:
 					  	// write to memory
 						// TODO: OpcodeRule.IndirectXXBit
@@ -420,7 +445,7 @@ module FyreVM {
 					  case 8:
 					  	// push onto stack
 						this.push(value);
-						break;
+						return;
 					  default: throw `unsupported store result mode ${type}`
 				  }	
 			  }
