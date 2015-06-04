@@ -213,7 +213,35 @@ module FyreVM {
 				OpcodeRule.DelayedStore
 			)
 
+			opcode(0x160, 'callf', 1, 0,
+				function(address:number, destType:number, destAddr:number){
+					this.performCall(address, null, destType, destAddr, this.PC);
+				},
+				OpcodeRule.DelayedStore
+			)
+
+			opcode(0x161, 'callfi', 2, 0,
+				function(address:number, arg: number, destType:number, destAddr:number){
+					this.performCall(address, [arg], destType, destAddr, this.PC);
+				},
+				OpcodeRule.DelayedStore
+			)
+
+			opcode(0x162, 'callfii', 3, 0,
+				function(address:number, arg1: number, arg2: number, destType:number, destAddr:number){
+					this.performCall(address, [arg1, arg2], destType, destAddr, this.PC);
+				},
+				OpcodeRule.DelayedStore
+			)
 		
+			opcode(0x163, 'callfiii', 4, 0,
+				function(address:number, arg1: number, arg2: number, arg3: number, destType:number, destAddr:number){
+					this.performCall(address, [arg1, arg2, arg3], destType, destAddr, this.PC);
+				},
+				OpcodeRule.DelayedStore
+			)
+
+
 			return opcodes;
 		}
 	}

@@ -501,6 +501,123 @@ module FyreVM{
 			test.done();	
 		}
 
+
+		tests.Opcodes.Functions.testCallf  =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x60, // double-byte opcode 0x0160
+				    p_in(LoadOperandType.int16, 0/* void*/),
+					label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		
+			let engine = stepImage(image, 2, test);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		}
+		
+		tests.Opcodes.Functions.testCallfi  =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x61, // double-byte opcode 0x0161
+				    p_in(LoadOperandType.int16, LoadOperandType.byte),
+					0, // void
+					label >> 8, label & 0xFF,
+					12
+			);
+			image.writeBytes(label,
+				CallType.stack, 0, 0,
+				// pop the number of arguments
+				op('add'), p_in(LoadOperandType.stack, LoadOperandType.zero),
+				p_out(StoreOperandType.discard),
+				// add 30 to the argument on the stack
+				op('add'),
+				p_in(LoadOperandType.byte, LoadOperandType.stack), 
+				p_out(StoreOperandType.ptr_16),
+				30,
+				0x03, 0xA0);
+			let engine = stepImage(image, 3, test);
+			test.equal(image.readInt32(label), 42);	
+			test.done();	
+		}
+		
+		tests.Opcodes.Functions.testCallfii  =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x62, // double-byte opcode 0x0162
+				    p_in(LoadOperandType.int16, LoadOperandType.byte),
+					p_in(LoadOperandType.byte, 0 /* void */),
+					label >> 8, label & 0xFF,
+					12,
+					30
+			);
+			image.writeBytes(label,
+				CallType.stack, 0, 0,
+				// pop the number of arguments
+				op('add'), p_in(LoadOperandType.stack, LoadOperandType.zero),
+				p_out(StoreOperandType.discard),
+				// add the two arguments on the stack
+				op('add'),
+				p_in(LoadOperandType.stack, LoadOperandType.stack), 
+				p_out(StoreOperandType.ptr_16),
+				0x03, 0xA0);
+			let engine = stepImage(image, 3);
+			test.equal(image.readInt32(label), 42);	
+			test.done();	
+		}
+		
+		tests.Opcodes.Functions.testCallfiii  =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x63, // double-byte opcode 0x0163
+				    p_in(LoadOperandType.int16, LoadOperandType.byte),
+					p_in(LoadOperandType.byte, LoadOperandType.byte),
+					0, // void
+					label >> 8, label & 0xFF,
+					55,
+					12,
+					30
+			);
+			image.writeBytes(label,
+				CallType.stack, 0, 0,
+				// pop the number of arguments
+				op('add'), p_in(LoadOperandType.stack, LoadOperandType.zero),
+				p_out(StoreOperandType.discard),
+				// pop the first argument
+				op('add'), p_in(LoadOperandType.stack, LoadOperandType.zero),
+				p_out(StoreOperandType.discard),
+				// add the second and third arguments on the stack
+				op('add'),
+				p_in(LoadOperandType.stack, LoadOperandType.stack), 
+				p_out(StoreOperandType.ptr_16),
+				0x03, 0xA0);
+			let engine = stepImage(image, 4, test);
+			test.equal(image.readInt32(label), 42);	
+			test.done();	
+		}
+		
+		
+
 		
 		}
 	}
