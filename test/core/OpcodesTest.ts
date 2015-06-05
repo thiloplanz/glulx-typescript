@@ -709,6 +709,19 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Opcodes.Variables.testSexs = 
+		function(test: nodeunit.Test){
+			check_int32_store(m, test, 'sexs', 1, 2, 0x80, 5, 0xFFFF8005);
+			check_int32_store(m, test, 'sexs', 9, 9, 0, 5, 5);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testSexb = 
+		function(test: nodeunit.Test){
+			check_int32_store(m, test, 'sexb', 9, 9, 9, 0x85, 0xFFFFFF85);
+			check_int32_store(m, test, 'sexb', 9, 9, 9, 5, 5);
+			test.done();	
+		}
 		
 		}
 	}

@@ -30,6 +30,14 @@ module FyreVM {
 		}
 	}
 	
+	   // coerce Javascript number into uint32 range
+	function uint32(x:number) : number{
+		if (x < 0){
+			x = 0xFFFFFFFF + x  + 1;
+		}
+		return x;
+	}
+	
 	
 	export module Opcodes{
 		export function initOpcodes(){
@@ -299,6 +307,17 @@ module FyreVM {
 				function(x:number){
 					return x & 0xFF;
 				}, OpcodeRule.Indirect8Bit);
+			
+			opcode(0x44, "sexs", 1, 1, 
+				function(x:number){
+					return x & 0x8000 ? uint32(x | 0xFFFF0000) : x & 0x0000FFFF;
+				});
+
+			opcode(0x45, "sexb", 1, 1, 
+				function(x:number){
+					return x & 0x80 ? uint32(x | 0xFFFFFF00) : x & 0x000000FF;
+				});
+			
 			
 			
 			return opcodes;
