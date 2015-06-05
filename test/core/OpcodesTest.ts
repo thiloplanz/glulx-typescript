@@ -33,6 +33,16 @@ module FyreVM{
 			);
 		}
 		
+		function makeOpcodeImage_int32_store(m: MemoryAccess, opcode: string, x3: number, x2: number, x1: number, x0:number){
+			return makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op(opcode), 
+				    LoadOperandType.int32 + StoreOperandType.ptr_16 * 0x10,
+					x3, x2, x1, x0, 
+					0x03, 0xA0
+			);
+		}
+		
 		
 		function check_byte_byte_store(m: MemoryAccess, test: nodeunit.Test, opcode: string, a: number, b:number, expected: number){
 		
@@ -64,8 +74,25 @@ module FyreVM{
 			
 		}
 		
+		function check_int32_store(m: MemoryAccess, test: nodeunit.Test, opcode: string, x3: number, x2:number, x1:number, x0:number, expected: number){
+		
+			try{
+				let gameImage = makeOpcodeImage_int32_store(m,opcode, x3, x2, x1, x0);
+				gameImage.writeInt32(0x03A0, 0);
+				stepImage(gameImage);
+				test.equals(gameImage.readInt32(0x03A0), expected, `${opcode}(${x3} ${x2} ${x1} ${x0}) == ${expected}`);
+		
+			}
+			catch(e){
+				if (typeof e === 'string')
+					test.strictEqual(null, e, e);
+				throw e;
+			}
+			
+		}
+		
 		export function addOpcodeTests(tests, m: MemoryAccess){
-			tests.Opcodes = { Arithmetics: {}, Branching: {}, Functions: {} }
+			tests.Opcodes = { Arithmetics: {}, Branching: {}, Functions: {}, Variables: {} }
 			
 		
 		tests.Opcodes.Arithmetics.testAdd = 
@@ -663,6 +690,25 @@ module FyreVM{
 			test.equal(engine['SP'], 16);
 			test.done();	
 		}
+		
+		tests.Opcodes.Variables.testCopy = 
+		function(test: nodeunit.Test){
+			check_byte_store(m, test, 'copy', 5, 5);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testCopys = 
+		function(test: nodeunit.Test){
+			check_int32_store(m, test, 'copys', 1, 2, 3, 4 , 0x03040000);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testCopyb = 
+		function(test: nodeunit.Test){
+			check_int32_store(m, test, 'copyb', 1, 2, 3, 4, 0x04000000);
+			test.done();	
+		}
+		
 		
 		}
 	}

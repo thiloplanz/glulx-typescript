@@ -125,6 +125,18 @@ module FyreVM {
 			}
 		}
 	
+		write(rule:OpcodeRule, address:number, value:number){
+			switch(rule){
+				case OpcodeRule.Indirect8Bit:
+					this.writeBytes(address, value);
+					return;
+				case OpcodeRule.Indirect16Bit:
+					this.writeBytes(address, value >>8, value & 0xFF);
+					return;
+				default:
+					this.writeInt32(address, value);
+			}
+		}
 	
 		static writeHeader(fields: GlulxHeader, m: MemoryAccess, offset=0){
 			m.writeASCII(offset, fields.magic || 'Glul');

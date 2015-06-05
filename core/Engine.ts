@@ -370,7 +370,7 @@ module FyreVM {
 					
 					// store results
 					if (result){
-						this.storeResults(resultTypes, resultAddrs, result );
+						this.storeResults(opcode.rule, resultTypes, resultAddrs, result );
 					}
 					
 				  	break;
@@ -465,16 +465,15 @@ module FyreVM {
 		  }
 		  
 		  
-		  private storeResults(resultTypes: number[], resultAddrs: number[], results: number[]){
-		  	  for (let i=0; i<results.length; i++){
+		  private storeResults(rule: OpcodeRule, resultTypes: number[], resultAddrs: number[], results: number[]){
+		  	    for (let i=0; i<results.length; i++){
 				  let value = results[i];
 				  let type = resultTypes[i];
 				  switch(type){
 					  case StoreOperandType.discard: return;
 					  case 5: case 6: case 7: case 13: case 14: case 15:
 					  	// write to memory
-						// TODO: OpcodeRule.IndirectXXBit
-						this.image.writeInt32(resultAddrs[i], value);
+						this.image.write(rule, resultAddrs[i], value);
 						break;
 					  case 8:
 					  	// push onto stack

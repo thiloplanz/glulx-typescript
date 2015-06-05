@@ -285,6 +285,22 @@ module FyreVM {
 					this.performCall(address, argv, 0, 0, 0, true);
 				});
 			
+			opcode(0x40, "copy", 1, 1, 
+				function(x:number){
+					return x;
+				});
+			
+			opcode(0x41, "copys", 1, 1, 
+				function(x:number){
+					return x & 0xFFFF;
+				}, OpcodeRule.Indirect16Bit);
+
+			opcode(0x42, "copyb", 1, 1, 
+				function(x:number){
+					return x & 0xFF;
+				}, OpcodeRule.Indirect8Bit);
+			
+			
 			return opcodes;
 		}
 	}
