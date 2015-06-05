@@ -91,6 +91,32 @@ module FyreVM{
 			
 		}
 		
+		function check_int16_int16_int16(m: MemoryAccess, test: nodeunit.Test, opcode: string, a:number, b:number, c:number, expected: number){
+		
+			try{
+				
+				let gameImage = makeTestImage(m,
+						CallType.stack, 0x00, 0x00,  // type C0, no args
+						op(opcode), 
+						    p_in(LoadOperandType.int16, LoadOperandType.int16), 
+							p_in(LoadOperandType.int16),
+							a >> 8, a &0xFF,
+							b >> 8, b &0xFF,
+							c >> 8, c &0xFF
+					);
+				gameImage.writeInt32(0x03A0, 0);
+				stepImage(gameImage);
+				test.equals(gameImage.readInt32(0x03A0), expected, `${opcode}(${a} ${b} ${c}) == ${expected}`);
+		
+			}
+			catch(e){
+				if (typeof e === 'string')
+					test.strictEqual(null, e, e);
+				throw e;
+			}
+			
+		}
+		
 		export function addOpcodeTests(tests, m: MemoryAccess){
 			tests.Opcodes = { Arithmetics: {}, Branching: {}, Functions: {}, Variables: {} }
 			
@@ -722,7 +748,64 @@ module FyreVM{
 			check_int32_store(m, test, 'sexb', 9, 9, 9, 5, 5);
 			test.done();	
 		}
+
+		tests.Opcodes.Variables.testAload = 
+		function(test: nodeunit.Test){
+			// "array" is the code segment 
+			// array[1] = { CallType.stack, 0x00, 0x00, opcode } )
+			check_byte_byte_store(m, test, 'aload', 252, 1, 0xC0000048);
+			test.done();	
+		}
+
+		tests.Opcodes.Variables.testAloads = 
+		function(test: nodeunit.Test){
+			check_byte_byte_store(m, test, 'aloads', 252, 2, 0xC000);
+			test.done();	
+		}
+
+		tests.Opcodes.Variables.testAloadb = 
+		function(test: nodeunit.Test){
+			check_byte_byte_store(m, test, 'aloadb', 252, 4, 0xC0);
+			test.done();	
+		}
 		
+		tests.Opcodes.Variables.testAloadbit = 
+		function(test: nodeunit.Test){
+			// 0xC0 = 1100 0000
+			check_byte_byte_store(m, test, 'aloadbit', 252, 32, 0);
+			check_byte_byte_store(m, test, 'aloadbit', 252, 39, 1);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testAstore = 
+		function(test: nodeunit.Test){
+			check_int16_int16_int16(m, test, 'astore', 0x0300, 0xA0 / 4, 99, 99);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testAstores = 
+		function(test: nodeunit.Test){
+			check_int16_int16_int16(m, test, 'astores', 0x0300, 0xA0 / 2 + 1, 99, 99);
+			test.done();	
+		}
+		
+		tests.Opcodes.Variables.testAstoreb = 
+		function(test: nodeunit.Test){
+			check_int16_int16_int16(m, test, 'astoreb', 0x0300, 0xA0 + 3, 99, 99);
+			test.done();	
+		}
+
+		tests.Opcodes.Variables.testAstorebit = 
+		function(test: nodeunit.Test){
+			check_int16_int16_int16(m, test, 'astorebit', 0x03A0, 28, 1, 16);
+			check_int16_int16_int16(m, test, 'astorebit', 0x03A0, 7, 1, 0x80000000);
+			check_int16_int16_int16(m, test, 'astorebit', 0x03A0, 7, 0, 0);
+			
+			test.done();	
+		}
+
+
+
 		}
 	}
 }

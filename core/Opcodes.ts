@@ -318,8 +318,71 @@ module FyreVM {
 					return x & 0x80 ? uint32(x | 0xFFFFFF00) : x & 0x000000FF;
 				});
 			
+			opcode(0x48, "aload", 2, 1,
+				function(array: number, index: number){
+					return this.image.readInt32(array+4*index);
+				});
 			
+			opcode(0x49, "aloads", 2, 1,
+				function(array: number, index: number){
+					return this.image.readInt16(array+2*index);
+				});
+
+			opcode(0x4A, "aloadb", 2, 1,
+				function(array: number, index: number){
+					return this.image.readByte(array+index);
+				});
+
+			opcode(0x4B, "aloadbit", 2, 1,
+				function(array: number, index: number){
+					let address = array + index / 8;
+					index %= 8;
+					if (index < 0){
+						address--;
+						index += 8;
+					}
+					let byte =  this.image.readByte(address);
+					return byte & (1 << index) ? 1 : 0;
+				});
+
+			opcode(0x4C, "astore", 3, 0,
+				function(array: number, index: number, value: number){
+					this.image.writeInt32(array+4*index, value);
+				}
+			);
 			
+			opcode(0x4D, "astores", 3, 0,
+				function(array: number, index: number, value: number){
+					value = value & 0xFFFF;
+					this.image.writeBytes(array+2*index, value >> 8, value & 0xFF );
+				}
+			);
+			
+			opcode(0x4E, "astoreb", 3, 0,
+				function(array: number, index: number, value: number){
+					this.image.writeBytes(array+index, value & 0xFF );
+				}
+			);
+
+			opcode(0x4F, "astorebit", 3, 0,
+				function(array: number, index: number, value: number){
+					let address = array + index / 8;
+					index %= 8;
+					if (index < 0){
+						address--;
+						index += 8;
+					}
+					let byte =  this.image.readByte(address);
+					if (value === 0){
+						byte &= ~(1 << index);
+					}else{
+						byte |= (1 << index);
+					}
+					this.image.writeBytes(address, byte);
+				}
+			);
+
+
 			return opcodes;
 		}
 	}
