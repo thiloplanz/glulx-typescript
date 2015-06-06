@@ -118,7 +118,13 @@ module FyreVM{
 		}
 		
 		export function addOpcodeTests(tests, m: MemoryAccess){
-			tests.Opcodes = { Arithmetics: {}, Branching: {}, Functions: {}, Variables: {} }
+			tests.Opcodes = { 
+				Arithmetics: {}, 
+				Branching: {},
+				Functions: {}, 
+				Variables: {},
+				Output: {}
+			 }
 			
 		
 		tests.Opcodes.Arithmetics.testAdd = 
@@ -804,6 +810,60 @@ module FyreVM{
 			test.done();	
 		}
 
+		tests.Opcodes.Output.setiosys = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x49, // double-byte opcode 0x0149
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0
+			);
+			let engine = stepImage(image, 0, test);
+			test.equal(engine['outputSystem'], IOSystem.Null);
+			engine.step();
+			test.equal(engine['outputSystem'], IOSystem.Channels);
+			test.done();	
+		}
+		
+		tests.Opcodes.Output.streamchar = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x49, // double-byte opcode 0x0149
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0,
+				op('streamchar'),
+					p_in(LoadOperandType.byte),
+					'X'.charCodeAt(0),
+				op('streamchar'),
+					p_in(LoadOperandType.int16),
+					99, 'Y'.charCodeAt(0)
+			);
+			let engine = stepImage(image, 2, test);
+			let channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], 'X');
+			engine.step();
+			channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], 'Y');
+			test.done();	
+		}
+		
+		tests.Opcodes.Output.streamunichar = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x49, // double-byte opcode 0x0149
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0,
+				op('streamunichar'),
+					p_in(LoadOperandType.int16),
+					0x30, 0x42
+			);
+			let engine = stepImage(image, 2, test);
+			let channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], 'あ');
+			test.done();	
+		}
 
 
 		}

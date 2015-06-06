@@ -381,7 +381,33 @@ module FyreVM {
 					this.image.writeBytes(address, byte);
 				}
 			);
+			
+			opcode(0x70, 'streamchar', 1, 0, Engine.prototype.streamCharCore);
+			
+			opcode(0x73, 'streamunichar', 1, 0, Engine.prototype.streamUniCharCore);
 
+
+			opcode(0x149, 'setiosys', 2, 0,
+				function(system, rock){
+					switch(system){
+						case 0:
+							this['outputSystem'] = IOSystem.Null;
+							return;
+						case 1:
+							this['outputSystem'] = IOSystem.Filter;
+							this['filterAddress'] = rock;
+							return;
+						case 2:
+							// TODO Glk support
+							throw "Glk support is not available"
+						case 20:
+							this['outputSystem'] = IOSystem.Channels;
+							return;
+						default:
+							throw `Unrecognized output system ${system}`
+					}
+				}
+			);
 
 			return opcodes;
 		}

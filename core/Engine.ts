@@ -5,6 +5,7 @@
 
 
 /// <reference path='Opcodes.ts' />
+/// <reference path='Output.ts' />
 
 module FyreVM {
 	
@@ -122,6 +123,9 @@ module FyreVM {
 		private execMode: ExecutionMode;
 		private opcodes: Opcode[];
 		private running: boolean;
+		private outputSystem: IOSystem;
+		private filterAddress: number;
+		private outputBuffer = new OutputBuffer();
 		
 		constructor(gameFile: UlxImage){
 			let major = gameFile.getMajorVersion();
@@ -145,7 +149,7 @@ module FyreVM {
 			 let mainfunc = this.image.getStartFunc();
 			 this.decodingTable = this.image.getDecodingTable();
 			 this.SP = this.FP = this.frameLen = this.localsPos = 0;
-			 // TODO: outputSystem
+			 this.outputSystem = IOSystem.Null;
 			 this.enterFunction(mainfunc);
 			 
 		 }
@@ -555,6 +559,19 @@ module FyreVM {
 				}
 				
 		  }
+		  
+		  streamCharCore(x: number){
+			   this.streamUniCharCore(x & 0xFF);
+		  }
+		  
+		  streamUniCharCore(x: number){
+			    if (this.outputSystem === IOSystem.Filter){
+					this.performCall(this.filterAddress, [ x ], GLUXLX_STUB.STORE_NULL, 0, this.PC, false);
+				}else{
+					SendCharToOutput.call(this, x);
+				}
+		  }
+
 	}
 		
 }
