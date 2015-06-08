@@ -173,6 +173,25 @@ module FyreVM{
 			test.equals(gameImage.readInt32(0x03A0), 2, "1+1=2");
 			test.done();	
 		}
+		
+		
+		tests.Engine.run = 
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('add'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
+					p_out(StoreOperandType.ptr_16),
+					1, 1, 
+					0x03, 0xA0,
+				op('return'),
+					p_in(LoadOperandType.zero)
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			test.done();
+		}
+		
 
 		}
 		

@@ -551,7 +551,8 @@ module FyreVM {
 					}
 				});
 
-
+			opcode(0x120, 'quit', 0, 0,
+				function(){ this.running = false; });
 
 			return opcodes;
 		}

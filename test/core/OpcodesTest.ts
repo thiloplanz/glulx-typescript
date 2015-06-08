@@ -125,7 +125,8 @@ module FyreVM{
 				Variables: {},
 				Output: {},
 				MemoryManagement: {},
-				StackManipulation: {}
+				StackManipulation: {},
+				GameState: {}
 			 }
 			
 		
@@ -1050,6 +1051,18 @@ module FyreVM{
 			test.equal(c,1);
 			test.done();	
 		}
+		
+		tests.Opcodes.GameState.quit = 
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x20  // "quit"
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			test.done();
+		}
+
 
 		}
 	}

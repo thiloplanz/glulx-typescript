@@ -28,6 +28,10 @@ module FyreVM {
 		throw `unsupported output system ${this.outputSystem}`;
 	}
 	
+	export interface ChannelData {
+		[channel: string] : string; 
+	}
+	
 	
 	export class OutputBuffer {
 		
@@ -37,7 +41,7 @@ module FyreVM {
 		
 		private channel = 'MAIN';
 		
-		private channelData: { [channel: string] : string; }  = {
+		private channelData: ChannelData  = {
 				MAIN: ''
 		}
 		
@@ -69,9 +73,9 @@ module FyreVM {
 		 *  Packages all the output that has been stored so far, returns it,
          *  and empties the buffer.
 		 */
-		flush() {
+		flush() : ChannelData{
 			let {channelData} = this;
-			let r = {};
+			let r : ChannelData= {};
 			for (let c in channelData) {
 				let s = channelData[c];
 				if (s.length){

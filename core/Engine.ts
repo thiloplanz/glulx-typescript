@@ -9,6 +9,13 @@
 
 module FyreVM {
 	
+	/**
+	 * A delegate that handles the OutputReady event
+	 */
+	
+	export interface OutputReadyEventHandler{
+		(sender, package: ChannelData) : void
+	}
 	
     /** 
 	 *  Describes the task that the interpreter is currently performing.
@@ -127,6 +134,9 @@ module FyreVM {
 		private filterAddress: number;
 		private outputBuffer = new OutputBuffer();
 		private heap: HeapAllocator;
+		
+		outputReady: OutputReadyEventHandler;
+		
 		
 		constructor(gameFile: UlxImage){
 			let major = gameFile.getMajorVersion();
@@ -385,6 +395,25 @@ module FyreVM {
 		  }
 		  
 		  /**
+		   * Starts the interpreter.
+		   * This method does not return until the game finishes, either by
+           * returning from the main function or with the quit opcode.
+		   */
+		  run(){
+			  this.running = true;
+				
+			  this.bootstrap();
+			  while (this.running){
+				  this.step();
+			  }
+			  
+			  // send any output that may be left
+			  this.deliverOutput();
+		  }
+		  
+		  
+		  
+		  /**
 		   * @return how many extra bytes were read (so that operandPos can be advanced)
 		   */
 		  private decodeLoadOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
@@ -571,6 +600,14 @@ module FyreVM {
 				}else{
 					SendCharToOutput.call(this, x);
 				}
+		  }
+
+		  //  Sends the queued output to the OutputReady event handler.
+      	  private deliverOutput(){
+			 if (this.outputReady){
+			 	let pack = this.outputBuffer.flush();
+			 	this.outputReady(this, pack);
+			 }
 		  }
 
 	}
