@@ -157,6 +157,24 @@ module FyreVM{
 			test.equals(gameImage.readInt32(0x03A0), 31, "ramStart := add 12, 19");
 			test.done();	
 		}
+		
+		tests.Engine.testLoadOperandTypeRAM =
+		function (test: nodeunit.Test){
+			
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('add'), 
+				    p_in(LoadOperandType.ram_16, LoadOperandType.ram_8), 
+					p_out(StoreOperandType.ptr_16),
+					0, 0x10, 0x10, 
+					0x03, 0xA0
+			);
+	
+			gameImage.writeInt32(0x03B0, 0x01020304);
+			stepImage(gameImage,1, test);
+			test.equals(gameImage.readInt32(0x03A0), 0x02040608, "ramStart := add 0x01020304, 0x01020304");
+			test.done();	
+		}
 
 		tests.Engine.testStoreOperandTypePtr_32 =
 		function (test: nodeunit.Test){

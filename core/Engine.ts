@@ -54,7 +54,10 @@ module FyreVM {
 		stack = 8,
 		local_8 = 9,
 		local_16 = 10,
-		local_32 = 11
+		local_32 = 11,
+		ram_8 = 13,
+		ram_16 = 14,
+		ram_32 = 15
 	}
 	
 	export const enum StoreOperandType {
@@ -442,6 +445,11 @@ module FyreVM {
 			 				throw "Stack underflow";
 				  	operands.push(this.pop()); 
 					return 0;
+				  // indirect from RAM
+				  case LoadOperandType.ram_8: operands.push(loadIndirect(image.getRamAddress(image.readByte(operandPos)))); return 1;
+				  case LoadOperandType.ram_16: operands.push(loadIndirect(image.getRamAddress(image.readInt16(operandPos)))); return 2;
+				  case LoadOperandType.ram_32: operands.push(loadIndirect(image.getRamAddress(image.readInt32(operandPos)))); return 4;
+				  
 				  default: throw `unsupported load operand type ${type}`;
 			  }
 			  

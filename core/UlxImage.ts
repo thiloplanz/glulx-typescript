@@ -88,6 +88,10 @@ module FyreVM {
 			return this.memory.size();
 		}
 		
+		getRamAddress(relativeAddress: number): number{
+			return this.ramstart + relativeAddress;
+		}
+		
 		/**
 		 * sets the address at which memory ends.
 		 * This can be changed by the game with setmemsize,
