@@ -124,7 +124,8 @@ module FyreVM{
 				Functions: {}, 
 				Variables: {},
 				Output: {},
-				MemoryManagement: {}
+				MemoryManagement: {},
+				StackManipulation: {}
 			 }
 			
 		
@@ -964,8 +965,91 @@ module FyreVM{
 			test.done();	
 		};
 		
-		
+		tests.Opcodes.StackManipulation.stkcount =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('stkcount'),
+				    p_out(StoreOperandType.ptr_16),
+					0x03, 0xA0
+			);
+			let engine = stepImage(image, 1, test, [1,2,3,4]);
+			test.equal(image.readInt32(0x03A0),4);
+			test.done();	
+		}
 
+
+		tests.Opcodes.StackManipulation.stkpeek =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('stkpeek'),
+				    p_in(LoadOperandType.byte, LoadOperandType.ptr_16),
+					1,
+					0x03, 0xA0
+			);
+			let engine = stepImage(image, 1, test, [1,2,3,4]);
+			test.equal(image.readInt32(0x03A0),2);
+			test.done();	
+		}
+		
+		tests.Opcodes.StackManipulation.stkswap =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('stkswap')
+			);
+			let engine = stepImage(image, 1, test, [1,2,3,4]);
+			let a = engine['pop']();
+			let b = engine['pop']();
+			let c = engine['pop']();
+			test.equal(a,2);
+			test.equal(b,1);
+			test.equal(c,3);
+			test.done();	
+		}
+		
+		tests.Opcodes.StackManipulation.stkroll =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('stkroll'),
+				p_in(LoadOperandType.byte, LoadOperandType.byte),
+				3, 1
+			);
+			let engine = stepImage(image, 1, test, [1,2,3,4]);
+			let a = engine['pop']();
+			let b = engine['pop']();
+			let c = engine['pop']();
+			let d = engine['pop']();
+			
+			test.equal(a,2);
+			test.equal(b,3);
+			test.equal(c,1);
+			test.equal(d,4);
+			
+			test.done();
+			// TODO: negative roll	
+		}
+
+
+		tests.Opcodes.StackManipulation.stkcopy =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('stkcopy'),
+				p_in(LoadOperandType.byte),
+				2
+			);
+			let engine = stepImage(image, 1, test, [1,2,3,4]);
+			let a = engine['pop']();
+			let b = engine['pop']();
+			let c = engine['pop']();
+			test.equal(a,1);
+			test.equal(b,2);
+			test.equal(c,1);
+			test.done();	
+		}
 
 		}
 	}

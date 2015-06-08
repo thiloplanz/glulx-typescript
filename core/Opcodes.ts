@@ -483,6 +483,75 @@ module FyreVM {
 				
 			});
 
+			opcode(0x50, 'stkcount', 0, 1,
+				function(){
+					return (this.SP - (this.FP + this.frameLen)) / 4;
+				}
+			);
+
+			opcode(0x51, 'stkpeek', 1, 1,
+				function(pos){
+					let address = this.SP - 4 * (1 + pos)
+					if (address < this.FP + this.frameLen)
+						throw "Stack underflow";
+					return this.stack.readInt32(address);
+				}
+			);
+
+			opcode(0x52, 'stkswap', 0, 0,
+				function(pos){
+					if (this.SP - (this.FP + this.frameLen) < 8)
+						throw "Stack underflow";
+					let a = this.pop();
+					let b = this.pop();
+					this.push(a);
+					this.push(b);
+				}
+			);
+			
+			opcode(0x53, 'stkroll', 2, 0,
+				function(items, distance){
+					// TODO: treat distance as signed value
+					if (items === 0)
+						return;
+					distance %= items;
+					if (distance === 0)
+						return;
+					// rolling X items down Y slots == rolling X items up X-Y slots
+             		if (distance < 0)
+					 	distance += items;
+					if (this.SP - (this.FP + this.frameLen) < 4* items)
+						throw "Stack underflow";
+					let temp1 = [];
+					let temp2 = [];
+					for (let i=0; i<distance; i++){
+						temp1.push(this.pop());
+					}
+					for (let i=distance; i<items; i++){
+						temp2.push(this.pop());
+					}
+					while(temp1.length){
+						this.push(temp1.pop());
+					}
+					while(temp2.length){
+						this.push(temp2.pop());
+					}
+				}
+			);
+
+			opcode(0x54, 'stkcopy',1, 0,
+				function(count){
+					let bytes = count * 4;
+					if (bytes > this.SP - (this.FP + this.frameLen))
+						throw "Stack underflow";
+					let start = this.SP - bytes;
+					while(count--){
+						this.push(this.stack.readInt32(start))
+						start+= 4;
+					}
+				});
+
+
 
 			return opcodes;
 		}
