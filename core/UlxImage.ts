@@ -84,6 +84,25 @@ module FyreVM {
 			return this.memory.readInt32(GLULX_HDR.STACKSIZE_OFFSET);
 		}
 		
+		getEndMem(): number {
+			return this.memory.size();
+		}
+		
+		/**
+		 * sets the address at which memory ends.
+		 * This can be changed by the game with setmemsize,
+		 * or managed automatically be the heap allocator.
+		 */
+		setEndMem(value: number){
+			// round up to the next multiple of 256
+			if (value % 256 != 0){
+				value = (value + 255) & 0xFFFFFF00;
+			}
+			if (this.memory.size() != value){
+				this.memory = this.memory.copy(0, value);
+			}
+		}
+		
 		getStartFunc(): number {
 			return this.memory.readInt32(GLULX_HDR.STARTFUNC_OFFSET);
 		}
@@ -120,6 +139,8 @@ module FyreVM {
 		}
 		
 		writeBytes(address: number, ...bytes: number[]){
+			if (address < this.ramstart)
+				throw `Writing into ROM! offset: ${address}`;
 			for (let i=0; i<bytes.length; i++){
 				this.memory.writeByte(address+i, bytes[i]);
 			}

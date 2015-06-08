@@ -9,7 +9,7 @@
 /// <reference path='../core/EngineTest.ts' />
 /// <reference path='../core/OpcodesTest.ts' />
 
-let buffer = new FyreVM.BufferMemoryAccess(1000);
+let buffer = new FyreVM.BufferMemoryAccess(1000, 10240);
 
 FyreVM.NodeUnit.addMemoryTests(exports, buffer);
 

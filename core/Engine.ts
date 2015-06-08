@@ -126,6 +126,7 @@ module FyreVM {
 		private outputSystem: IOSystem;
 		private filterAddress: number;
 		private outputBuffer = new OutputBuffer();
+		private heap: HeapAllocator;
 		
 		constructor(gameFile: UlxImage){
 			let major = gameFile.getMajorVersion();

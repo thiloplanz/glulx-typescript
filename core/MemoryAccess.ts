@@ -71,6 +71,11 @@ module FyreVM {
 		  */
 		  copy(offset: number, length: number): MemoryAccess;
 		  
+		  /**
+		   * returns the number of bytes available
+		   */
+		   size(): number;
+		  
 	}
 	
 	/**
@@ -98,7 +103,7 @@ module FyreVM {
 		private heapAddress: number;
 		private endMem: number;
 		private heapExtent = 0;
-		private maxHeapExtent = 0
+	 	maxHeapExtent = 0
 		private memory: MemoryAccess;
 		private blocks: HeapEntry[] = [];
 		private freeList: HeapEntry[] = [];

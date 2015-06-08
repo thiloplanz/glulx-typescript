@@ -123,7 +123,8 @@ module FyreVM{
 				Branching: {},
 				Functions: {}, 
 				Variables: {},
-				Output: {}
+				Output: {},
+				MemoryManagement: {}
 			 }
 			
 		
@@ -864,6 +865,106 @@ module FyreVM{
 			test.equal(channels['MAIN'], 'あ');
 			test.done();	
 		}
+
+		tests.Opcodes.MemoryManagement.getmemsize =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x02, // double-byte opcode 0x0102
+				    p_out(StoreOperandType.ptr_16),
+					0x03, 0xA0
+			);
+			let engine = stepImage(image, 1, test);
+			test.equal(image.readInt32(0x03A0), image.getEndMem());
+			test.done();	
+		};
+
+		tests.Opcodes.MemoryManagement.setmemsize =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x03, // double-byte opcode 0x0103
+				    p_in(LoadOperandType.int16, LoadOperandType.zero),
+					0x05, 0xA0
+			);
+			let engine = stepImage(image, 1, test);
+			test.equal(image.getEndMem(), 0x0600, "rounded up to multiple of 256");
+			test.done();	
+		};
+
+		tests.Opcodes.MemoryManagement.mzero =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x70, // double-byte opcode 0x0170
+				    p_in(LoadOperandType.byte, LoadOperandType.int16),
+					0xFF,
+					0x03, 0xA0
+			);
+			image.writeInt32(0x03A0, 0x12345678)
+			let engine = stepImage(image, 1, test);
+			test.equal(image.readInt32(0x03A0), 0);
+			test.done();	
+		};
+
+		tests.Opcodes.MemoryManagement.mcopy =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x71, // double-byte opcode 0x0171
+				    p_in(LoadOperandType.byte, LoadOperandType.int16),
+					p_in(LoadOperandType.int16),
+					0xFF,
+					0x01, 0x00,
+					0x03, 0xA0
+			);
+			let engine = stepImage(image, 1, test);
+			test.equal(image.readInt32(0x03A0), 0xC0000081);
+			test.done();	
+		};
+		
+		
+		tests.Opcodes.MemoryManagement.malloc =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x78, // double-byte opcode 0x0178
+				    p_in(LoadOperandType.byte, LoadOperandType.ptr_16),
+					0x08,
+					0x03, 0xA0
+			);
+			// lower memory limit to make space for heap
+			image.setEndMem(8000);
+			let engine = stepImage(image, 1, test);
+			let heap : HeapAllocator = engine['heap'];
+			test.ok(heap, "allocator was created");
+			test.equals(1, heap.blockCount());
+			test.done();	
+		};
+		
+
+		tests.Opcodes.MemoryManagement.mfree =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				0x81, 0x78, // double-byte opcode malloc
+				    p_in(LoadOperandType.byte, LoadOperandType.ptr_16),
+					0x08,
+					0x03, 0xA0,
+				0x81, 0x79, // double-byte opcode mfree
+					p_in(LoadOperandType.ptr_16),
+					0x03, 0xA0
+			);
+			// lower memory limit to make space for heap
+			image.setEndMem(8000);
+			let engine = stepImage(image, 1, test);
+			test.ok(engine['heap'], "allocator was created");
+			engine.step();
+			test.equal(engine['heap'], null, "allocator was destroyed");
+			test.done();	
+		};
+		
+		
 
 
 		}

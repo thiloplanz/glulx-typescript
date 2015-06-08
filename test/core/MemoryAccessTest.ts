@@ -22,6 +22,7 @@ module FyreVM{
 		
 		function testAlloc(test: nodeunit.Test){
 			let allocator = new HeapAllocator(0, this);
+			allocator.maxHeapExtent = 1000;
 			test.equals(allocator.blockCount(), 0, "initially no blocks");
 			test.equals(allocator.alloc(100), 0, "could alloc 100 bytes");
 			test.equals(allocator.blockCount(), 1, "allocated the first block");
@@ -35,6 +36,8 @@ module FyreVM{
 		
 		function testFree(test: nodeunit.Test){
 			let allocator = new HeapAllocator(0, this);
+			allocator.maxHeapExtent = 1000;
+			
 			let a = allocator.alloc(500);
 			let b = allocator.alloc(500);
 			test.equals(allocator.blockCount(), 2);

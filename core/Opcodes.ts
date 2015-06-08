@@ -409,6 +409,81 @@ module FyreVM {
 				}
 			);
 
+			opcode(0x102, 'getmemsize', 0, 1, 
+				function(){
+					return this.image.getEndMem();
+				}
+			);
+	
+			opcode(0x103, 'setmemsize', 1, 1,
+				function(size){
+					if (this.heap)
+						throw "setmemsize is not allowed while the heap is active";
+					try{
+						this.image.setEndMem(size);
+						return 0;
+					}
+					catch (e){
+						console.error(e);
+						return 1;
+					}
+					
+				}
+			);
+
+			opcode(0x170, 'mzero', 2, 0, 
+				function(count, address){
+					let zeros = [];
+					while(count--){
+						zeros.push(0);
+					}
+					this.image.writeBytes(address, ...zeros);
+				}
+			);
+
+
+			opcode(0x171, 'mcopy', 3, 0, 
+				function(count, from, to){
+					let data = [];
+					for (let i = from; i<from+count; i++){
+						data.push(this.image.readByte(i));
+					}
+					this.image.writeBytes(to, ...data);
+				}
+			);
+			
+			opcode(0x178, 'malloc', 1, 1,
+				function(size){
+					if (size <= 0)
+						return 0;
+					if (this.heap){
+						return this.heap.alloc(size);
+					}
+					let oldEndMem = this.image.getEndMem();
+					this.heap = new HeapAllocator(oldEndMem, this.image.memory);
+					this.heap.maxHeapExtent = this.maxHeapSize;
+					let a = this.heap.alloc(size);
+					if (a === 0){
+						this.heap = null;
+						this.image.setEndMem(oldEndMem);
+					}
+					return a;
+				}
+			);
+
+			opcode(0x179, 'mfree', 1, 0,
+				function(address){
+					if (this.heap){
+						this.heap.free(address);
+						if (this.heap.blockCount() === 0){
+							this.image.endMem = this.heap.heapAddress;
+							this.heap = null;
+						}
+					}
+				
+			});
+
+
 			return opcodes;
 		}
 	}

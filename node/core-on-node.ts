@@ -11,8 +11,11 @@ module FyreVM{
 		
 		private buffer: Buffer;
 		
-		constructor(size: number){
+		private maxSize: number;
+		
+		constructor(size: number, maxSize=size){
 			this.buffer = new Buffer(size);
+			this.maxSize = maxSize;
 		}
 		
 		readByte(offset: number){
@@ -48,18 +51,24 @@ module FyreVM{
 		}
 		 		 
 		setEndMem(newEndMem: number) : boolean {
-			if (newEndMem > this.buffer.length)
+			if (newEndMem > this.maxSize)
 				return false;
 			return true;
 		}
 		
 		copy(offset: number, length: number) : BufferMemoryAccess {
 			// TODO: range check
+			if (length > this.maxSize)
+				throw `Memory request for ${length} bytes exceeds limit of ${this.maxSize}`;
 			let result = new BufferMemoryAccess(length);
 			this.buffer.copy(result.buffer, 0, offset, offset+length);
+			result.maxSize = this.maxSize;
 			return result;
 		}
 		
+		size(){
+			return this.buffer.length;
+		}
 	}
 	
 }
