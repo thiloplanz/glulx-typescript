@@ -22,6 +22,19 @@ module FyreVM{
 					0x03, 0xA0
 			);
 		}
+
+		function makeOpcodeImage_byte_int32_store(m: MemoryAccess, opcode: string, a: number, b3: number, b2: number, b1 : number, b0:number){
+			return makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op(opcode), 
+				    p_in(LoadOperandType.byte, LoadOperandType.int32), 
+					p_out(StoreOperandType.ptr_16),
+					a, 
+					b3, b2, b1, b0, 
+					0x03, 0xA0
+			);
+		}
+
 		
 		function makeOpcodeImage_byte_store(m: MemoryAccess, opcode: string, x: number){
 			return makeTestImage(m,
@@ -50,6 +63,20 @@ module FyreVM{
 				let gameImage = makeOpcodeImage_byte_byte_store(m,opcode, a, b);
 				stepImage(gameImage);
 				test.equals(gameImage.readInt32(0x03A0), expected, `${opcode}(${a}, ${b}) == ${expected}`);
+		
+			}
+			catch(e){
+				test.strictEqual(null, e, e);
+			}
+			
+		}
+		
+		function check_byte_int32_store(m: MemoryAccess, test: nodeunit.Test, opcode: string, a: number, b3:number, b2:number, b1:number, b0:number, expected: number){
+		
+			try{
+				let gameImage = makeOpcodeImage_byte_int32_store(m,opcode, a, b3, b2, b1, b0);
+				stepImage(gameImage);
+				test.equals(gameImage.readInt32(0x03A0), expected, `${opcode}(${a}, ${b3} ${b2} ${b1} ${b0}) == ${expected}`);
 		
 			}
 			catch(e){
@@ -133,12 +160,16 @@ module FyreVM{
 		tests.Opcodes.Arithmetics.testAdd = 
 		function(test: nodeunit.Test){
 			check_byte_byte_store(m, test, 'add', 40, 2, 42);
+			check_byte_int32_store(m, test, 'add', 40, 0xFF, 0xFF, 0xFF, 0xFE, 38);
 			test.done();	
 		}
 		
 		tests.Opcodes.Arithmetics.testSub = 
 		function(test: nodeunit.Test){
 			check_byte_byte_store(m, test, 'sub', 47, 5, 42);
+			check_byte_byte_store(m, test, 'sub', 0, 3,  0xFFFFFFFF -3 + 1);
+			check_byte_int32_store(m, test, 'sub', 0, 0xFF, 0xFF, 0xFF, 0xFD,  3);
+			
 			test.done();	
 		}
 		

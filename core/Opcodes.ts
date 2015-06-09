@@ -35,6 +35,9 @@ module FyreVM {
 		if (x < 0){
 			x = 0xFFFFFFFF + x  + 1;
 		}
+		if (x > 0xFFFFFFFF){
+			x %= 0x100000000;
+		}
 		return x;
 	}
 	
@@ -51,10 +54,10 @@ module FyreVM {
 				function(){ });
 			
 			opcode(0x10, 'add', 2, 1,
-				function(a,b){ return a+b});
+				function(a,b){ return uint32(a+b)});
 				
 			opcode(0x11, 'sub', 2, 1,
-				function(a,b){ return a-b});				
+				function(a,b){ return uint32(a-b)});				
 		
 			opcode(0x12, 'mul', 2, 1,
 				function(a,b){ return a*b});
