@@ -64,7 +64,11 @@ module FyreVM {
 		discard = 0,
 		ptr_8 = 5,
 		ptr_16 = 6,
-		ptr_32 = 7
+		ptr_32 = 7,
+		stack = 8,
+		local_8 = 9,
+		local_16 = 10,
+		local_32 = 11
 	}
 	
 	export const enum CallType {
@@ -460,10 +464,21 @@ module FyreVM {
 		   */
 		  private decodeStoreOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
 			  switch(type){
-				  case StoreOperandType.discard: return 0; // discard
-				  case StoreOperandType.ptr_8: operands.push(this.image.readByte(operandPos)); return 1;
-				  case StoreOperandType.ptr_16: operands.push(this.image.readInt16(operandPos)); return 2;
-				  case StoreOperandType.ptr_32: operands.push(this.image.readInt32(operandPos)); return 4;
+				  case StoreOperandType.discard: 
+				  case StoreOperandType.stack:
+				  		return 0; 
+				  case StoreOperandType.ptr_8: 
+				  case StoreOperandType.local_8:
+				  		operands.push(this.image.readByte(operandPos)); 
+						return 1;
+				  case StoreOperandType.ptr_16:
+				  case StoreOperandType.local_16: 
+				  		operands.push(this.image.readInt16(operandPos)); 
+						return 2;
+				  case StoreOperandType.ptr_32: 
+				  case StoreOperandType.local_32:
+				  		operands.push(this.image.readInt32(operandPos)); 
+					 	return 4;
 				  default: throw `unsupported store operand type ${type}`;
 			  }
 			  return operandPos;
@@ -517,10 +532,33 @@ module FyreVM {
 					  	// write to memory
 						this.image.write(rule, resultAddrs[i], value);
 						break;
-					  case 8:
+					  case StoreOperandType.stack:
 					  	// push onto stack
 						this.push(value);
 						return;
+					  case StoreOperandType.local_8:
+					  case StoreOperandType.local_16:
+					  case StoreOperandType.local_32:
+						// write to local storage
+						let address = resultAddrs[i] + this.FP + this.localsPos;
+						let limit = this.FP + this.frameLen;
+						switch(rule){
+							case OpcodeRule.Indirect8Bit:
+								if(address >= limit)
+									throw "writing outside local storage bounds";
+								this.stack.writeByte(address, value);
+								return;
+							case OpcodeRule.Indirect16Bit:
+								if(address+1 >= limit)
+									throw "writing outside local storage bounds";
+								this.stack.writeInt16(address, value);
+								return;
+							default:
+								if(address+3 >= limit)
+									throw "writing outside local storage bounds";
+								this.stack.writeInt32(address, value);
+								return;
+						}					  
 					  default: throw `unsupported store result mode ${type}`
 				  }	
 			  }
