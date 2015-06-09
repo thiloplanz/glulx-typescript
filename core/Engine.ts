@@ -427,26 +427,34 @@ module FyreVM {
 		   * @return how many extra bytes were read (so that operandPos can be advanced)
 		   */
 		  private decodeLoadOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
-			  let {image} = this;
-			  function loadIndirect(address: number, maxAddress?: number){
-					if (maxAddress){
-						switch(opcode.rule){
-							case OpcodeRule.Indirect8Bit: 
-							  break;
-							case OpcodeRule.Indirect16Bit:
-							  maxAddress--;
-							  break;
-							default: maxAddress -= 3;
-						}
-						if (address >= maxAddress)
-						  throw "Reading outside local storage bounds";
-					}
+			  let {image, stack, FP, localsPos, frameLen} = this;
+			  function loadLocal(address: number){
+					address += FP + localsPos;
+					let maxAddress = FP + frameLen;
 					
+					 switch(opcode.rule){
+						case OpcodeRule.Indirect8Bit: 
+							if (address > maxAddress)
+							    throw "Reading outside local storage bounds";
+							return stack.readByte(address);
+						case OpcodeRule.Indirect16Bit: 
+							if (address+1 > maxAddress)
+							    throw "Reading outside local storage bounds";
+						    return stack.readInt16(address);
+						default: 
+							if (address+3 > maxAddress)
+							    throw "Reading outside local storage bounds";
+							return stack.readInt32(address);
+					} 
+			  }
+			  
+			  function loadIndirect(address: number){
+				  
 					switch(opcode.rule){
 						case OpcodeRule.Indirect8Bit: return image.readByte(address);
 						case OpcodeRule.Indirect16Bit: return image.readInt16(address);
 						default: return image.readInt32(address);
-					}			  
+					}		  
 			  }
 
 			  switch(type){
@@ -470,9 +478,9 @@ module FyreVM {
 				  case LoadOperandType.ram_16: operands.push(loadIndirect(image.getRamAddress(image.readInt16(operandPos)))); return 2;
 				  case LoadOperandType.ram_32: operands.push(loadIndirect(image.getRamAddress(image.readInt32(operandPos)))); return 4;
 				  // local storage
-				  case LoadOperandType.local_8: operands.push(loadIndirect(image.readByte(operandPos) + this.FP + this.localsPos, this.FP + this.frameLen)); return 1;
-				  case LoadOperandType.local_16: operands.push(loadIndirect(image.readInt16(operandPos) + this.FP + this.localsPos, this.FP + this.frameLen)); return 2;
-				  case LoadOperandType.local_32: operands.push(loadIndirect(image.readInt32(operandPos) + this.FP + this.localsPos, this.FP + this.frameLen)); return 4;
+				  case LoadOperandType.local_8: operands.push(loadLocal(image.readByte(operandPos))); return 1;
+				  case LoadOperandType.local_16: operands.push(loadLocal(image.readInt16(operandPos))); return 2;
+				  case LoadOperandType.local_32: operands.push(loadLocal(image.readInt32(operandPos))); return 4;
 
 				  default: throw `unsupported load operand type ${type}`;
 			  }
