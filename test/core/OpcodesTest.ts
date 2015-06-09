@@ -401,6 +401,28 @@ module FyreVM{
 			test.equal(image.readInt32(label), 30);	
 			test.done();	
 		} 
+		
+		tests.Opcodes.Branching.testJlt_negative =
+		function(test: nodeunit.Test){
+			//          jump label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			let jumpTarget = label - 269 + 2;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('jlt'), 
+				    p_in(LoadOperandType.int32, LoadOperandType.byte),
+					p_in(LoadOperandType.int16),
+					0xFF, 0, 0, 0,
+					15,
+					jumpTarget >> 8, jumpTarget & 0xFF
+			);
+			writeAddFunction(image, label);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.done();	
+		} 
 
 		tests.Opcodes.Branching.testJge =
 		function(test: nodeunit.Test){
@@ -796,6 +818,12 @@ module FyreVM{
 			// "array" is the code segment 
 			// array[1] = { CallType.stack, 0x00, 0x00, opcode } )
 			check_byte_byte_store(m, test, 'aload', 252, 1, 0xC0000048);
+			
+			// negative indexing:
+			// byte 0 is 'Glul'
+			let GLUL = 0x476c756c;
+			check_byte_int32_store(m, test, 'aload', 4, 0xFF, 0xFF, 0xFF, 0xFF, GLUL);
+			
 			test.done();	
 		}
 

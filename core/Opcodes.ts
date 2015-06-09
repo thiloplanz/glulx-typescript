@@ -46,13 +46,22 @@ module FyreVM {
         }
 
 	
-	   // coerce Javascript number into uint32 range
+	// coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
 		if (x < 0){
 			x = 0xFFFFFFFF + x  + 1;
 		}
 		if (x > 0xFFFFFFFF){
 			x %= 0x100000000;
+		}
+		return x;
+	}
+	
+	// coerce uint32 number into  (signed!) int32 range
+	
+	function int32(x: number) :number{
+		if (x > 0xF0000000){
+			x = - (0xFFFFFFFF - x + 1);
 		}
 		return x;
 	}
@@ -158,34 +167,30 @@ module FyreVM {
 				}
 			);
 			
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x026, 'jlt', 3, 0, 
 				function(a, b, jumpVector){
-					if (a < b)
+					if (int32(a) < int32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
 
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x027, 'jge', 3, 0, 
 				function(a, b, jumpVector){
-					if (a >= b)
+					if (int32(a) >= int32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
 
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x028, 'jgt', 3, 0, 
 				function(a, b, jumpVector){
-					if (a > b)
+					if (int32(a) > int32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
 
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x029, 'jle', 3, 0, 
 				function(a, b, jumpVector){
-					if (a <= b)
+					if (int32(a) <= int32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
@@ -339,17 +344,17 @@ module FyreVM {
 			
 			opcode(0x48, "aload", 2, 1,
 				function(array: number, index: number){
-					return this.image.readInt32(array+4*index);
+					return this.image.readInt32(uint32(array+4*index));
 				});
 			
 			opcode(0x49, "aloads", 2, 1,
 				function(array: number, index: number){
-					return this.image.readInt16(array+2*index);
+					return this.image.readInt16(uint32(array+2*index));
 				});
 
 			opcode(0x4A, "aloadb", 2, 1,
 				function(array: number, index: number){
-					return this.image.readByte(array+index);
+					return this.image.readByte(uint32(array+index));
 				});
 
 			opcode(0x4B, "aloadbit", 2, 1,
@@ -360,7 +365,7 @@ module FyreVM {
 						address--;
 						index += 8;
 					}
-					let byte =  this.image.readByte(address);
+					let byte =  this.image.readByte(uint32(address));
 					return byte & (1 << index) ? 1 : 0;
 				});
 
