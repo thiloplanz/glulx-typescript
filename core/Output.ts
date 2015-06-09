@@ -19,6 +19,7 @@ module FyreVM {
 	
 	export function SendCharToOutput(x: number){
 		switch(this.outputSystem){
+			case IOSystem.Null: return;
 			case IOSystem.Channels:
 				// TODO? need to handle Unicode characters larger than 16 bits
 				this.outputBuffer.write(String.fromCharCode(x));
