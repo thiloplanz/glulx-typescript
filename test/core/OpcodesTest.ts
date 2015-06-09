@@ -201,33 +201,33 @@ module FyreVM{
 		
 		tests.Opcodes.Arithmetics.testBitAnd = 
 		function(test: nodeunit.Test){
-			check_byte_byte_store(m, test, 'bitand', 0xFF, 0x11, 0x11);
+			check_byte_byte_store(m, test, 'bitand', 0x7F, 0x11, 0x11);
 			check_byte_byte_store(m, test, 'bitand', 0x00, 0x11, 0x00);
-			check_byte_byte_store(m, test, 'bitand', 0xF0, 0xAA, 0xA0);
+			check_byte_byte_store(m, test, 'bitand', 0x70, 0x7A, 0x70);
 			test.done();	
 		}
 		
 		tests.Opcodes.Arithmetics.testBitOr = 
 		function(test: nodeunit.Test){
-			check_byte_byte_store(m, test, 'bitor', 0xFF, 0x11, 0xFF);
+			check_byte_byte_store(m, test, 'bitor', 0x7F, 0x11, 0x7F);
 			check_byte_byte_store(m, test, 'bitor', 0x00, 0x11, 0x11);
-			check_byte_byte_store(m, test, 'bitor', 0xF0, 0xAA, 0xFA);
+			check_byte_byte_store(m, test, 'bitor', 0x70, 0x7A, 0x7A);
 			test.done();	
 		}
 		
 		tests.Opcodes.Arithmetics.testBitXor = 
 		function(test: nodeunit.Test){
-			check_byte_byte_store(m, test, 'bitxor', 0xFF, 0x11, 0xEE);
+			check_byte_byte_store(m, test, 'bitxor', 0x7F, 0x11, 0x6E);
 			check_byte_byte_store(m, test, 'bitxor', 0x00, 0x11, 0x11);
-			check_byte_byte_store(m, test, 'bitxor', 0xF0, 0xAA, 0x5A);
+			check_byte_byte_store(m, test, 'bitxor', 0x70, 0x7A, 0x0A);
 			test.done();	
 		}
 		
 		tests.Opcodes.Arithmetics.testBitNot = 
 		function(test: nodeunit.Test){
-			check_byte_store(m, test, 'bitnot', 0xFF, 0xFFFFFF00);
+			check_byte_store(m, test, 'bitnot', 0xFF, 0x00000000);
 			check_byte_store(m, test, 'bitnot', 0x00, 0xFFFFFFFF);
-			check_byte_store(m, test, 'bitnot', 0xF0, 0xFFFFFF0F);
+			check_byte_store(m, test, 'bitnot', 0xF0, 0x0000000F);
 			test.done();	
 		}
 		
@@ -258,7 +258,7 @@ module FyreVM{
 				0x03, 0xA0,
 				op('return'),
 				p_in(LoadOperandType.byte),
-				155);
+				105);
 		}
 		
 		tests.Opcodes.Branching.testJump =
@@ -280,6 +280,7 @@ module FyreVM{
 			test.done();	
 		} 
 		
+			
 		tests.Opcodes.Branching.testJumpAbs =
 		function(test: nodeunit.Test){
 			//          jump label
@@ -593,6 +594,27 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Opcodes.Functions.testCall_int32_target =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('call'), 
+				    p_in(LoadOperandType.int32, LoadOperandType.zero),
+					0, // void
+					0, 0, label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		
+			let engine = stepImage(image, 2);
+			test.equal(image.readInt32(label), 30);	
+			test.equal(engine['SP'], 44);
+			test.done();	
+		}
+		
 		tests.Opcodes.Functions.testCall_stack_args =
 		function(test: nodeunit.Test){
 			//          call label
@@ -753,9 +775,9 @@ module FyreVM{
 					label >> 8, label & 0xFF
 			);
 			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
-			writeAddFunction(image, label + 3);		// this returns 155
+			writeAddFunction(image, label + 3);		// this returns 105
 			let engine = stepImage(image, 3, test);  // .. on cycle 3
-			test.equal(image.readInt32(label), 155);	
+			test.equal(image.readInt32(label), 105);	
 			test.done();	
 		}
 		
@@ -815,9 +837,9 @@ module FyreVM{
 
 		tests.Opcodes.Variables.testAload = 
 		function(test: nodeunit.Test){
-			// "array" is the code segment 
-			// array[1] = { CallType.stack, 0x00, 0x00, opcode } )
-			check_byte_byte_store(m, test, 'aload', 252, 1, 0xC0000048);
+			// "array" is 200 bytes before the code segment 
+			// array[51] = { CallType.stack, 0x00, 0x00, opcode } )
+			check_byte_byte_store(m, test, 'aload', 52, 51, 0xC0000048);
 			
 			// negative indexing:
 			// byte 0 is 'Glul'
@@ -829,27 +851,29 @@ module FyreVM{
 
 		tests.Opcodes.Variables.testAloads = 
 		function(test: nodeunit.Test){
-			check_byte_byte_store(m, test, 'aloads', 252, 2, 0xC000);
+			check_byte_byte_store(m, test, 'aloads', 52, 102, 0xC000);
 			test.done();	
 		}
 
 		tests.Opcodes.Variables.testAloadb = 
 		function(test: nodeunit.Test){
-			check_byte_byte_store(m, test, 'aloadb', 252, 4, 0xC0);
+			check_byte_int32_store(m, test, 'aloadb', 52, 0,0,0,204, 0xC0);
 			test.done();	
 		}
 		
 		tests.Opcodes.Variables.testAloadbit = 
 		function(test: nodeunit.Test){
 			// 0xC0 = 1100 0000
-			check_byte_byte_store(m, test, 'aloadbit', 252, 32, 0);
-			check_byte_byte_store(m, test, 'aloadbit', 252, 39, 1);
+			check_byte_int32_store(m, test, 'aloadbit', 52, 0,0,6,32+64, 0);
+			check_byte_int32_store(m, test, 'aloadbit', 52, 0,0,6,39+64, 1);
 			test.done();	
 		}
 		
 		tests.Opcodes.Variables.testAstore = 
 		function(test: nodeunit.Test){
 			check_int16_int16_int16(m, test, 'astore', 0x0300, 0xA0 / 4, 99, 99);
+			check_int16_int16_int16(m, test, 'astore', 0x0300, 0xA0 / 4, 0xFFFF, 0xFFFFFFFF);
+			
 			test.done();	
 		}
 		
@@ -961,7 +985,7 @@ module FyreVM{
 				CallType.stack, 0x00, 0x00,  // type C0, no args
 				0x81, 0x70, // double-byte opcode 0x0170
 				    p_in(LoadOperandType.byte, LoadOperandType.int16),
-					0xFF,
+					100,
 					0x03, 0xA0
 			);
 			image.writeInt32(0x03A0, 0x12345678)
@@ -977,7 +1001,7 @@ module FyreVM{
 				0x81, 0x71, // double-byte opcode 0x0171
 				    p_in(LoadOperandType.byte, LoadOperandType.int16),
 					p_in(LoadOperandType.int16),
-					0xFF,
+					100,
 					0x01, 0x00,
 					0x03, 0xA0
 			);

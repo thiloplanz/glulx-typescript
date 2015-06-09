@@ -99,19 +99,19 @@ module FyreVM {
 	
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x18, 'bitand', 2, 1,
-				function(a,b){ return a & b});
+				function(a,b){ return uint32(a) & uint32(b)});
 		
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x19, 'bitor', 2, 1,
-				function(a,b){ return a | b});
+				function(a,b){ return uint32(a) | uint32(b)});
 		
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1A, 'bitxor', 2, 1,
-				function(a,b){ return a ^ b});
+				function(a,b){ return uint32(a) ^ uint32(b)});
 			
 			// TODO: check if it works, JS has signed ints, we want uint	
 			opcode(0x1B, 'bitnot', 1, 1,
-				function(x){ x = ~x; if (x<0) return 1 + x + 0xFFFFFFFF; return x; });
+				function(x){ x = ~uint32(x); if (x<0) return 1 + x + 0xFFFFFFFF; return x; });
 	
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1C, 'shiftl', 2, 1,
@@ -371,7 +371,7 @@ module FyreVM {
 
 			opcode(0x4C, "astore", 3, 0,
 				function(array: number, index: number, value: number){
-					this.image.writeInt32(array+4*index, value);
+					this.image.writeInt32(array+4*index, uint32(value));
 				}
 			);
 			
@@ -458,6 +458,7 @@ module FyreVM {
 			opcode(0x170, 'mzero', 2, 0, 
 				function(count, address){
 					let zeros = [];
+					count = uint32(count);
 					while(count--){
 						zeros.push(0);
 					}
@@ -469,6 +470,7 @@ module FyreVM {
 			opcode(0x171, 'mcopy', 3, 0, 
 				function(count, from, to){
 					let data = [];
+					count = uint32(count);
 					for (let i = from; i<from+count; i++){
 						data.push(this.image.readByte(i));
 					}
@@ -607,6 +609,8 @@ module FyreVM {
 
 			opcode(0x120, 'quit', 0, 0,
 				function(){ this.running = false; });
+				
+			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
 
 			return opcodes;
 		}

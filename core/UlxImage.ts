@@ -175,6 +175,13 @@ module FyreVM {
 			m.writeInt32(offset + GLULX_HDR.CHECKSUM_OFFSET, fields.checksum);
 		}
 	
+	
+	    /** Reloads the game file, discarding all changes that have been made
+        * to RAM and restoring the memory map to its original size.
+		*/
+		revert(){
+			this.loadFromOriginal();	
+		}
 		
 	}
 	

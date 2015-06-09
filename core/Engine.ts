@@ -130,7 +130,29 @@ module FyreVM {
             /// was performed.
             framePtr : number
 	}
+	
+	// coerce uint32 number into  (signed!) int32 range
+	function int32(x: number) :number{
+		if (x >= 0x80000000){
+			x = - (0xFFFFFFFF - x + 1);
+		}
+		return x;
+	}
+	function int16(x: number) :number{
+		if (x >= 0x8000){
+			x = - (0xFFFF - x + 1);
+		}
+		return x;
+	}
+	function int8(x: number) :number{
+		if (x >= 0x80){
+			x = - (0xFF - x + 1);
+		}
+		return x;
+	}
 		
+
+
 					
 	export class Engine{
 		
@@ -465,9 +487,9 @@ module FyreVM {
 			  switch(type){
 				  // immediates
 				  case LoadOperandType.zero: operands.push(0); return 0;
-				  case LoadOperandType.byte: operands.push(image.readByte(operandPos)); return 1;
-				  case LoadOperandType.int16: operands.push(image.readInt16(operandPos)); return 2;
-				  case LoadOperandType.int32: operands.push(image.readInt32(operandPos)); return 4;
+				  case LoadOperandType.byte: operands.push(int8(image.readByte(operandPos))); return 1;
+				  case LoadOperandType.int16: operands.push(int16(image.readInt16(operandPos))); return 2;
+				  case LoadOperandType.int32: operands.push(int32(image.readInt32(operandPos))); return 4;
 				  // indirect
 				  case LoadOperandType.ptr_8: operands.push(loadIndirect(image.readByte(operandPos))); return 1;
 				  case LoadOperandType.ptr_16: operands.push(loadIndirect(image.readInt16(operandPos))); return 2;
@@ -725,6 +747,16 @@ module FyreVM {
 			 	let pack = this.outputBuffer.flush();
 			 	this.outputReady(this, pack);
 			 }
+		  }
+
+         /**  Reloads the initial contents of memory (except the protected area)
+         * and starts the game over from the top of the main function.
+		 */
+		  restart(){
+			  // TODO save the protected area of RAM
+			  this.image.revert();
+			  this.bootstrap();
+			  // TODO: restore the protected RAM
 		  }
 
 	}

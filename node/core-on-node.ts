@@ -69,6 +69,16 @@ module FyreVM{
 		size(){
 			return this.buffer.length;
 		}
+		
+		static loadFile(name) : MemoryAccess{
+			var fs = require('fs');
+
+			let buffer = fs.readFileSync(name);
+			let result = new BufferMemoryAccess(0);
+			result.buffer = buffer;
+			result.maxSize = buffer.length * 2;
+			return result;
+		}
 	}
 	
 }
