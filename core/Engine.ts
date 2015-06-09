@@ -534,6 +534,35 @@ module FyreVM {
 				  	operands.push(GLUXLX_STUB.STORE_MEM);
 					operands.push(this.image.readInt32(operandPos)); 
 					return 4;
+				  case StoreOperandType.stack:
+				  	operands.push(GLUXLX_STUB.STORE_STACK);
+					operands.push(0);
+					return 0;  
+				  case StoreOperandType.local_8:
+				    operands.push(GLUXLX_STUB.STORE_LOCAL);
+					operands.push(this.image.readByte(operandPos));
+				  	return 1;
+				  case StoreOperandType.local_16: 
+				  	operands.push(GLUXLX_STUB.STORE_LOCAL);
+					operands.push(this.image.readInt16(operandPos));
+				  	return 2;
+				  case StoreOperandType.local_32: 
+				  	operands.push(GLUXLX_STUB.STORE_LOCAL);
+					operands.push(this.image.readInt32(operandPos)); 
+					return 4;
+				  case StoreOperandType.ram_8:
+				    operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.getRamAddress(this.image.readByte(operandPos)));
+				  	return 1;
+				  case StoreOperandType.ram_16: 
+				  	operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.getRamAddress(this.image.readInt16(operandPos)));
+				  	return 2;
+				  case StoreOperandType.ram_32: 
+				  	operands.push(GLUXLX_STUB.STORE_MEM);
+					operands.push(this.image.getRamAddress(this.image.readInt32(operandPos))); 
+					return 4;	
+					
 				  default: throw `unsupported delayed store operand type ${type}`;
 			  }
 			  return operandPos;
