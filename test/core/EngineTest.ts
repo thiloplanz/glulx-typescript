@@ -21,6 +21,14 @@ module FyreVM{
 				ramStart: 0x03A0
 			}, m, 0);
 			
+			// allow for two-byte opcodes
+			if (code[3] > 255){
+				let oc = code[3];
+				if (oc > 0x8000)
+					throw `cannot encode opcode ${oc}`
+				code.splice(3, 1, (oc + 0x8000) >> 8, oc & 0xFF);
+			}
+			
 			for(let i=0; i<code.length; i++){
 				m.writeByte(c++, code[i]);
 			}

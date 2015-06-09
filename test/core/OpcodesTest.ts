@@ -153,13 +153,15 @@ module FyreVM{
 				Output: {},
 				MemoryManagement: {},
 				StackManipulation: {},
-				GameState: {}
+				GameState: {},
+				Misc: {}
 			 }
 			
 		
 		tests.Opcodes.Arithmetics.testAdd = 
 		function(test: nodeunit.Test){
 			check_byte_byte_store(m, test, 'add', 40, 2, 42);
+			check_byte_byte_store(m, test, 'add', 0, 0, 0);
 			check_byte_int32_store(m, test, 'add', 40, 0xFF, 0xFF, 0xFF, 0xFE, 38);
 			test.done();	
 		}
@@ -286,7 +288,7 @@ module FyreVM{
 			
 			let image = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x04, // double-byte opcode 0x0104
+				op('jumpabs'), 
 				    p_in(LoadOperandType.int16, 0), 
 					label >> 8, label & 0xFF
 			);
@@ -607,7 +609,7 @@ module FyreVM{
 			
 			let image = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x60, // double-byte opcode 0x0160
+				op('callf'),
 				    p_in(LoadOperandType.int16, 0/* void*/),
 					label >> 8, label & 0xFF
 			);
@@ -1094,7 +1096,28 @@ module FyreVM{
 			test.done();
 		}
 
-
+		tests.Opcodes.Misc.gestalt = 
+		function(test: nodeunit.Test){
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.GlulxVersion, 0, 0x00030102);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.TerpVersion, 0, 0x00000001);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.ResizeMem, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Undo, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Unicode, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.MemCopy, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Acceleration, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Float, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 20, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 1, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 2, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.MAllocHeap, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.AccelFunc, 0, 0);
+			
+			
+			test.done();
+		}
+		
+		
 		}
 	}
 }

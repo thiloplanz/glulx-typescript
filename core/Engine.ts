@@ -9,6 +9,11 @@
 
 module FyreVM {
 	
+	export const enum Versions {
+		terp = 1,
+		glulx = 0x00030102
+	}
+	
 	/**
 	 * A delegate that handles the OutputReady event
 	 */

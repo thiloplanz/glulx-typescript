@@ -30,6 +30,22 @@ module FyreVM {
 		}
 	}
 	
+	export const enum Gestalt  {
+            GlulxVersion = 0,
+            TerpVersion = 1,
+            ResizeMem = 2,
+            Undo = 3,
+            IOSystem = 4,
+            Unicode = 5,
+            MemCopy = 6,
+            MAlloc = 7,
+            MAllocHeap = 8,
+            Acceleration = 9,
+            AccelFunc = 10,
+            Float = 11,
+        }
+
+	
 	   // coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
 		if (x < 0){
@@ -553,6 +569,36 @@ module FyreVM {
 						start+= 4;
 					}
 				});
+
+			opcode(0x100, "gestalt", 2, 1,
+				function(selector, arg){
+					switch(selector){
+						case Gestalt.GlulxVersion: return Versions.glulx;
+						case Gestalt.TerpVersion: return Versions.terp;
+						case Gestalt.ResizeMem:
+						case Gestalt.Unicode:
+						case Gestalt.MemCopy:
+						case Gestalt.MAlloc:
+				 			return 1;
+						case Gestalt.Undo:
+						case Gestalt.Acceleration:
+						case Gestalt.Float:
+							return 0;
+						case Gestalt.IOSystem:
+							if (arg === 0) return 1;
+							if (arg === 20) return 1;
+							return 0;
+						case Gestalt.MAllocHeap:
+							if (this.heap) return this.heap.heapAddress;
+							return 0;
+						case Gestalt.AccelFunc:
+							return 0;
+						default:
+							return 0; 
+					}		
+				}
+			);
+
 
 			opcode(0x120, 'quit', 0, 0,
 				function(){ this.running = false; });
