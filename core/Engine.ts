@@ -682,7 +682,17 @@ module FyreVM {
 				  case GLUXLX_STUB.STORE_MEM:
 				  		this.image.writeInt32(stub.destAddr, result);
 						break;
-				// TODO: the other return modes
+				  case GLUXLX_STUB.STORE_LOCAL:
+				  		this.stack.writeInt32(newFP + newLocalsPos+ stub.destAddr, result);
+						break;
+				  case GLUXLX_STUB.STORE_STACK:
+				  		this.push(result);
+						break;
+				  case GLUXLX_STUB.RESUME_FUNC:
+				  		// resume executing in the same call frame
+                    	// return to avoid changing FP
+                    	return;
+				  // TODO: the other return modes
 				  default:
 				  		throw `unsupported return mode ${stub.destType}`
 			  }

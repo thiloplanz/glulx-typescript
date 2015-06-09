@@ -781,6 +781,27 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Opcodes.Functions.testReturnViaStack =
+		function(test: nodeunit.Test){
+			//          call label
+			// label:   add 10, 20 => label
+			let label = 0x03A0;
+			
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('call'), 
+				    p_in(LoadOperandType.int16, LoadOperandType.zero),
+					p_out(StoreOperandType.stack), // Store result in memory
+					label >> 8, label & 0xFF,
+					label >> 8, label & 0xFF
+			);
+			image.writeBytes(label, CallType.stack, 0, 0);  // type C0, no args
+			writeAddFunction(image, label + 3);		// this returns 105
+			let engine = stepImage(image, 3, test);  // .. on cycle 3
+			test.equal(engine['pop'](), 105);	
+			test.done();	
+		}
+		
 		// TODO: testCatch  testThrow
 		
 		tests.Opcodes.Functions.testTailCall =
