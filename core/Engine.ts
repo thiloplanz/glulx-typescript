@@ -68,7 +68,10 @@ module FyreVM {
 		stack = 8,
 		local_8 = 9,
 		local_16 = 10,
-		local_32 = 11
+		local_32 = 11,
+		ram_8 = 13,
+		ram_16 = 14,
+		ram_32 = 15
 	}
 	
 	export const enum CallType {
@@ -496,6 +499,15 @@ module FyreVM {
 				  case StoreOperandType.local_32:
 				  		operands.push(this.image.readInt32(operandPos)); 
 					 	return 4;
+				  case StoreOperandType.ram_8:
+				  		operands.push(this.image.getRamAddress(this.image.readByte(operandPos)));
+						return 1;  
+				  case StoreOperandType.ram_16:
+				  		operands.push(this.image.getRamAddress(this.image.readInt16(operandPos)));
+						return 2;  
+				  case StoreOperandType.ram_32:
+				  		operands.push(this.image.getRamAddress(this.image.readInt32(operandPos)));
+						return 4;  
 				  default: throw `unsupported store operand type ${type}`;
 			  }
 			  return operandPos;

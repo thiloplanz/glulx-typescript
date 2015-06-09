@@ -192,6 +192,22 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Engine.testStoreOperandTypeRAM_32 =
+		function (test: nodeunit.Test){
+			
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('add'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
+					p_out(StoreOperandType.ram_32),
+					1, 1, 
+					0x00, 0x00, 0x00, 0x21
+			);
+			stepImage(gameImage);
+			test.equals(gameImage.readInt32(0x03C1), 2, "1+1=2");
+			test.done();	
+		}
+		
 		
 		tests.Engine.run = 
 		function(test: nodeunit.Test){
