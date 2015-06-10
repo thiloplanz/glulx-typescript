@@ -47,7 +47,7 @@ module FyreVM{
 			throw `unknown opcode ${name}`
 		}
 
-		export function p_in(a:LoadOperandType, b:LoadOperandType = 0){
+		export function p_in(a:LoadOperandType, b:LoadOperandType|StoreOperandType = 0){
 			return a + (b << 4);
 		}
 

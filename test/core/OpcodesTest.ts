@@ -22,6 +22,17 @@ module FyreVM{
 					0x03, 0xA0
 			);
 		}
+		
+		function makeOpcodeImage_byte_byte_byte_store(m: MemoryAccess, opcode: string, a: number, b: number, c:number){
+			return makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op(opcode), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
+					p_in(LoadOperandType.byte, StoreOperandType.ptr_16),
+					a, b, c,
+					0x03, 0xA0
+			);
+		}
 
 		function makeOpcodeImage_byte_int32_store(m: MemoryAccess, opcode: string, a: number, b3: number, b2: number, b1 : number, b0:number){
 			return makeTestImage(m,
@@ -70,6 +81,22 @@ module FyreVM{
 			}
 			
 		}
+		
+		function check_byte_byte_byte_store(m: MemoryAccess, test: nodeunit.Test, opcode: string, a: number, b:number, c:number, expected: number){
+		
+			try{
+				let gameImage = makeOpcodeImage_byte_byte_byte_store(m,opcode, a, b, c);
+				stepImage(gameImage);
+				test.equals(gameImage.readInt32(0x03A0), expected, `${opcode}(${a}, ${b}, ${c}) == ${expected}`);
+		
+			}
+			catch(e){
+				test.strictEqual(null, e, e);
+			}
+			
+		}
+	
+		
 		
 		function check_byte_int32_store(m: MemoryAccess, test: nodeunit.Test, opcode: string, a: number, b3:number, b2:number, b1:number, b0:number, expected: number){
 		
@@ -154,7 +181,8 @@ module FyreVM{
 				MemoryManagement: {},
 				StackManipulation: {},
 				GameState: {},
-				Misc: {}
+				Misc: {},
+				FyreVM: {}
 			 }
 			
 		
@@ -1187,6 +1215,32 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.AccelFunc, 0, 0);
 			
 			
+			test.done();
+		}
+		
+		
+		tests.Opcodes.FyreVM.ToLower =
+		function(test: nodeunit.Test){
+			check_byte_byte_byte_store(m, test, 'fyrecall', FyreCall.ToLower, 'A'.charCodeAt(0), 99, 'a'.charCodeAt(0));
+			test.done();
+		}
+		
+		tests.Opcodes.FyreVM.ToUpper =
+		function(test: nodeunit.Test){
+			check_byte_byte_byte_store(m, test, 'fyrecall', FyreCall.ToUpper, 'a'.charCodeAt(0), 99, 'A'.charCodeAt(0));
+			test.done();
+		}
+		
+		tests.Opcodes.FyreVM.Channel =
+		function(test: nodeunit.Test){
+			var image = makeTestImage(m, 
+			  CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('fyrecall'), 
+			  	p_in(LoadOperandType.byte, LoadOperandType.int32),
+				p_in(LoadOperandType.zero, StoreOperandType.discard),  
+				FyreCall.Channel, 0x47, 0x6c, 0x75, 0x6c);
+			var engine = stepImage(image, 1, test);
+			test.equal(engine['outputBuffer'].getChannel(), 'Glul');
 			test.done();
 		}
 		

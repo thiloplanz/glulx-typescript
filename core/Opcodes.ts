@@ -44,6 +44,45 @@ module FyreVM {
             AccelFunc = 10,
             Float = 11,
         }
+		
+		/// <summary>
+        /// Selects a function for the FyreVM system call opcode.
+        /// </summary>
+        export const enum FyreCall
+        {
+            /// <summary>
+            /// Reads a line from the user: args[1] = buffer, args[2] = buffer size.
+            /// </summary>
+            ReadLine = 1,
+            /// <summary>
+            /// Converts a character to lowercase: args[1] = the character,
+            /// result = the lowercased character.
+            /// </summary>
+            ToLower = 2,
+            /// <summary>
+            /// Converts a character to uppercase: args[1] = the character,
+            /// result = the uppercased character.
+            /// </summary>
+            ToUpper = 3,
+            /// <summary>
+            /// Selects an output channel: args[1] = an OutputChannel value (see Output.cs).
+            /// </summary>
+            Channel = 4,
+            /// <summary>
+            /// Reads a character from the user: result = the 16-bit Unicode value.
+            /// </summary>
+            ReadKey = 5,
+            /// <summary>
+            /// Registers a veneer function address or constant value: args[1] = a
+            /// VeneerSlot value (see Veneer.cs), args[2] = the function address or
+            /// constant value, result = nonzero if the value was accepted.
+            /// </summary>
+            SetVeneer = 6,
+            /// <summary>
+            /// Tells the UI a device handled transition is requested. (press a button, touch screen, etc).
+            /// </summary>
+            RequestTransition = 7
+        }
 
 	
 	// coerce Javascript number into uint32 range
@@ -611,6 +650,9 @@ module FyreVM {
 				function(){ this.running = false; });
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
+
+
+			opcode(0x1000, 'fyrecall', 3, 1, Engine.prototype.fyreCall);
 
 			return opcodes;
 		}

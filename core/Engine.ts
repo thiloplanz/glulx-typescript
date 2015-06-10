@@ -150,7 +150,19 @@ module FyreVM {
 		}
 		return x;
 	}
-		
+	function uint8(x: number) :number{
+		if (x < 0){
+			x = 255 + x + 1;
+		}
+		return x % 256;
+	}
+	function toASCII(x:number){
+		return String.fromCharCode(
+			x >> 24,
+			(x >> 16) & 0xFF,
+			(x >> 8) & 0xFF,
+			x & 0xFF);
+	}
 
 
 					
@@ -767,6 +779,24 @@ module FyreVM {
 			  this.image.revert();
 			  this.bootstrap();
 			  // TODO: restore the protected RAM
+		  }
+		  
+		  fyreCall(call, x, y){
+			  switch(call){
+				  case FyreCall.ToLower:
+				  	return String.fromCharCode(uint8(x)).toLowerCase().charCodeAt(0);
+				  case FyreCall.ToUpper:
+				  	return String.fromCharCode(uint8(x)).toUpperCase().charCodeAt(0);
+				  case FyreCall.Channel:
+				    x = toASCII(x);
+				    this.outputBuffer.setChannel(x);
+				  	return;
+				  case FyreCall.SetVeneer:
+				  	console.warn("ignoring veneer ${x} ${y}");
+					return 1;
+				  default:
+				  	throw `Unrecognized FyreVM system call ${call}(${x},${y})`	  
+			  }
 		  }
 
 	}
