@@ -3,6 +3,8 @@
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
 
+/// <reference path='../mersenne-twister.ts' />
+
 module FyreVM {
 	
 	/**
@@ -655,6 +657,33 @@ module FyreVM {
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
 
+			opcode(0x110, 'random', 1, 1,
+				function(max){
+					if (max === 1 || max === -1)
+						return 0;
+					
+					let random: MersenneTwister = this.random;
+					if (!random){
+						random = this.random = new MersenneTwister();
+					}
+					if (max === 0){
+						return random.genrand_int32();
+					}
+					
+					max = int32(max);
+					if (max < 0){
+						return  uint32( - (random.genrand_int31() % -max));
+					}
+					return random.genrand_int31() % max;
+				}
+			);
+			
+			opcode(0x111, 'setrandom',1, 0,
+				function(seed){
+					if (!seed) seed = undefined;
+					this.random = new MersenneTwister(seed);
+				}
+			);
 
 			opcode(0x1000, 'fyrecall', 3, 1, Engine.prototype.fyreCall);
 

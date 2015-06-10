@@ -1284,6 +1284,28 @@ module FyreVM{
 			test.done();
 		}
 		
+		tests.Opcodes.Misc.random =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setrandom'),
+				p_in(LoadOperandType.byte),
+				42,
+				op('random'),
+				p_in(LoadOperandType.byte, StoreOperandType.stack),
+				6,
+				op('random'),
+				p_in(LoadOperandType.byte, StoreOperandType.stack),
+				0xA0
+			);
+			let engine = stepImage(image, 3, test);
+			let a = engine['pop']();
+			let b = engine['pop']();
+			test.equal(a,4294967207, 'negative random');
+			test.equal(b,3, 'positive random');
+			test.done();	
+		}
+		
 		
 		tests.Opcodes.FyreVM.ToLower =
 		function(test: nodeunit.Test){
