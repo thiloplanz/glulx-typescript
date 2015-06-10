@@ -11,7 +11,7 @@ module FyreVM{
 	
 	export module NodeUnit {
 
-		export function makeTestImage(m: MemoryAccess, ...code : number[]): UlxImage{
+		export function makeTestImage(m: MemoryAccess, ...code : any[]): UlxImage{
 			let c = 256;
 			UlxImage.writeHeader({
 				endMem: 10*1024,
@@ -21,16 +21,17 @@ module FyreVM{
 				ramStart: 0x03A0
 			}, m, 0);
 			
-			// allow for two-byte opcodes
-			if (code[3] > 255){
-				let oc = code[3];
-				if (oc > 0x8000)
-					throw `cannot encode opcode ${oc}`
-				code.splice(3, 1, (oc + 0x8000) >> 8, oc & 0xFF);
-			}
 			
 			for(let i=0; i<code.length; i++){
-				m.writeByte(c++, code[i]);
+				let x = code[i];
+				if (typeof(x) === 'number')
+					m.writeByte(c++, code[i]);
+				else{
+					// flatten arrays
+					for(let j=0; j<x.length; j++){
+						m.writeByte(c++, x[j])
+					}
+				}
 			}
 			
 			return new UlxImage(m);
@@ -38,10 +39,19 @@ module FyreVM{
 		
 		let opcodes = Opcodes.initOpcodes();
 
-		export function op(name: string) : number{
+		
+		export function op(name: string) : any {
 			for (var c in opcodes) {
 				if (opcodes[c].name === name){
-					return opcodes[c].code;
+					c = opcodes[c].code;
+					if (c >= 0x1000){
+						return [ 0xC0, 0x00, c >> 8, c & 0xFF ];
+					}
+					if (c >= 0x80){
+						c = c + 0x8000;
+						return [ c >> 8, c & 0xFF ]
+					}
+					return c;
 				}
 			}
 			throw `unknown opcode ${name}`

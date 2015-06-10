@@ -46,6 +46,17 @@ module FyreVM{
 			return this.buffer.toString('ascii', offset, offset+length);
 		}
 		
+		readCString(offset:number): string{
+			let len = 0, {buffer} = this;
+			while(true){
+				if (buffer.readUInt8(offset+len) === 0)
+					break;
+				len++;
+			}
+			return buffer.toString('ASCII', offset, offset+len);
+		}
+		
+		
 		writeASCII(offset: number, value: string){
 			this.buffer.write(value, offset, value.length, 'ascii');
 		}

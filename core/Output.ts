@@ -29,6 +29,17 @@ module FyreVM {
 		throw `unsupported output system ${this.outputSystem}`;
 	}
 	
+	export function SendStringToOutput(x: string){
+		switch(this.outputSystem){
+			case IOSystem.Null: return;
+			case IOSystem.Channels:
+				this.outputBuffer.write(x);
+				return;
+		}
+		// TODO implement Glk
+		throw `unsupported output system ${this.outputSystem}`;
+	}
+	
 	export interface ChannelData {
 		[channel: string] : string; 
 	}

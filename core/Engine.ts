@@ -763,6 +763,54 @@ module FyreVM {
 				}
 		  }
 
+ 		  streamNumCore(x: number){
+			    if (this.outputSystem === IOSystem.Filter){
+					this.pushCallStub(GLUXLX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
+					let num = x.toString();
+					this.performCall(this.filterAddress, [ num.charCodeAt(0) ], GLUXLX_STUB.RESUME_NUMBER, 1, x, false);
+				}else{
+					SendStringToOutput.call(this, x.toString());
+				}
+		  }
+
+		  streamStrCore(address: number){
+			  if (this.outputSystem == IOSystem.Null) return;
+			  let type = this.image.readByte(address);
+			  
+			  if (type === 0xE1 && !this.decodingTable)
+			  		throw "No string decoding table is set";
+			  
+			  if (this.outputSystem == IOSystem.Filter){
+				  this.pushCallStub(GLUXLX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
+				  switch(type){
+					  case 0xE0:
+					  	this.execMode = ExecutionMode.CString;
+						this.PC = address+1;
+						return;
+				      case 0xE1:
+					  	this.execMode = ExecutionMode.CompressedString;
+						this.PC = address+1;
+						// TODO: printingDigit, SavedNode
+						return;
+					  case 0xE2:
+					  	this.execMode = ExecutionMode.UnicodeString;
+						this.PC = address+4;
+						return;
+					  default:
+					  	throw `Invalid string type ${type} at ${address}`;
+				  }
+			  }
+			  
+			  switch(type){
+				  case 0xE0:
+				  	SendStringToOutput.call(this, this.image.readCString(address+1));
+					return;
+				  default:
+					  throw `Invalid string type ${type} at ${address}`;
+			  }
+		  }
+
+
 		  //  Sends the queued output to the OutputReady event handler.
       	  private deliverOutput(){
 			 if (this.outputReady){

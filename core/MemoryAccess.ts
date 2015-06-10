@@ -49,12 +49,18 @@ module FyreVM {
 		  * Converts part of the buffer into a String,
 		  * assumes that the data is valid ASCII
 		  */
-		 readASCII(offset: number, length: number): String;
+		 readASCII(offset: number, length: number): string;
+		 
+		 /**
+		  * reads a 0-terminated C-string
+		  */
+		 readCString(offset: number): string;
+		 
 		 
 		 /**
 		  * Writes an ASCII String
 		  */
-		 writeASCII(offset: number, value: String);
+		 writeASCII(offset: number, value: string);
 		 
 		 /**
 		  * Resizes the available memory

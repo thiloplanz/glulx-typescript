@@ -136,6 +136,10 @@ module FyreVM {
 			return this.memory.readInt32(address);
 		}
 		
+		readCString(address: number): string {
+			return this.memory.readCString(address);
+		}
+		
 		writeInt32(address: number, value: number) {
 			if (address < this.ramstart)
 				throw `Writing into ROM! offset: ${address}`;

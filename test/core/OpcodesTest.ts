@@ -951,7 +951,7 @@ module FyreVM{
 		function(test: nodeunit.Test){
 			let image = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x49, // double-byte opcode 0x0149
+				op('setiosys'),
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					20, 0
 			);
@@ -966,7 +966,7 @@ module FyreVM{
 		function(test: nodeunit.Test){
 			let image = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x49, // double-byte opcode 0x0149
+			    op('setiosys'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					20, 0,
 				op('streamchar'),
@@ -989,7 +989,7 @@ module FyreVM{
 		function(test: nodeunit.Test){
 			let image = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x49, // double-byte opcode 0x0149
+				op('setiosys'), 
 				    p_in(LoadOperandType.byte, LoadOperandType.byte),
 					20, 0,
 				op('streamunichar'),
@@ -1001,6 +1001,46 @@ module FyreVM{
 			test.equal(channels['MAIN'], 'あ');
 			test.done();	
 		}
+
+
+		tests.Opcodes.Output.streamstr_E0 = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setiosys'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0,
+				op('streamstr'),
+					p_in(LoadOperandType.int16),
+					0x03, 0xA0
+			);
+			// E0: 0-terminated ASCII string
+			image.writeBytes(0x03A0, 0xE0, 65, 66, 67, 0);
+			let engine = stepImage(image, 2, test);
+			let channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], 'ABC');
+			test.done();	
+		}
+
+
+		tests.Opcodes.Output.streamnum = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setiosys'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0,
+				op('streamnum'),
+					p_in(LoadOperandType.int16),
+					0xFF, 0x00
+			);
+			let engine = stepImage(image, 2, test);
+			let channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], '-256');
+			test.done();	
+		}
+
+		
 
 		tests.Opcodes.MemoryManagement.getmemsize =
 		function(test: nodeunit.Test){
