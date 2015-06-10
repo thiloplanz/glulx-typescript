@@ -40,6 +40,75 @@ module FyreVM {
 		throw `unsupported output system ${this.outputSystem}`;
 	}
 	
+	
+	export const enum GLULX_HUFF {
+		// String decoding table: header field offsets
+        TABLESIZE_OFFSET = 0,
+        NODECOUNT_OFFSET = 4,
+        ROOTNODE_OFFSET = 8,
+
+        // String decoding table: node types
+        NODE_BRANCH = 0,
+        NODE_END = 1,
+        NODE_CHAR = 2,
+        NODE_CSTR = 3,
+        NODE_UNICHAR = 4,
+        NODE_UNISTR = 5,
+        NODE_INDIRECT = 8,
+       	NODE_DBLINDIRECT = 9,
+        NODE_INDIRECT_ARGS = 10,
+        NODE_DBLINDIRECT_ARGS = 11
+	}
+	
+	/**
+	 * Prints the next character of a compressed string, consuming one or more bits.
+     *
+	 */
+	export function NextCompressedChar(){
+		let engine: Engine = this;
+		let {image} = engine;
+		let node = image.readInt32(this.decodingTable + GLULX_HUFF.ROOTNODE_OFFSET);
+		
+		while (true){
+			let nodeType = image.readByte(node++);
+			switch(nodeType){
+				case GLULX_HUFF.NODE_BRANCH:
+					if (nextCompressedStringBit(engine)){
+						node = image.readInt32(node+4); // go right
+					}else{
+						node = image.readInt32(node); // go left
+					}
+					break;
+				case GLULX_HUFF.NODE_END:
+					this.resumeFromCallStub(0);
+					return;
+				case GLULX_HUFF.NODE_CHAR:
+				case GLULX_HUFF.NODE_UNICHAR:
+					let c = (nodeType === GLULX_HUFF.NODE_UNICHAR) ? image.readInt32(node) : image.readByte(node);
+					if (this.outputSystem === IOSystem.Filter){
+						this.performCall(this.filterAddress, [ c ], GLUXLX_STUB.RESUME_HUFFSTR, this.printingDigit, this.PC);
+					}else{
+						SendCharToOutput.call(this, c);
+					}
+					return;
+					
+				default:
+					throw `Unrecognized compressed string node type ${nodeType}`;
+			}
+		}
+	}
+	
+	
+	function nextCompressedStringBit(engine): boolean{
+		let result = (engine.image.readByte(engine.PC & ( 1 << engine.printingDigit)) !== 0)
+		engine.printingDigit++;
+		if (engine.printingDigit === 8){
+			engine.printingDigit = 0;
+			engine.PC++;
+		}
+		return result;
+	}
+	
 	export interface ChannelData {
 		[channel: string] : string; 
 	}

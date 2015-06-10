@@ -18,7 +18,8 @@ module FyreVM{
 				version: 0x00030100,
 				startFunc: c,
 				stackSize: 1024,
-				ramStart: 0x03A0
+				ramStart: 0x03A0,
+				decodingTbl: 0x3B0
 			}, m, 0);
 			
 			

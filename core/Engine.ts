@@ -85,7 +85,7 @@ module FyreVM {
 	}
 	
 	// Call stub
-	const enum GLUXLX_STUB {
+	export const enum GLUXLX_STUB {
 		// DestType values for function calls
 		STORE_NULL = 0,
 		STORE_MEM = 1,
@@ -183,6 +183,9 @@ module FyreVM {
 		private filterAddress: number;
 		private outputBuffer = new OutputBuffer();
 		private heap: HeapAllocator;
+		private cycle = 0;
+		private printingDigit = 0; // bit number for compressed strings, digit for numbers
+        
 		
 		outputReady: OutputReadyEventHandler;
 		
@@ -438,6 +441,11 @@ module FyreVM {
 					}
 					
 				  	break;
+				  case ExecutionMode.CompressedString:
+				  	// TODO: native decoding table
+					NextCompressedChar.call(this);
+					break;  
+					  
 				  default:
 				  	throw `unsupported execution mode ${this.execMode}`;
 			  }
@@ -779,8 +787,12 @@ module FyreVM {
 			  
 			  if (type === 0xE1 && !this.decodingTable)
 			  		throw "No string decoding table is set";
+			  	
+			  // TODO: native decoding table
+			  // for now, just fall back to using ExecutionMode.CompressedString	  
+			  let fallbackEncoding = (type === 0xE1);
 			  
-			  if (this.outputSystem == IOSystem.Filter){
+			  if (this.outputSystem == IOSystem.Filter || fallbackEncoding){
 				  this.pushCallStub(GLUXLX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
 				  switch(type){
 					  case 0xE0:
@@ -790,7 +802,7 @@ module FyreVM {
 				      case 0xE1:
 					  	this.execMode = ExecutionMode.CompressedString;
 						this.PC = address+1;
-						// TODO: printingDigit, SavedNode
+						this.printingDigit = 0;
 						return;
 					  case 0xE2:
 					  	this.execMode = ExecutionMode.UnicodeString;

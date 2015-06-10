@@ -1021,6 +1021,32 @@ module FyreVM{
 			test.equal(channels['MAIN'], 'ABC');
 			test.done();	
 		}
+		
+		tests.Opcodes.Output.streamstr_E1 = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setiosys'), 
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					20, 0,
+				op('streamstr'),
+					p_in(LoadOperandType.int16),
+					0x03, 0xA0
+			);
+			// E1: compressed Huffman encoded string
+			image.writeBytes(0x03A0, 0xE1, 0)
+			// Huffman table 'A'
+			image.writeBytes(0x03B0, 
+					0,0,0,0,0,0,0,0, // length + number of nodes
+					0,0, 0x03, 0xC0 // root node
+			);
+			image.writeBytes(0x03C0,
+					GLULX_HUFF.NODE_CHAR , 65);
+			let engine = stepImage(image, 3, test);
+			let channels = engine['outputBuffer'].flush();
+			test.equal(channels['MAIN'], 'A');
+			test.done();	
+		}
 
 
 		tests.Opcodes.Output.streamnum = 
