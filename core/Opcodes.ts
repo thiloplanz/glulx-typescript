@@ -451,7 +451,7 @@ module FyreVM {
 			
 			opcode(0x73, 'streamunichar', 1, 0, Engine.prototype.streamUniCharCore);
 
-			opcode(0x74, 'streamnum', 1, 0, Engine.prototype.streamNumCore);
+			opcode(0x71, 'streamnum', 1, 0, Engine.prototype.streamNumCore);
 
 			opcode(0x72, 'streamstr', 1, 0, Engine.prototype.streamStrCore);
 
