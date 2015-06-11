@@ -400,7 +400,7 @@ module FyreVM {
 
 			opcode(0x4B, "aloadbit", 2, 1,
 				function(array: number, index: number){
-					let address = array + index / 8;
+					let address = array + Math.floor(index / 8);
 					index %= 8;
 					if (index < 0){
 						address--;
@@ -431,7 +431,7 @@ module FyreVM {
 
 			opcode(0x4F, "astorebit", 3, 0,
 				function(array: number, index: number, value: number){
-					let address = array + index / 8;
+					let address = array + Math.floor(index / 8);
 					index %= 8;
 					if (index < 0){
 						address--;
