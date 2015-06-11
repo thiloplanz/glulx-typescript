@@ -100,7 +100,7 @@ module FyreVM {
 	
 	
 	function nextCompressedStringBit(engine): boolean{
-		let result = (engine.image.readByte(engine.PC & ( 1 << engine.printingDigit)) !== 0)
+		let result = ((engine.image.readByte(engine.PC) & ( 1 << engine.printingDigit)) !== 0)
 		engine.printingDigit++;
 		if (engine.printingDigit === 8){
 			engine.printingDigit = 0;
