@@ -295,21 +295,21 @@ module FyreVM {
 
 			opcode(0x161, 'callfi', 2, 0,
 				function(address:number, arg: number, destType:number, destAddr:number){
-					this.performCall(address, [arg], destType, destAddr, this.PC);
+					this.performCall(address, [uint32(arg)], destType, destAddr, this.PC);
 				},
 				OpcodeRule.DelayedStore
 			)
 
 			opcode(0x162, 'callfii', 3, 0,
 				function(address:number, arg1: number, arg2: number, destType:number, destAddr:number){
-					this.performCall(address, [arg1, arg2], destType, destAddr, this.PC);
+					this.performCall(address, [uint32(arg1), uint32(arg2)], destType, destAddr, this.PC);
 				},
 				OpcodeRule.DelayedStore
 			)
 		
 			opcode(0x163, 'callfiii', 4, 0,
 				function(address:number, arg1: number, arg2: number, arg3: number, destType:number, destAddr:number){
-					this.performCall(address, [arg1, arg2, arg3], destType, destAddr, this.PC);
+					this.performCall(address, [uint32(arg1), uint32(arg2), uint32(arg3)], destType, destAddr, this.PC);
 				},
 				OpcodeRule.DelayedStore
 			)
@@ -360,7 +360,7 @@ module FyreVM {
 			
 			opcode(0x40, "copy", 1, 1, 
 				function(x:number){
-					return x;
+					return uint32(x);
 				});
 			
 			opcode(0x41, "copys", 1, 1, 
