@@ -16,10 +16,14 @@ module FyreVM{
 		function testImage(test: nodeunit.Test){
 			let m: MemoryAccess = this;
 			
-			test.throws(function(){
-				m.writeASCII(0, 'nope')
+			try{
+				m.writeASCII(0, 'nope');
 				let image = new UlxImage(m);
-			}, null, "wrong magic");
+			}
+			catch(e){
+				test.equal(e, '.ulx file has wrong magic number nope');
+			}
+			
 			
 			UlxImage.writeHeader({
 		 			endMem: 10*1024,
