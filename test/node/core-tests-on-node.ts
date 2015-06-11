@@ -4,12 +4,13 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../../node/core-on-node.ts' />
+/// <reference path='../../core/Engine.ts' />
 /// <reference path='../core/MemoryAccessTest.ts' />
 /// <reference path='../core/UlxImageTest.ts' />
 /// <reference path='../core/EngineTest.ts' />
 /// <reference path='../core/OpcodesTest.ts' />
 
-let buffer = new FyreVM.BufferMemoryAccess(1000, 10240);
+let buffer = new FyreVM.Uint8ArrayMemoryAccess(1000, 10240);
 
 FyreVM.NodeUnit.addMemoryTests(exports, buffer);
 

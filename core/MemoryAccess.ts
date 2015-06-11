@@ -229,6 +229,114 @@ module FyreVM {
 			}
 		}
 	}
+	
+	/**
+	 * implementation of MemoryAccess using the ECMAScript 6 standard UInt8Array 
+	 */
+	export class Uint8ArrayMemoryAccess implements MemoryAccess {
+		
+		private buffer: Uint8Array;
+		
+		private maxSize: number;
+		
+		constructor(size: number, maxSize=size){
+			this.buffer = new Uint8Array(size);
+			this.maxSize = maxSize;
+		}
+		
+		readByte(offset: number){
+			return this.buffer[offset];
+		}
+		
+		writeByte(offset: number, value:number){
+			if (value < 0 || value > 255)
+				throw `${value} is out of range for a byte`;
+			console.info("write", offset, value);
+			this.buffer[offset] = value;
+		}
+		
+		readInt16(offset: number){
+			return (this.buffer[offset] * 256) + this.buffer[offset+1];
+		}
+		
+		// TypeScript does not like us calling "set" with an array directly
+		private set(offset: number, value: any){
+			this.buffer.set(value, offset);
+		}
+		
+		writeInt16(offset: number, value: number){
+			if (value < 0 || value > 0xFFFF)
+				throw `${value} is out of range for uint16`;
+			this.set(offset, [value >> 8, value & 0xFF]);
+		}
+		
+		readInt32(offset: number){
+			return this.buffer[offset] * 0x1000000 
+			+ this.buffer[offset+1] * 0x10000 
+			+ this.buffer[offset+2] * 0x100 
+			+ this.buffer[offset+3];
+		}
+		
+		writeInt32(offset: number, value: number){
+			if (value < 0 || value > 0xFFFFFFFF)
+				throw `${value} is out of range for uint32`;
+			this.set(offset, [ value >> 24, value >> 16 & 0xFF, value >> 8 & 0xFF, value & 0xFF])
+		}
+		
+		readASCII(offset: number, length: number): string{
+			let len = 0, {buffer} = this, d = [];
+			while(len < length){
+				let x = buffer[offset+len];
+				len++;	
+				d.push(x);
+			}
+			return String.fromCharCode(...d);
+		}
+		
+		readCString(offset:number): string{
+			let len = 0, {buffer} = this, d = [];
+			while(true){
+				let x = buffer[offset+len];
+				if (x === 0)
+					break;
+				len++;	
+				d.push(x);
+			}
+			return String.fromCharCode(...d);
+		}
+		
+		
+		writeASCII(offset: number, value: string){
+			let codes = [];
+			for (let i=0; i<value.length; i++){
+				codes.push(value.charCodeAt(i))
+			}
+			this.set(offset, codes);
+		}
+		 		 
+		setEndMem(newEndMem: number) : boolean {
+			if (newEndMem > this.maxSize)
+				return false;
+			return true;
+		}
+		
+		copy(offset: number, length: number) : Uint8ArrayMemoryAccess {
+			// TODO: range check
+			if (length > this.maxSize)
+				throw `Memory request for ${length} bytes exceeds limit of ${this.maxSize}`;
+			let result = new Uint8ArrayMemoryAccess(length);
+			result.buffer.set(this.buffer.subarray(offset, offset+length));
+			result.maxSize = this.maxSize;
+			return result;
+		}
+		
+		size(){
+			return this.buffer.length;
+		}
+		
+	}
+	
+	
 }
 
 
