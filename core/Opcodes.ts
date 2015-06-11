@@ -554,6 +554,8 @@ module FyreVM {
 				
 			});
 
+			opcode(0x151, 'binarysearch', 7, 1, PerformBinarySearch);
+
 			opcode(0x50, 'stkcount', 0, 1,
 				function(){
 					return (this.SP - (this.FP + this.frameLen)) / 4;
@@ -659,7 +661,7 @@ module FyreVM {
 
 			opcode(0x110, 'random', 1, 1,
 				function(max){
-					if (max === 1 || max === -1)
+					if (max === 1 || max === 0xFFFFFFFF)
 						return 0;
 					
 					let random: MersenneTwister = this.random;
@@ -689,5 +691,75 @@ module FyreVM {
 
 			return opcodes;
 		}
+	}
+	
+	const enum SearchOptions {
+		KeyIndirect = 1,
+        ZeroKeyTerminates = 2,
+        ReturnIndex = 4
+	}
+	
+	function PerformBinarySearch(key, keySize, start, structSize, numStructs, keyOffset, options){
+		if (options & SearchOptions.ZeroKeyTerminates)
+			throw "ZeroKeyTerminated option may not be used with binary search";
+		if (keySize > 4 && !(options & SearchOptions.KeyIndirect) )
+			throw "KeyIndirect option must be used when searching for a >4 byte key";
+		let returnIndex = options & SearchOptions.ReturnIndex;
+		let low =0, high = numStructs;
+		while (low < high){
+			let index = Math.floor((low+high) / 2);
+			let cmp = compareKeys.call(this, key, start + index*structSize + keyOffset, keySize, options);
+			if (cmp === 0){
+				// found it
+				if (returnIndex) return index;
+				return start+index*structSize;
+			}
+			if (cmp < 0){
+				high = index;
+			}else{
+				low = index + 1;	
+			}
+		}
+		// did not find
+		return returnIndex ? 0xFFFFFFFF : 0;
+	}
+	
+	function compareKeys(query:number, candidateAddr: number, keySize: number, options: number){
+		let { image } = this;
+		if (options & SearchOptions.KeyIndirect){
+			// KeyIndirect *is* set
+            // compare the bytes stored at query vs. candidateAddr
+ 			for (let i=0; i<keySize; i++){
+				let b1 = image.readByte(query++);
+				let b2 = image.readByte(candidateAddr++);
+				if (b1 < b2)
+					return -1;
+				if (b1 > b2)
+					return 1; 
+			}
+			return 0;
+		}	
+		
+		// KeyIndirect is *not* set
+        // mask query to the appropriate size and compare it against the value stored at candidateAddr
+		let ckey;
+		switch(keySize){
+			case 1:
+				ckey = image.readByte(candidateAddr);
+				query &= 0xFF;
+				return query - ckey;
+			case 2:
+				ckey = image.readInt16(candidateAddr);
+				query &= 0xFFFF;
+				return query - ckey;
+			case 3:
+				ckey = image.readInt32(candidateAddr) & 0xFFFFFF;
+				query &= 0xFFFFFF;
+				return query - ckey;
+			case 4:
+				ckey = image.readInt32(candidateAddr);
+				return query - ckey;
+		}
+		
 	}
 }

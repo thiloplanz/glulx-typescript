@@ -1306,6 +1306,33 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Opcodes.Misc.binarySearch =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('binarysearch'),
+				p_in(LoadOperandType.byte, LoadOperandType.byte),
+				p_in(LoadOperandType.int16, LoadOperandType.byte),
+				p_in(LoadOperandType.byte, LoadOperandType.zero),
+				p_in(LoadOperandType.zero, StoreOperandType.stack),
+				42, // key
+				1, // keySize
+				0x03, 0xA0, // array start
+				1, // structSize
+				10 // numStructs
+			);
+			
+			image.writeBytes(0x03A0,
+				1, 10, 20, 42, 50, 
+				60, 70, 80, 90, 100
+			);
+			
+			let engine = stepImage(image, 1, test);
+			let x = engine['pop']();
+			test.equal(x, 0x03A3, 'found key in array')	
+			test.done();	
+		}
+		
 		
 		tests.Opcodes.FyreVM.ToLower =
 		function(test: nodeunit.Test){
