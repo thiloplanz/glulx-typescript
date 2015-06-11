@@ -196,14 +196,14 @@ module FyreVM {
 
 			opcode(0x024, 'jeq', 3, 0, 
 				function(a, b, jumpVector){
-					if (a === b)
+					if (a === b || uint32(a) === uint32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
 
 			opcode(0x025, 'jne', 3, 0, 
 				function(a, b, jumpVector){
-					if (a !== b)
+					if (uint32(a) !== uint32(b))
 						this.takeBranch(jumpVector);
 				}
 			);
