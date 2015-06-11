@@ -470,6 +470,8 @@ module FyreVM {
 							// TODO Glk support
 							throw "Glk support is not available"
 						case 20:
+							if (!this.enableFyreVM)
+								throw "FyreVM support has been disabled";
 							this['outputSystem'] = IOSystem.Channels;
 							return;
 						default:
@@ -640,7 +642,7 @@ module FyreVM {
 							return 0;
 						case Gestalt.IOSystem:
 							if (arg === 0) return 1;
-							if (arg === 20) return 1;
+							if (arg === 20 && this.enableFyreVM) return 1;
 							return 0;
 						case Gestalt.MAllocHeap:
 							if (this.heap) return this.heap.heapAddress;

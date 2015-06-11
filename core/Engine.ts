@@ -186,6 +186,8 @@ module FyreVM {
 		private cycle = 0;
 		private printingDigit = 0; // bit number for compressed strings, digit for numbers
         
+		// if turned off, no FyreVM functions are made available, just standard Glulx stuff
+		enableFyreVM = true;
 		
 		outputReady: OutputReadyEventHandler;
 		
@@ -842,6 +844,8 @@ module FyreVM {
 		  }
 		  
 		  fyreCall(call, x, y){
+			  if (!this.enableFyreVM)
+			  	throw `FyreVM functionality has been disabled`;
 			  switch(call){
 				  case FyreCall.ToLower:
 				  	return String.fromCharCode(uint8(x)).toLowerCase().charCodeAt(0);
