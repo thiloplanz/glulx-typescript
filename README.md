@@ -20,3 +20,9 @@ Then you can compile everything in this project and run the test suite:
 Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.
 
 
+You can also run the same unit tests in your browser instead of on Node.js:
+
+    $ cd test/web
+    $ tsc
+    $ open test.html
+ 
