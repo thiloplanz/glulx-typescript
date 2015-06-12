@@ -1334,6 +1334,65 @@ module FyreVM{
 		}
 		
 		
+		tests.Opcodes.FyreVM.ReadLine_noInput =
+		function(test: nodeunit.Test){
+			var image = makeTestImage(m, 
+			  CallType.stack, 0x00, 0x00,  // type C0, no args
+			  	op('fyrecall'), 
+			  	p_in(LoadOperandType.byte, LoadOperandType.int16),
+				p_in(LoadOperandType.byte, StoreOperandType.discard),  
+				FyreCall.ReadLine, 0x03, 0xA0, 100);
+			image.writeInt32(0x03A0, 0xFFFFFFFF);
+			
+			var engine = stepImage(image, 1, test);
+			test.equal(image.readInt32(0x03A0), 0);
+			test.done();	
+		}
+		
+		tests.Opcodes.FyreVM.ReadLine_waitForInput =
+		function(test: nodeunit.Test){
+			var image = makeTestImage(m, 
+			  CallType.stack, 0x00, 0x00,  // type C0, no args
+			  	op('fyrecall'), 
+			  	p_in(LoadOperandType.byte, LoadOperandType.int16),
+				p_in(LoadOperandType.byte, StoreOperandType.discard),  
+				FyreCall.ReadLine, 0x03, 0xA0, 100);
+				
+			var engine = stepImage(image, 0, test);
+			
+			let cb : LineReadyCallback;
+			engine.lineWanted = function(callback){
+				cb = callback;
+			}
+			test.equal(engine.step(), 'wait');
+			cb('Hello world');
+			test.equal(image.readInt32(0x03A0), 11);
+			test.equal(image.readCString(0x03A4), 'Hello world');
+			test.done();	
+		}
+
+		tests.Opcodes.FyreVM.ReadKey_waitForInput =
+		function(test: nodeunit.Test){
+			var image = makeTestImage(m, 
+			  CallType.stack, 0x00, 0x00,  // type C0, no args
+			  	op('fyrecall'), 
+			  	p_in(LoadOperandType.byte, LoadOperandType.zero),
+				p_in(LoadOperandType.zero, StoreOperandType.ptr_16),  
+				FyreCall.ReadKey, 0x03, 0xA0);
+				
+			var engine = stepImage(image, 0, test);
+			
+			let cb : LineReadyCallback;
+			engine.keyWanted = function(callback){
+				cb = callback;
+			}
+			test.equal(engine.step(), 'wait');
+			cb('A');
+			test.equal(image.readInt32(0x03A0), '65');
+			test.done();	
+		}
+
+		
 		tests.Opcodes.FyreVM.ToLower =
 		function(test: nodeunit.Test){
 			check_byte_byte_byte_store(m, test, 'fyrecall', FyreCall.ToLower, 'A'.charCodeAt(0), 99, 'a'.charCodeAt(0));

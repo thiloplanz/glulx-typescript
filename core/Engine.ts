@@ -15,11 +15,33 @@ module FyreVM {
 	}
 	
 	/**
+	 * A delegate that handles the LineWanted event
+	 */
+	 export interface LineWantedEventHandler {
+		 (callback: LineReadyCallback) : void
+	 }
+	
+	 export interface LineReadyCallback {
+		 (line: string) : void
+	 }
+	 
+	 /**
+	 * A delegate that handles the KeyWanted event
+	 *
+	 * Also uses LineReadyCallback. Only the first character
+	 * will be used.
+	 */
+	 export interface KeyWantedEventHandler {
+		 (callback: LineReadyCallback) : void
+	 }
+	
+	
+	/**
 	 * A delegate that handles the OutputReady event
 	 */
 	
 	export interface OutputReadyEventHandler{
-		(sender, package: ChannelData) : void
+		(package: ChannelData) : void
 	}
 	
     /** 
@@ -190,6 +212,9 @@ module FyreVM {
 		enableFyreVM = true;
 		
 		outputReady: OutputReadyEventHandler;
+		lineWanted: LineWantedEventHandler;
+		keyWanted: KeyWantedEventHandler;
+		
 		
 		
 		constructor(gameFile: UlxImage){
@@ -439,6 +464,16 @@ module FyreVM {
 					
 					// store results
 					if (result){
+						// for asynchronous input, we need to stop right now
+						// until we are asked to resume
+						if ('wait' === result[0]){
+							this.resumeAfterWait_resultTypes = resultTypes;
+							this.resumeAfterWait_resultAddrs = resultAddrs;
+							
+							return 'wait';
+						}
+						
+						
 						this.storeResults(opcode.rule, resultTypes, resultAddrs, result );
 					}
 					
@@ -456,20 +491,17 @@ module FyreVM {
 		  /**
 		   * Starts the interpreter.
 		   * This method does not return until the game finishes, either by
-           * returning from the main function or with the quit opcode.
+           * returning from the main function or with the quit opcode
+		   * (unless it is placed into "waiting" mode for asynchronous
+		   * user input. In this case, there will be a callback that resumes
+		   * execution)
 		   */
 		  run(){
 			  this.running = true;
 				
 			  this.bootstrap();
-			  while (this.running){
-				  this.step();
-			  }
-			  
-			  // send any output that may be left
-			  this.deliverOutput();
+			  this.resumeAfterWait();
 		  }
-		  
 		  
 		  
 		  /**
@@ -829,7 +861,7 @@ module FyreVM {
       	  private deliverOutput(){
 			 if (this.outputReady){
 			 	let pack = this.outputBuffer.flush();
-			 	this.outputReady(this, pack);
+			 	this.outputReady(pack);
 			 }
 		  }
 
@@ -843,10 +875,16 @@ module FyreVM {
 			  // TODO: restore the protected RAM
 		  }
 		  
-		  fyreCall(call, x, y){
+		  fyreCall(call, x, y) : any{
 			  if (!this.enableFyreVM)
 			  	throw `FyreVM functionality has been disabled`;
 			  switch(call){
+				  case FyreCall.ReadLine:
+				  	this.deliverOutput();
+					return this.inputLine(x, y);
+				  case FyreCall.ReadKey:
+				  	this.deliverOutput();
+					return this.inputChar();
 				  case FyreCall.ToLower:
 				  	return String.fromCharCode(uint8(x)).toLowerCase().charCodeAt(0);
 				  case FyreCall.ToUpper:
@@ -861,6 +899,84 @@ module FyreVM {
 				  default:
 				  	throw `Unrecognized FyreVM system call ${call}(${x},${y})`	  
 			  }
+		  }
+
+		  private inputLine(address: number, bufSize: number) : string{
+				// we need at least 4 bytes to do anything useful
+				if (bufSize < 4){
+					console.warn("buffer size ${bufSize} to small to input line");
+					return;
+				}
+				let {image} = this;
+				let resume = this.resumeAfterWait.bind(this);
+				// can't do anything without this event handler
+           		if (!this.lineWanted){
+					this.image.writeInt32(address, 0);	   
+					return;
+				}
+				// ask the application to read a line
+				let callback = function(line:string){
+					if (line && line.length){
+						// TODO? handle Unicode
+						let bytes = [];
+						for (let i=0; i<line.length; i++){
+							let c = line.charCodeAt(i);
+							if (c > 255){
+								c = 63; // '?'
+							}
+							bytes.push(c);
+						}
+						// write the length first
+						image.writeInt32(address, bytes.length);
+						// followed by the character data, truncated to fit the buffer
+               			if (bytes.length > bufSize){
+						   bytes.splice(bufSize, bytes.length-bufSize);	   
+						}
+					   	image.writeBytes(address + 4, ...bytes);  
+					}else{
+						image.writeInt32(address, 0);
+					}
+					resume();
+				}
+				this.lineWanted(callback);
+				return 'wait';   
+		  }
+		  
+		  private inputChar():any{
+			  // can't do anything without this event handler
+           	  if (!this.keyWanted){
+				 return 0;
+			  }
+			  let resume = this.resumeAfterWait.bind(this);
+			  
+			  // ask the application to read a character
+			  let callback = function(line:string){
+					if (line && line.length){
+						resume([line.charCodeAt(0)]);
+					}else{
+						resume([0]);
+					}
+				}
+			  this.keyWanted(callback);
+			  return 'wait';   	
+		  }
+		  
+		  private resumeAfterWait_resultTypes : number[];
+		  private resumeAfterWait_resultAddrs : number[];
+		  
+		  private resumeAfterWait(result?: number[]){
+			  if (result){
+				  this.storeResults(null, this.resumeAfterWait_resultTypes, this.resumeAfterWait_resultAddrs, result );
+				  this.resumeAfterWait_resultAddrs = this.resumeAfterWait_resultTypes = null;
+			  }
+			  
+			  while (this.running){
+				  if( this.step() === 'wait')
+				  	  return;
+			  }
+			  
+			  // send any output that may be left
+			  this.deliverOutput();
 		  }
 
 	}

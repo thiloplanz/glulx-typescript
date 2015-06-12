@@ -251,7 +251,6 @@ module FyreVM {
 		writeByte(offset: number, value:number){
 			if (value < 0 || value > 255)
 				throw `${value} is out of range for a byte`;
-			console.info("write", offset, value);
 			this.buffer[offset] = value;
 		}
 		
