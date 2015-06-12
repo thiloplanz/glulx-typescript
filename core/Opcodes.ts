@@ -4,6 +4,7 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../mersenne-twister.ts' />
+/// <reference path='GlkWrapper.ts' />
 
 module FyreVM {
 	
@@ -455,6 +456,23 @@ module FyreVM {
 
 			opcode(0x72, 'streamstr', 1, 0, Engine.prototype.streamStrCore);
 
+			opcode(0x130, 'glk', 2, 1,
+				function(code:number, argc: number){
+					switch(this.glkMode){
+						case GlkMode.None:
+							// not really supported, just clear the stack
+							while(argc--){
+								this.pop();
+							}
+							return 0;
+						case GlkMode.Wrapper:
+						  	return GlkWrapperCall.call(this, code, argc);
+						default:
+							throw `unsupported glkMode ${this.glkMode}`;	
+					}
+				}
+			);
+
 
 			opcode(0x149, 'setiosys', 2, 0,
 				function(system, rock){
@@ -467,8 +485,10 @@ module FyreVM {
 							this['filterAddress'] = rock;
 							return;
 						case 2:
-							// TODO Glk support
-							throw "Glk support is not available"
+							if (this.glkMode !== GlkMode.Wrapper)
+								throw "Glk wrapper support has not been enabled";
+							this['outputSystem'] = IOSystem.Glk;
+							return;
 						case 20:
 							if (!this.enableFyreVM)
 								throw "FyreVM support has been disabled";
@@ -643,6 +663,7 @@ module FyreVM {
 						case Gestalt.IOSystem:
 							if (arg === 0) return 1;
 							if (arg === 20 && this.enableFyreVM) return 1;
+							if (arg == 2 && this.glkMode === GlkMode.Wrapper) return 1;
 							return 0;
 						case Gestalt.MAllocHeap:
 							if (this.heap) return this.heap.heapAddress;

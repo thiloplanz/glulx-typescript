@@ -3,6 +3,9 @@
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
 
+/// <reference path='GlkWrapper.ts' />
+
+
 module FyreVM {
 	
 	 /// Identifies an output system for use with @setiosys.
@@ -24,8 +27,12 @@ module FyreVM {
 				// TODO? need to handle Unicode characters larger than 16 bits
 				this.outputBuffer.write(String.fromCharCode(x));
 				return;
+			case IOSystem.Glk:
+				if (this.glkMode === GlkMode.Wrapper)
+					GlkWrapperWrite.call(this, String.fromCharCode(x));
+				return;
+							
 		}
-		// TODO implement Glk
 		throw `unsupported output system ${this.outputSystem}`;
 	}
 	
@@ -35,8 +42,11 @@ module FyreVM {
 			case IOSystem.Channels:
 				this.outputBuffer.write(x);
 				return;
+			case IOSystem.Glk:
+				if (this.glkMode === GlkMode.Wrapper)
+					GlkWrapperWrite.call(this, x);
+				return;
 		}
-		// TODO implement Glk
 		throw `unsupported output system ${this.outputSystem}`;
 	}
 	

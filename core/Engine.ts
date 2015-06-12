@@ -15,6 +15,17 @@ module FyreVM {
 	}
 	
 	/**
+	 * Describes the type of Glk support offered by the interpreter.
+	 */
+	export const enum GlkMode {
+		// No Glk support.
+		None,
+		// A minimal Glk implementation, with I/O functions mapped to the channel system.
+        Wrapper
+	}
+	
+	
+	/**
 	 * A delegate that handles the LineWanted event
 	 */
 	 export interface LineWantedEventHandler {
@@ -210,6 +221,8 @@ module FyreVM {
         
 		// if turned off, no FyreVM functions are made available, just standard Glulx stuff
 		enableFyreVM = true;
+		
+		glkMode : GlkMode = GlkMode.None;
 		
 		outputReady: OutputReadyEventHandler;
 		lineWanted: LineWantedEventHandler;
