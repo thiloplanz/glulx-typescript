@@ -907,7 +907,7 @@ module FyreVM {
 				    this.outputBuffer.setChannel(x);
 				  	return;
 				  case FyreCall.SetVeneer:
-				  	console.warn("ignoring veneer ${x} ${y}");
+				  	console.warn(`ignoring veneer ${x} ${y}`);
 					return 1;
 				  default:
 				  	throw `Unrecognized FyreVM system call ${call}(${x},${y})`	  
