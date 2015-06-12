@@ -96,12 +96,21 @@ module FyreVM {
 				case GLULX_HUFF.NODE_UNICHAR:
 					let c = (nodeType === GLULX_HUFF.NODE_UNICHAR) ? image.readInt32(node) : image.readByte(node);
 					if (this.outputSystem === IOSystem.Filter){
-						this.performCall(this.filterAddress, [ c ], GLUXLX_STUB.RESUME_HUFFSTR, this.printingDigit, this.PC);
+						this.performCall(this.filterAddress, [ c ], GLULX_STUB.RESUME_HUFFSTR, this.printingDigit, this.PC);
 					}else{
 						SendCharToOutput.call(this, c);
 					}
 					return;
-					
+				case GLULX_HUFF.NODE_CSTR:
+					if (this.outputSystem === IOSystem.Filter){
+						this.pushCallStub(GLULX_STUB.RESUME_HUFFSTR, this.printingDigit, this.PC, this.FP);
+						this.PC = node;
+						this.execMode = ExecutionMode.CString;
+					}else{
+						SendStringToOutput.call(this, this.image.readCString(node));
+					}
+					return;
+				// TODO: the other node types
 				default:
 					throw `Unrecognized compressed string node type ${nodeType}`;
 			}
@@ -117,6 +126,19 @@ module FyreVM {
 			engine.PC++;
 		}
 		return result;
+	}
+	
+	export function NextCStringChar(){
+		let ch = this.image.readByte(this.PC++);
+		if (ch === 0){
+			this.resumeFromCallStub(0);
+			return;
+		}
+		if (this.outputSystem === IOSystem.Filter){
+			this.performCall(this.filterAddress, [ch],  GLULX_STUB.RESUME_CSTR, 0, this.PC);
+		}else{
+			SendCharToOutput(ch);
+		}
 	}
 	
 	export interface ChannelData {

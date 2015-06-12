@@ -58,7 +58,7 @@ module FyreVM {
     /** 
 	 *  Describes the task that the interpreter is currently performing.
     */
-    const enum ExecutionMode
+    export const enum ExecutionMode
     {
         /// We are running function code. PC points to the next instruction.
         Code,
@@ -118,7 +118,7 @@ module FyreVM {
 	}
 	
 	// Call stub
-	export const enum GLUXLX_STUB {
+	export const enum GLULX_STUB {
 		// DestType values for function calls
 		STORE_NULL = 0,
 		STORE_MEM = 1,
@@ -494,7 +494,11 @@ module FyreVM {
 				  case ExecutionMode.CompressedString:
 				  	// TODO: native decoding table
 					NextCompressedChar.call(this);
-					break;  
+					break; 
+					
+				  case ExecutionMode.CString:
+				  	NextCStringChar.call(this);
+					break 
 					  
 				  default:
 				  	throw `unsupported execution mode ${this.execMode}`;
@@ -621,47 +625,47 @@ module FyreVM {
 		  private decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
 			  switch(type){
 				  case StoreOperandType.discard: 
-				  	operands.push(GLUXLX_STUB.STORE_NULL);
+				  	operands.push(GLULX_STUB.STORE_NULL);
 					operands.push(0);
 				  	return 0;
 				  case StoreOperandType.ptr_8: 
-				  	operands.push(GLUXLX_STUB.STORE_MEM);
+				  	operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.readByte(operandPos));
 				  	return 1;
 				  case StoreOperandType.ptr_16: 
-				  	operands.push(GLUXLX_STUB.STORE_MEM);
+				  	operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.readInt16(operandPos));
 				  	return 2;
 				  case StoreOperandType.ptr_32: 
-				  	operands.push(GLUXLX_STUB.STORE_MEM);
+				  	operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.readInt32(operandPos)); 
 					return 4;
 				  case StoreOperandType.stack:
-				  	operands.push(GLUXLX_STUB.STORE_STACK);
+				  	operands.push(GLULX_STUB.STORE_STACK);
 					operands.push(0);
 					return 0;  
 				  case StoreOperandType.local_8:
-				    operands.push(GLUXLX_STUB.STORE_LOCAL);
+				    operands.push(GLULX_STUB.STORE_LOCAL);
 					operands.push(this.image.readByte(operandPos));
 				  	return 1;
 				  case StoreOperandType.local_16: 
-				  	operands.push(GLUXLX_STUB.STORE_LOCAL);
+				  	operands.push(GLULX_STUB.STORE_LOCAL);
 					operands.push(this.image.readInt16(operandPos));
 				  	return 2;
 				  case StoreOperandType.local_32: 
-				  	operands.push(GLUXLX_STUB.STORE_LOCAL);
+				  	operands.push(GLULX_STUB.STORE_LOCAL);
 					operands.push(this.image.readInt32(operandPos)); 
 					return 4;
 				  case StoreOperandType.ram_8:
-				    operands.push(GLUXLX_STUB.STORE_MEM);
+				    operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.getRamAddress(this.image.readByte(operandPos)));
 				  	return 1;
 				  case StoreOperandType.ram_16: 
-				  	operands.push(GLUXLX_STUB.STORE_MEM);
+				  	operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.getRamAddress(this.image.readInt16(operandPos)));
 				  	return 2;
 				  case StoreOperandType.ram_32: 
-				  	operands.push(GLUXLX_STUB.STORE_MEM);
+				  	operands.push(GLULX_STUB.STORE_MEM);
 					operands.push(this.image.getRamAddress(this.image.readInt32(operandPos))); 
 					return 4;	
 					
@@ -673,10 +677,10 @@ module FyreVM {
 		  
 		  private performDelayedStore(type:number, address: number, value: number){
 			  switch(type){
-				  case GLUXLX_STUB.STORE_NULL: return;
-				  case GLUXLX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
-				  case GLUXLX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
-				  case GLUXLX_STUB.STORE_STACK: this.push(value); return;
+				  case GLULX_STUB.STORE_NULL: return;
+				  case GLULX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
+				  case GLULX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
+				  case GLULX_STUB.STORE_STACK: this.push(value); return;
 				  default: throw `unsupported delayed store mode ${type}`;
 			  }
 		  }
@@ -745,20 +749,38 @@ module FyreVM {
 			  let newLocalsPos = this.stack.readInt32(newFP+4);
 			  
 			  switch(stub.destType){
-				  case GLUXLX_STUB.STORE_NULL: break;
-				  case GLUXLX_STUB.STORE_MEM:
+				  case GLULX_STUB.STORE_NULL: break;
+				  case GLULX_STUB.STORE_MEM:
 				  		this.image.writeInt32(stub.destAddr, result);
 						break;
-				  case GLUXLX_STUB.STORE_LOCAL:
+				  case GLULX_STUB.STORE_LOCAL:
 				  		this.stack.writeInt32(newFP + newLocalsPos+ stub.destAddr, result);
 						break;
-				  case GLUXLX_STUB.STORE_STACK:
+				  case GLULX_STUB.STORE_STACK:
 				  		this.push(result);
 						break;
-				  case GLUXLX_STUB.RESUME_FUNC:
+				  case GLULX_STUB.RESUME_FUNC:
 				  		// resume executing in the same call frame
                     	// return to avoid changing FP
                     	return;
+				  case GLULX_STUB.RESUME_CSTR:
+                    	// resume printing a C-string
+                    	this.execMode = ExecutionMode.CString;
+                    	break;
+                  case GLULX_STUB.RESUME_UNISTR:
+                   	    // resume printing a Unicode string
+                    	this.execMode = ExecutionMode.UnicodeString;
+                        break;
+                  case GLULX_STUB.RESUME_NUMBER:
+                    	// resume printing a decimal number
+                    	this.execMode = ExecutionMode.Number;
+                    	this.printingDigit = stub.destAddr;
+                    break;
+                  case GLULX_STUB.RESUME_HUFFSTR:
+                    	// resume printing a compressed string
+                    	this.execMode = ExecutionMode.CompressedString;
+                    	this.printingDigit = stub.destAddr;
+                    break;		
 				  // TODO: the other return modes
 				  default:
 				  		throw `unsupported return mode ${stub.destType}`
@@ -812,7 +834,7 @@ module FyreVM {
 		  
 		  streamUniCharCore(x: number){
 			    if (this.outputSystem === IOSystem.Filter){
-					this.performCall(this.filterAddress, [ x ], GLUXLX_STUB.STORE_NULL, 0, this.PC, false);
+					this.performCall(this.filterAddress, [ x ], GLULX_STUB.STORE_NULL, 0, this.PC, false);
 				}else{
 					SendCharToOutput.call(this, x);
 				}
@@ -820,9 +842,9 @@ module FyreVM {
 
  		  streamNumCore(x: number){
 			    if (this.outputSystem === IOSystem.Filter){
-					this.pushCallStub(GLUXLX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
+					this.pushCallStub(GLULX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
 					let num = x.toString();
-					this.performCall(this.filterAddress, [ num.charCodeAt(0) ], GLUXLX_STUB.RESUME_NUMBER, 1, x, false);
+					this.performCall(this.filterAddress, [ num.charCodeAt(0) ], GLULX_STUB.RESUME_NUMBER, 1, x, false);
 				}else{
 					SendStringToOutput.call(this, x.toString());
 				}
@@ -840,7 +862,7 @@ module FyreVM {
 			  let fallbackEncoding = (type === 0xE1);
 			  
 			  if (this.outputSystem == IOSystem.Filter || fallbackEncoding){
-				  this.pushCallStub(GLUXLX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
+				  this.pushCallStub(GLULX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
 				  switch(type){
 					  case 0xE0:
 					  	this.execMode = ExecutionMode.CString;

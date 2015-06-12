@@ -151,6 +151,16 @@ module FyreVM {
 			this.glkLineInputBuffer = buffer;
 		}
 		
+		// glk_request_char_event
+		handlers[0xD2] = function(){
+			this.glkWantCharInput = true;
+		}
+		
+		// glk_put_char
+		handlers[0x80] = function(c){
+			GlkWrapperWrite.call(this, String.fromCharCode(c));
+		}
+		
 		// glk_select 
 		handlers[0xC0] = function(reference) : any{
 			this.deliverOutput();
