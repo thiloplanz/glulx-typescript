@@ -166,6 +166,23 @@ module FyreVM {
 					this.writeInt32(address, value);
 			}
 		}
+		
+		/**
+		 * @param limit: the maximum number of bytes to write
+		 * returns the number of bytes written
+		 */
+		writeASCII(address: number, text: string, limit: number): number{
+			let bytes = [];
+			for (let i=0; i<text.length && i< limit; i++){
+				let c = text.charCodeAt(i);
+				if (c > 255){
+					c = 63; // '?'
+				}
+				bytes.push(c);
+			}
+			this.writeBytes(address, ...bytes);
+			return bytes.length;
+		}
 	
 		static writeHeader(fields: GlulxHeader, m: MemoryAccess, offset=0){
 			m.writeASCII(offset, fields.magic || 'Glul');

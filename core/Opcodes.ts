@@ -318,7 +318,7 @@ module FyreVM {
 
 			opcode(0x31, 'return', 1, 0,
 				function(retVal:number){
-					this.leaveFunction(retVal);
+					this.leaveFunction(uint32(retVal));
 				})
 				
 			opcode(0x32, "catch", 0, 0,
@@ -682,6 +682,12 @@ module FyreVM {
 				function(){ this.running = false; });
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
+
+			opcode(0x125, 'saveundo', 0, 1, function(){
+				// TODO: implement save/restore
+				return 1;
+			}, OpcodeRule.DelayedStore);
+
 
 			opcode(0x110, 'random', 1, 1,
 				function(max){

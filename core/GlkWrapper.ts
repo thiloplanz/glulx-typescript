@@ -134,7 +134,78 @@ module FyreVM {
 		//glk_stylehint_set 
 		handlers[0xB0] = stub;
 		
+		// glk_char_to_lower
+		handlers[0xA0] = function(ch){
+			return String.fromCharCode(ch).toLowerCase().charCodeAt(0);
+		}
+		
+		// glk_char_to_upper
+		handlers[0xA1] = function(ch){
+			return String.fromCharCode(ch).toUpperCase().charCodeAt(0);
+		}
+		
+		// glk_request_line_event
+		handlers[0xD0] = function(winId, buffer, bufferSize){
+			this.glkWantLineInput = true;
+			this.glkLineInputBufSize = bufferSize;
+			this.glkLineInputBuffer = buffer;
+		}
+		
+		// glk_select 
+		handlers[0xC0] = function(reference) : any{
+			this.deliverOutput();
+			
+					
+			if (this.glkWantLineInput){
+				this.glkWantLineInput = false;
+				if (!this.lineWanted){
+					GlkWriteReference.call(this, reference, GlkConst.evtype_LineInput, 1, 1, 0);
+					return 0;
+				}
+				let callback = function(line = ''){
+					let max = this.image.writeASCII(this.glkLineInputBuffer, line, this.glkLineInputBufSize);
+					GlkWriteReference.call(this, reference, GlkConst.evtype_LineInput, 1, max, 0);
+					this.resumeAfterWait([0]);
+				}
+				
+				this.lineWanted(callback.bind(this));
+				return 'wait';
+			}else if (this.glkWantCharInput){
+				this.glkWantCharInput = false;
+				if (!this.keyWanted){
+					GlkWriteReference.call(this, reference, GlkConst.evtype_CharInput, 1, 0, 0);
+					return 0;
+				}
+				let callback = function(line){
+					GlkWriteReference.call(this, reference, GlkConst.evtype_CharInput, 1, line.charCodeAt(0), 0);
+					this.resumeAfterWait([0]);
+				}
+				
+				this.lineWanted(callback.bind(this));
+				return 'wait';
+				
+			}else{
+				// no event
+				GlkWriteReference.call(this, reference, GlkConst.evtype_None, 0, 0, 0);
+			}
+			return 0;
+		}
+		
 		return handlers;
 	}
 	
+	
+	function GlkWriteReference(reference: number, ...values: number[])
+        {
+			if (reference == 0xffffffff){
+             	for (let i=0; i<values.length; i++)
+			    	this.push(values[i]);
+			}
+            else{
+				for (let i=0; i<values.length; i++){
+                	this.image.writeInt32(reference, values[i]);
+					reference += 4;
+				}
+			}
+        }
 }

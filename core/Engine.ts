@@ -931,21 +931,10 @@ module FyreVM {
 				let callback = function(line:string){
 					if (line && line.length){
 						// TODO? handle Unicode
-						let bytes = [];
-						for (let i=0; i<line.length; i++){
-							let c = line.charCodeAt(i);
-							if (c > 255){
-								c = 63; // '?'
-							}
-							bytes.push(c);
-						}
 						// write the length first
-						image.writeInt32(address, bytes.length);
+						image.writeInt32(address, line.length);
 						// followed by the character data, truncated to fit the buffer
-               			if (bytes.length > bufSize){
-						   bytes.splice(bufSize, bytes.length-bufSize);	   
-						}
-					   	image.writeBytes(address + 4, ...bytes);  
+             		   	image.writeASCII(address + 4, line, bufSize - 4);  
 					}else{
 						image.writeInt32(address, 0);
 					}

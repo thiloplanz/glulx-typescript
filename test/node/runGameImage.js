@@ -27,6 +27,9 @@ var rl = readline.createInterface({
 var testGame = FyreVM.BufferMemoryAccess.loadFile(process.argv[2]);
 
 var engine = new FyreVM.Engine(new FyreVM.UlxImage(testGame));
+
+// enable Glk emulation
+engine.glkMode = 1;
 	
 var prompt = "";
 var room = "";
@@ -39,7 +42,7 @@ engine.lineWanted = function(callback){
 engine.keyWanted = engine.lineWanted;
 engine.outputReady = function(x){
 	rl.write(x.MAIN);
-	prompt = x.PRPT;
-	room = x.ROOM;
+	prompt = x.PRPT || prompt;
+	room = x.ROOM || room;
 }
 engine.run();
