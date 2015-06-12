@@ -30,8 +30,15 @@ var engine = new FyreVM.Engine(new FyreVM.UlxImage(testGame));
 
 // enable Glk emulation
 engine.glkMode = 1;
+
+function glk_window_clear(){
+	readline.cursorTo(process.stdout, 0, 0);
+	readline.clearScreenDown(process.stdout);
+};
+		
 	
-var prompt = "";
+	
+var prompt = "> ";
 var room = "";
 	
 engine.lineWanted = function(callback){
@@ -41,6 +48,9 @@ engine.lineWanted = function(callback){
 }
 engine.keyWanted = engine.lineWanted;
 engine.outputReady = function(x){
+	if (engine.glkHandlers){
+		engine.glkHandlers[0x2A] = glk_window_clear;
+	}
 	rl.write(x.MAIN);
 	prompt = x.PRPT || prompt;
 	room = x.ROOM || room;

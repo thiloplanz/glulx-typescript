@@ -141,6 +141,35 @@ module FyreVM {
 		}
 	}
 	
+	export function NextUniStringChar(){
+		let ch = this.image.readInt32(this.PC);
+		this.PC += 4;
+		if (ch === 0){
+			this.resumeFromCallStub(0);
+			return;
+		}
+		if (this.outputSystem === IOSystem.Filter){
+			this.performCall(this.filterAddress, [ch],  GLULX_STUB.RESUME_UNISTR, 0, this.PC);
+		}else{
+			SendCharToOutput(ch);
+		}
+	}
+	
+	export function NextDigit(){
+		let s:string = this.PC.toString();
+		if (this.printingDigit < s.length){
+			let ch = s.charAt(this.printingDigit);
+			if (this.outputSystem === IOSystem.Filter){
+				this.performCall(this.filterAddress, [ch.charCodeAt(0)],  GLULX_STUB.RESUME_NUMBER, this.printingDigit+1, this.PC);
+			}else{
+				SendStringToOutput(ch);
+				this.printingDigit++;
+			}
+		}else{
+			this.resumeFromCallStub(0);
+		}
+	}
+	
 	export interface ChannelData {
 		[channel: string] : string; 
 	}

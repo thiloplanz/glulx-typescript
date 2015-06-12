@@ -498,7 +498,16 @@ module FyreVM {
 					
 				  case ExecutionMode.CString:
 				  	NextCStringChar.call(this);
-					break 
+					break;
+					
+				  case ExecutionMode.UnicodeString:
+				  	NextUniStringChar.call(this);
+					break;
+					
+				  case ExecutionMode.Number:
+				  	NextDigit.call(this);
+					break;
+					
 					  
 				  default:
 				  	throw `unsupported execution mode ${this.execMode}`;

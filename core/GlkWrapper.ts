@@ -134,6 +134,12 @@ module FyreVM {
 		//glk_stylehint_set 
 		handlers[0xB0] = stub;
 		
+		// glk_style_distinguish
+		handlers[0xB2] = stub;
+		
+		// glk_style_measure
+		handlers[0xB3] = stub;
+		
 		// glk_char_to_lower
 		handlers[0xA0] = function(ch){
 			return String.fromCharCode(ch).toLowerCase().charCodeAt(0);
