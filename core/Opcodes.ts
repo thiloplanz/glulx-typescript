@@ -137,7 +137,8 @@ module FyreVM {
 	
 			// TODO: check the specs
 			opcode(0x15, 'neg', 1, 1,
-				function(x){ return 0xFFFFFFFF - x });
+				function(x){ 
+				return uint32(0xFFFFFFFF - x + 1)});
 	
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x18, 'bitand', 2, 1,

@@ -199,7 +199,7 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'sub', 47, 5, 42);
 			check_byte_byte_store(m, test, 'sub', 0, 3,  0xFFFFFFFF -3 + 1);
 			check_byte_int32_store(m, test, 'sub', 0, 0xFF, 0xFF, 0xFF, 0xFD,  3);
-			
+			check_byte_byte_store(m, test, 'sub', 0xFF, 3, 0xFFFFFFFC);
 			test.done();	
 		}
 		
@@ -223,7 +223,8 @@ module FyreVM{
 		
 		tests.Opcodes.Arithmetics.testNeg = 
 		function(test: nodeunit.Test){
-			check_byte_store(m, test, 'neg', 5, 0xFFFFFFFA);
+			check_byte_store(m, test, 'neg', 5, 0xFFFFFFFB);
+			check_byte_store(m, test, 'neg', 0xFF, 1);
 			test.done();	
 		}
 		
