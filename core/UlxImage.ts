@@ -199,9 +199,31 @@ module FyreVM {
 	
 	    /** Reloads the game file, discarding all changes that have been made
         * to RAM and restoring the memory map to its original size.
+		* 
+		* Use the optional "protection" parameters to preserve a RAM region
 		*/
-		revert(){
+		revert(protectionStart=0, protectionLength=0){
+			let prot : MemoryAccess= null;
+			if (protectionLength > 0){
+				if (protectionStart + protectionLength > this.getEndMem()){
+					protectionLength = this.getEndMem() - protectionStart;
+				}
+				// can only protect RAM
+				let start = protectionStart - this.ramstart;
+				if (start < 0){
+					protectionLength += start;
+					start = 0;
+				}
+				prot = this.memory.copy(start + this.ramstart, protectionLength);
+			}
 			this.loadFromOriginal();	
+			if (prot){
+				let d = [];
+				for(let i=0; i<protectionLength; i++){
+					d.push(prot.readByte(i));
+				}
+				this.writeBytes(protectionStart, ...d);
+			}
 		}
 		
 	}

@@ -224,7 +224,10 @@ module FyreVM {
 		private heap: HeapAllocator;
 		private cycle = 0;
 		private printingDigit = 0; // bit number for compressed strings, digit for numbers
-        
+        private protectionStart = 0;
+		private protectionLength = 0;
+		
+		
 		// if turned off, no FyreVM functions are made available, just standard Glulx stuff
 		enableFyreVM = true;
 		
@@ -919,10 +922,8 @@ module FyreVM {
          * and starts the game over from the top of the main function.
 		 */
 		  restart(){
-			  // TODO save the protected area of RAM
-			  this.image.revert();
+			  this.image.revert(this.protectionStart, this.protectionLength);
 			  this.bootstrap();
-			  // TODO: restore the protected RAM
 		  }
 		  
 		  fyreCall(call, x, y) : any{

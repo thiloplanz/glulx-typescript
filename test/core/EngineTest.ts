@@ -67,24 +67,17 @@ module FyreVM{
 		}
 		
 		export function stepImage(gameImage: UlxImage, stepCount = 1, test?: nodeunit.Test, initialStack? : number[]) : Engine{
-			try{
-				let engine:any = new Engine(gameImage);
-				engine.bootstrap();
-				if (initialStack){
-					for (let i=initialStack.length -1 ; i>=0; i--){
-						engine.push(initialStack[i]);
-					}
+			let engine:any = new Engine(gameImage);
+			engine.bootstrap();
+			if (initialStack){
+				for (let i=initialStack.length -1 ; i>=0; i--){
+					engine.push(initialStack[i]);
 				}
-				while(stepCount--){
-					engine.step();
-				}
-				return engine;
 			}
-			catch(e){
-				if (!test)
-					throw e;
-				test.strictEqual(null, e, e);
+			while(stepCount--){
+				engine.step();
 			}
+			return engine;
 		}
 	
 		export function addEngineTests(tests, m: MemoryAccess){

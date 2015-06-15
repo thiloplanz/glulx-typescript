@@ -1257,12 +1257,48 @@ module FyreVM{
 		function(test: nodeunit.Test){
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				0x81, 0x20  // "quit"
+				op('quit')  
 			);
 			let engine = new Engine(gameImage);
 			engine.run();
 			test.done();
 		}
+		
+		tests.Opcodes.GameState.restart = 
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('copy'),
+					p_in(LoadOperandType.byte, StoreOperandType.ptr_16),
+					100, 0x03, 0xA0,
+				op('restart') 
+			);
+			let engine = stepImage(gameImage, 2, test);
+			test.equal(gameImage.readInt32(0x03A0), 0);
+			engine.step();
+			test.equal(gameImage.readInt32(0x03A0), 100);
+			test.done();
+		}
+		
+		tests.Opcodes.GameState.protect = 
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('copy'),
+					p_in(LoadOperandType.byte, StoreOperandType.ptr_16),
+					100, 0x03, 0xA0,
+				op('protect'),
+					p_in(LoadOperandType.int16, LoadOperandType.byte),
+					0x03, 0xA0,
+					32,
+				op('restart') 
+			);
+			let engine = stepImage(gameImage, 3, test);
+			test.equal(gameImage.readInt32(0x03A0), 100);
+			test.done();
+		}
+		
+		
 
 		tests.Opcodes.Misc.gestalt = 
 		function(test: nodeunit.Test){

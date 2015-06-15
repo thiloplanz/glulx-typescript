@@ -688,6 +688,15 @@ module FyreVM {
 				return 1;
 			}, OpcodeRule.DelayedStore);
 
+			opcode(0x127, 'protect', 2, 0,
+				function(start, length){
+					if (start < this.image.getEndMem()){
+						this.protectionStart = start;
+						this.protectionLength = length;
+					}
+				}
+			)
+
 
 			opcode(0x110, 'random', 1, 1,
 				function(max){
