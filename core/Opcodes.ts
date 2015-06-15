@@ -577,7 +577,11 @@ module FyreVM {
 				
 			});
 
+			opcode(0x150, 'linearsearch', 7, 1, PerformLinearSearch);
+
 			opcode(0x151, 'binarysearch', 7, 1, PerformBinarySearch);
+
+			opcode(0x152, 'linkedsearch', 6, 1, PerformLinkedSearch);
 
 			opcode(0x50, 'stkcount', 0, 1,
 				function(){
@@ -761,6 +765,56 @@ module FyreVM {
 		}
 		// did not find
 		return returnIndex ? 0xFFFFFFFF : 0;
+	}
+	
+	
+	function PerformLinearSearch(key, keySize, start, structSize, numStructs, keyOffset, options){
+		if (keySize > 4 && !(options & SearchOptions.KeyIndirect) )
+			throw new Error("KeyIndirect option must be used when searching for a >4 byte key");
+		let returnIndex = options & SearchOptions.ReturnIndex;
+		for (let i = 0; i<numStructs; i++){
+			let cmp = compareKeys.call(this, key, start + i*structSize + keyOffset, keySize, options);
+			if (cmp === 0){
+				// found it
+				if (returnIndex) return i;
+				return start+i*structSize;
+			}
+			if (options & SearchOptions.ZeroKeyTerminates){
+				if (keyIsZero.call(this, start + i*structSize + keyOffset, keySize)){
+					break;
+				}
+			}
+		}
+		// did not find
+		return returnIndex ? 0xFFFFFFFF : 0;
+	}
+	
+	function PerformLinkedSearch(key, keySize, start, keyOffset, nextOffset, options){
+		if (options & SearchOptions.ReturnIndex)
+			throw new Error("ReturnIndex option may not be used with linked search");
+		let node = start;
+		while (start){
+			let cmp = compareKeys.call(this, key, node + keyOffset, keySize, options);
+			if (cmp === 0){
+				// found it
+				return node;
+			}
+			if (options & SearchOptions.ZeroKeyTerminates){
+				if (keyIsZero.call(this, node + keyOffset, keySize)){
+					return 0;
+				}
+			}
+			// advance the next item
+			node = this.image.readInt32(node+nextOffset);
+		}
+	}
+	
+	function keyIsZero(address, size){
+		while(size--){
+			if (this.image.readByte(address+size) !== 0)
+				return false;
+		}
+		return true;
 	}
 	
 	function compareKeys(query:number, candidateAddr: number, keySize: number, options: number){

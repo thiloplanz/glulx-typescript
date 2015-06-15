@@ -1370,6 +1370,60 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Opcodes.Misc.linearSearch =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('linearsearch'),
+				p_in(LoadOperandType.byte, LoadOperandType.byte),
+				p_in(LoadOperandType.int16, LoadOperandType.byte),
+				p_in(LoadOperandType.byte, LoadOperandType.zero),
+				p_in(LoadOperandType.zero, StoreOperandType.stack),
+				42, // key
+				1, // keySize
+				0x03, 0xA0, // array start
+				1, // structSize
+				10 // numStructs
+			);
+			
+			image.writeBytes(0x03A0,
+				1, 10, 20, 42, 50, 
+				60, 70, 80, 90, 100
+			);
+			
+			let engine = stepImage(image, 1, test);
+			let x = engine['pop']();
+			test.equal(x, 0x03A3, 'found key in array')	
+			test.done();	
+		}
+		
+		tests.Opcodes.Misc.linkedSearch =
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('linkedsearch'),
+				p_in(LoadOperandType.byte, LoadOperandType.byte),
+				p_in(LoadOperandType.int16, LoadOperandType.zero),
+				p_in(LoadOperandType.byte, LoadOperandType.zero),
+				p_out(StoreOperandType.stack),
+				42, // key
+				1, // keySize
+				0x03, 0xA0, // array start
+				1 // nextOffset
+			);
+			
+			image.writeBytes(0x03A0,
+				1, 0x00, 0x00, 0x03, 0xA5,
+				42, 0x00, 0x00, 0x00, 0x00
+			);
+			
+			let engine = stepImage(image, 1, test);
+			let x = engine['pop']();
+			test.equal(x, 0x03A5, 'found key in linked list')	
+			test.done();	
+		}
+
+
 		
 		tests.Opcodes.FyreVM.ReadLine_noInput =
 		function(test: nodeunit.Test){
