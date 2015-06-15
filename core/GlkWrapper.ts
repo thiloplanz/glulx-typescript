@@ -72,7 +72,7 @@ module FyreVM {
 		}
 		
 		if (argc > 8){
-			throw `Too many stack arguments for glk call ${code}: ${argc}`;
+			throw new Error(`Too many stack arguments for glk call ${code}: ${argc}`);
 		}
 		let glkArgs = [];
 		while(argc--){

@@ -334,7 +334,7 @@ module FyreVM {
 			opcode(0x33, "throw", 2, 0,
 				function(ex, catchToken){
 					if (catchToken > this.SP)
-						throw "invalid catch token";
+						throw new Error("invalid catch token ${catchToken}");
 					// pop the stack back down to the stub pushed by catch
 					this.SP = catchToken;
 					
@@ -469,7 +469,7 @@ module FyreVM {
 						case GlkMode.Wrapper:
 						  	return GlkWrapperCall.call(this, code, argc);
 						default:
-							throw `unsupported glkMode ${this.glkMode}`;	
+							throw new Error(`unsupported glkMode ${this.glkMode}`);	
 					}
 				}
 			);
@@ -487,16 +487,16 @@ module FyreVM {
 							return;
 						case 2:
 							if (this.glkMode !== GlkMode.Wrapper)
-								throw "Glk wrapper support has not been enabled";
+								throw new Error("Glk wrapper support has not been enabled");
 							this['outputSystem'] = IOSystem.Glk;
 							return;
 						case 20:
 							if (!this.enableFyreVM)
-								throw "FyreVM support has been disabled";
+								throw new Error("FyreVM support has been disabled");
 							this['outputSystem'] = IOSystem.Channels;
 							return;
 						default:
-							throw `Unrecognized output system ${system}`
+							throw new Error(`Unrecognized output system ${system}`);
 					}
 				}
 			);
@@ -510,7 +510,7 @@ module FyreVM {
 			opcode(0x103, 'setmemsize', 1, 1,
 				function(size){
 					if (this.heap)
-						throw "setmemsize is not allowed while the heap is active";
+						throw new Error("setmemsize is not allowed while the heap is active");
 					try{
 						this.image.setEndMem(size);
 						return 0;
@@ -589,7 +589,7 @@ module FyreVM {
 				function(pos){
 					let address = this.SP - 4 * (1 + pos)
 					if (address < this.FP + this.frameLen)
-						throw "Stack underflow";
+						throw new Error("Stack underflow");
 					return this.stack.readInt32(address);
 				}
 			);
@@ -597,7 +597,7 @@ module FyreVM {
 			opcode(0x52, 'stkswap', 0, 0,
 				function(pos){
 					if (this.SP - (this.FP + this.frameLen) < 8)
-						throw "Stack underflow";
+						throw new Error("Stack underflow");
 					let a = this.pop();
 					let b = this.pop();
 					this.push(a);
@@ -617,7 +617,7 @@ module FyreVM {
              		if (distance < 0)
 					 	distance += items;
 					if (this.SP - (this.FP + this.frameLen) < 4* items)
-						throw "Stack underflow";
+						throw new Error("Stack underflow");
 					let temp1 = [];
 					let temp2 = [];
 					for (let i=0; i<distance; i++){
@@ -639,7 +639,7 @@ module FyreVM {
 				function(count){
 					let bytes = count * 4;
 					if (bytes > this.SP - (this.FP + this.frameLen))
-						throw "Stack underflow";
+						throw new Error("Stack underflow");
 					let start = this.SP - bytes;
 					while(count--){
 						this.push(this.stack.readInt32(start))
@@ -731,9 +731,9 @@ module FyreVM {
 	
 	function PerformBinarySearch(key, keySize, start, structSize, numStructs, keyOffset, options){
 		if (options & SearchOptions.ZeroKeyTerminates)
-			throw "ZeroKeyTerminated option may not be used with binary search";
+			throw new Error("ZeroKeyTerminated option may not be used with binary search");
 		if (keySize > 4 && !(options & SearchOptions.KeyIndirect) )
-			throw "KeyIndirect option must be used when searching for a >4 byte key";
+			throw new Error("KeyIndirect option must be used when searching for a >4 byte key");
 		let returnIndex = options & SearchOptions.ReturnIndex;
 		let low =0, high = numStructs;
 		while (low < high){

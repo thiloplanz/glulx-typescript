@@ -33,7 +33,7 @@ module FyreVM {
 				return;
 							
 		}
-		throw `unsupported output system ${this.outputSystem}`;
+		throw new Error(`unsupported output system ${this.outputSystem}`);
 	}
 	
 	export function SendStringToOutput(x: string){
@@ -47,7 +47,7 @@ module FyreVM {
 					GlkWrapperWrite.call(this, x);
 				return;
 		}
-		throw `unsupported output system ${this.outputSystem}`;
+		throw new Error(`unsupported output system ${this.outputSystem}`);
 	}
 	
 	
@@ -112,7 +112,7 @@ module FyreVM {
 					return;
 				// TODO: the other node types
 				default:
-					throw `Unrecognized compressed string node type ${nodeType}`;
+					throw new Error(`Unrecognized compressed string node type ${nodeType}`);
 			}
 		}
 	}

@@ -70,7 +70,7 @@ module FyreVM{
 		copy(offset: number, length: number) : BufferMemoryAccess {
 			// TODO: range check
 			if (length > this.maxSize)
-				throw `Memory request for ${length} bytes exceeds limit of ${this.maxSize}`;
+				throw new Error(`Memory request for ${length} bytes exceeds limit of ${this.maxSize}`);
 			let result = new BufferMemoryAccess(length);
 			this.buffer.copy(result.buffer, 0, offset, offset+length);
 			result.maxSize = this.maxSize;

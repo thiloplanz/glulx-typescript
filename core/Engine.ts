@@ -55,6 +55,12 @@ module FyreVM {
 		(package: ChannelData) : void
 	}
 	
+
+	// TODO: find out what this does
+	export interface TransitionRequestedEventHandler {
+		(): void
+	}	
+	
     /** 
 	 *  Describes the task that the interpreter is currently performing.
     */
@@ -227,18 +233,18 @@ module FyreVM {
 		outputReady: OutputReadyEventHandler;
 		lineWanted: LineWantedEventHandler;
 		keyWanted: KeyWantedEventHandler;
-		
+		transitionRequested: TransitionRequestedEventHandler;
 		
 		
 		constructor(gameFile: UlxImage){
 			let major = gameFile.getMajorVersion();
 			if (major < 2 || major > 3)
-				throw "Game version is out of the supported range";
+				throw new Error("Game version is out of the supported range");
 			let minor = gameFile.getMinorVersion();
 			if (major == 2 && minor < 0)
-				throw "Game version is out of the supported range";
+				throw new Error("Game version is out of the supported range");
 			if (major == 3 && minor > 1)
-				throw "Game version is out of the supported range";
+				throw new Error("Game version is out of the supported range");
 			this.image = gameFile;
 			this.stack = gameFile.allocateStack();
 		}
@@ -329,7 +335,7 @@ module FyreVM {
 						    stack.writeInt32(sp+offset, args[argnum]);
 							break;
 						 default:
-						    throw `Illegal call param size ${size} at position ${argnum}`;
+						    throw new Error(`Illegal call param size ${size} at position ${argnum}`);
 					 }
 					 offset += size;
 					 lastOffset = offset;
@@ -405,7 +411,7 @@ module FyreVM {
 					// look up opcode info
 					let opcode = this.opcodes[opnum];
 					if (!opcode){
-						throw `Unrecognized opcode ${opnum}`;
+						throw new Error(`Unrecognized opcode ${opnum}`);
 					}
 					
 					// decode load-operands
@@ -510,7 +516,7 @@ module FyreVM {
 					
 					  
 				  default:
-				  	throw `unsupported execution mode ${this.execMode}`;
+				  	throw new Error(`unsupported execution mode ${this.execMode}`);
 			  }
 		  }
 		  
@@ -542,15 +548,15 @@ module FyreVM {
 					 switch(opcode.rule){
 						case OpcodeRule.Indirect8Bit: 
 							if (address > maxAddress)
-							    throw "Reading outside local storage bounds";
+							    throw new Error("Reading outside local storage bounds");
 							return stack.readByte(address);
 						case OpcodeRule.Indirect16Bit: 
 							if (address+1 > maxAddress)
-							    throw "Reading outside local storage bounds";
+							    throw new Error("Reading outside local storage bounds");
 						    return stack.readInt16(address);
 						default: 
 							if (address+3 > maxAddress)
-							    throw "Reading outside local storage bounds";
+							    throw new Error("Reading outside local storage bounds");
 							return stack.readInt32(address);
 					} 
 			  }
@@ -577,7 +583,7 @@ module FyreVM {
 				  // stack
 				  case LoadOperandType.stack: 
 				  	 if (this.SP <= this.FP + this.frameLen)
-			 				throw "Stack underflow";
+			 				throw new Error("Stack underflow");
 				  	operands.push(this.pop()); 
 					return 0;
 				  // indirect from RAM
@@ -589,7 +595,7 @@ module FyreVM {
 				  case LoadOperandType.local_16: operands.push(loadLocal(image.readInt16(operandPos))); return 2;
 				  case LoadOperandType.local_32: operands.push(loadLocal(image.readInt32(operandPos))); return 4;
 
-				  default: throw `unsupported load operand type ${type}`;
+				  default: throw new Error(`unsupported load operand type ${type}`);
 			  }
 			  
 		  }
@@ -623,7 +629,7 @@ module FyreVM {
 				  case StoreOperandType.ram_32:
 				  		operands.push(this.image.getRamAddress(this.image.readInt32(operandPos)));
 						return 4;  
-				  default: throw `unsupported store operand type ${type}`;
+				  default: throw new Error(`unsupported store operand type ${type}`);
 			  }
 			  return operandPos;
 		  }
@@ -678,7 +684,7 @@ module FyreVM {
 					operands.push(this.image.getRamAddress(this.image.readInt32(operandPos))); 
 					return 4;	
 					
-				  default: throw `unsupported delayed store operand type ${type}`;
+				  default: throw new Error(`unsupported delayed store operand type ${type}`);
 			  }
 			  return operandPos;
 		  }
@@ -690,7 +696,7 @@ module FyreVM {
 				  case GLULX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
 				  case GLULX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
 				  case GLULX_STUB.STORE_STACK: this.push(value); return;
-				  default: throw `unsupported delayed store mode ${type}`;
+				  default: throw new Error(`unsupported delayed store mode ${type}`);
 			  }
 		  }
 		  
@@ -718,21 +724,21 @@ module FyreVM {
 						switch(rule){
 							case OpcodeRule.Indirect8Bit:
 								if(address >= limit)
-									throw "writing outside local storage bounds";
+									throw new Error("writing outside local storage bounds");
 								this.stack.writeByte(address, value);
 								return;
 							case OpcodeRule.Indirect16Bit:
 								if(address+1 >= limit)
-									throw "writing outside local storage bounds";
+									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt16(address, value);
 								return;
 							default:
 								if(address+3 >= limit)
-									throw "writing outside local storage bounds";
+									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt32(address, value);
 								return;
 						}					  
-					  default: throw `unsupported store result mode ${type}`
+					  default: throw new Error(`unsupported store result mode ${type}`);
 				  }	
 			  }
 		  }
@@ -792,7 +798,7 @@ module FyreVM {
                     break;		
 				  // TODO: the other return modes
 				  default:
-				  		throw `unsupported return mode ${stub.destType}`
+				  		throw new Error(`unsupported return mode ${stub.destType}`);
 			  }
 			  
 			  this.FP = newFP;
@@ -832,7 +838,7 @@ module FyreVM {
 				} else if (type === CallType.localStorage){
 					this.enterFunction(address, ...args);
 				} else {
-					throw `Invalid function call type ${type}`;
+					throw new Error(`Invalid function call type ${type}`);
 				}
 				
 		  }
@@ -864,7 +870,7 @@ module FyreVM {
 			  let type = this.image.readByte(address);
 			  
 			  if (type === 0xE1 && !this.decodingTable)
-			  		throw "No string decoding table is set";
+			  		throw new Error("No string decoding table is set");
 			  	
 			  // TODO: native decoding table
 			  // for now, just fall back to using ExecutionMode.CompressedString	  
@@ -887,7 +893,7 @@ module FyreVM {
 						this.PC = address+4;
 						return;
 					  default:
-					  	throw `Invalid string type ${type} at ${address}`;
+					  	throw new Error(`Invalid string type ${type} at ${address}`);
 				  }
 			  }
 			  
@@ -896,7 +902,7 @@ module FyreVM {
 				  	SendStringToOutput.call(this, this.image.readCString(address+1));
 					return;
 				  default:
-					  throw `Invalid string type ${type} at ${address}`;
+					  throw new Error(`Invalid string type ${type} at ${address}`);
 			  }
 		  }
 
@@ -921,7 +927,7 @@ module FyreVM {
 		  
 		  fyreCall(call, x, y) : any{
 			  if (!this.enableFyreVM)
-			  	throw `FyreVM functionality has been disabled`;
+			  	throw new Error(`FyreVM functionality has been disabled`);
 			  switch(call){
 				  case FyreCall.ReadLine:
 				  	this.deliverOutput();
@@ -940,8 +946,13 @@ module FyreVM {
 				  case FyreCall.SetVeneer:
 				  	console.warn(`ignoring veneer ${x} ${y}`);
 					return 1;
+				  case FyreCall.RequestTransition:
+				    if (this.transitionRequested){
+						this.transitionRequested();
+					return;
+					}
 				  default:
-				  	throw `Unrecognized FyreVM system call ${call}(${x},${y})`	  
+				  	throw new Error(`Unrecognized FyreVM system call ${call}(${x},${y})`);	  
 			  }
 		  }
 

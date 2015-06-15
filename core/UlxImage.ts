@@ -56,19 +56,19 @@ module FyreVM {
 			let header = stream.copy(0, GLULX_HDR.SIZE);
 			let magic = header.readASCII(0, 4);
 			if (magic !== 'Glul'){
-				throw `.ulx file has wrong magic number ${magic}`;
+				throw new Error(`.ulx file has wrong magic number ${magic}`);
 			}
 			
 			let endmem = header.readInt32(GLULX_HDR.ENDMEM_OFFSET);
 			if (endmem < GLULX_HDR.SIZE){
-				throw `invalid endMem ${endmem} in .ulx file. Too small to even fit the header.`
+				throw new Error(`invalid endMem ${endmem} in .ulx file. Too small to even fit the header.`);
 			}
 			// now read the whole thing
 			this.memory = stream.copy(0, endmem);
 			// TODO: verify checksum
 			this.ramstart = header.readInt32(GLULX_HDR.RAMSTART_OFFSET);
 			if (this.ramstart > endmem){
-				throw `invalid ramStart ${this.ramstart} beyond endMem ${endmem}.`
+				throw new Error(`invalid ramStart ${this.ramstart} beyond endMem ${endmem}.`);
 			}			
 		}
 	
@@ -142,13 +142,13 @@ module FyreVM {
 		
 		writeInt32(address: number, value: number) {
 			if (address < this.ramstart)
-				throw `Writing into ROM! offset: ${address}`;
+				throw new Error(`Writing into ROM! offset: ${address}`);
 			this.memory.writeInt32(address, value);
 		}
 		
 		writeBytes(address: number, ...bytes: number[]){
 			if (address < this.ramstart)
-				throw `Writing into ROM! offset: ${address}`;
+				throw new Error(`Writing into ROM! offset: ${address}`);
 			for (let i=0; i<bytes.length; i++){
 				this.memory.writeByte(address+i, bytes[i]);
 			}

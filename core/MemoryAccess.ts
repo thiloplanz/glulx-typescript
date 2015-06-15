@@ -250,7 +250,7 @@ module FyreVM {
 		
 		writeByte(offset: number, value:number){
 			if (value < 0 || value > 255)
-				throw `${value} is out of range for a byte`;
+				throw new Error(`${value} is out of range for a byte`);
 			this.buffer[offset] = value;
 		}
 		
@@ -265,7 +265,7 @@ module FyreVM {
 		
 		writeInt16(offset: number, value: number){
 			if (value < 0 || value > 0xFFFF)
-				throw `${value} is out of range for uint16`;
+				throw new Error(`${value} is out of range for uint16`);
 			this.set(offset, [value >> 8, value & 0xFF]);
 		}
 		
@@ -278,7 +278,7 @@ module FyreVM {
 		
 		writeInt32(offset: number, value: number){
 			if (value < 0 || value > 0xFFFFFFFF)
-				throw `${value} is out of range for uint32`;
+				throw new Error(`${value} is out of range for uint32`);
 			this.set(offset, [ value >> 24, value >> 16 & 0xFF, value >> 8 & 0xFF, value & 0xFF])
 		}
 		
@@ -322,7 +322,7 @@ module FyreVM {
 		copy(offset: number, length: number) : Uint8ArrayMemoryAccess {
 			// TODO: range check
 			if (length > this.maxSize)
-				throw `Memory request for ${length} bytes exceeds limit of ${this.maxSize}`;
+				throw new Error(`Memory request for ${length} bytes exceeds limit of ${this.maxSize}`);
 			let result = new Uint8ArrayMemoryAccess(length);
 			result.buffer.set(this.buffer.subarray(offset, offset+length));
 			result.maxSize = this.maxSize;

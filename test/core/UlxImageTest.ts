@@ -21,7 +21,7 @@ module FyreVM{
 				let image = new UlxImage(m);
 			}
 			catch(e){
-				test.equal(e, '.ulx file has wrong magic number nope');
+				test.equal(e.message, '.ulx file has wrong magic number nope');
 			}
 			
 			
