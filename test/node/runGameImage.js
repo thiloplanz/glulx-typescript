@@ -28,8 +28,10 @@ var testGame = FyreVM.BufferMemoryAccess.loadFile(process.argv[2]);
 
 var engine = new FyreVM.Engine(new FyreVM.UlxImage(testGame));
 
+//engine.enableFyreVM = false;
+
 // enable Glk emulation
-engine.glkMode = 1;
+//engine.glkMode = 1;
 
 function glk_window_clear(){
 	readline.cursorTo(process.stdout, 0, 0);
@@ -41,18 +43,23 @@ function glk_window_clear(){
 var prompt = "> ";
 var room = "";
 	
+	
 engine.lineWanted = function(callback){
 	rl.question(prompt, function(answer){
 		callback(answer);
 	});
 }
 engine.keyWanted = engine.lineWanted;
+engine.transitionRequested = glk_window_clear;
+
 engine.outputReady = function(x){
 	if (engine.glkHandlers){
 		engine.glkHandlers[0x2A] = glk_window_clear;
 	}
-	rl.write(x.MAIN);
+	process.stdout.write(x.MAIN);
+	
 	prompt = x.PRPT || prompt;
 	room = x.ROOM || room;
+	
 }
 engine.run();

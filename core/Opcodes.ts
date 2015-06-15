@@ -127,7 +127,7 @@ module FyreVM {
 				function(a,b){ return uint32(a-b)});				
 		
 			opcode(0x12, 'mul', 2, 1,
-				function(a,b){ return a*b});
+				function(a,b){ return uint32(a*b)});
 		
 			opcode(0x13, 'div', 2, 1,
 				function(a,b){ return Math.floor(a / b)});
@@ -142,15 +142,15 @@ module FyreVM {
 	
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x18, 'bitand', 2, 1,
-				function(a,b){ return uint32(a) & uint32(b)});
+				function(a,b){ return uint32(uint32(a) & uint32(b))});
 		
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x19, 'bitor', 2, 1,
-				function(a,b){ return uint32(a) | uint32(b)});
+				function(a,b){ return uint32(uint32(a) | uint32(b))});
 		
 			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1A, 'bitxor', 2, 1,
-				function(a,b){ return uint32(a) ^ uint32(b)});
+				function(a,b){ return uint32(uint32(a) ^ uint32(b))});
 			
 			// TODO: check if it works, JS has signed ints, we want uint	
 			opcode(0x1B, 'bitnot', 1, 1,
