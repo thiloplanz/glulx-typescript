@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"out": "webworker.js"
+	},
+	"files": [
+		"../../web/WebWorker.ts"
+	]
+}

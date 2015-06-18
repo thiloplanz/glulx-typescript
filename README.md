@@ -8,13 +8,27 @@ It is based heavily on the [FyreVM](https://github.com/ChicagoDave/FyreVM) (a C#
 
 ### Playing a game image
 
-If you have a GLULX game image (a .ulx file), you can compile a simple Node.js and readline based command line tool and use that to play the game (if it works... this is all still very much under construction, games that target FyreVM work best, Inform6-compiled Glulx games seem to work okay, Inform7 not so much).
+If you have a Glulx game image (a .ulx file), you can try if it works... this is all still very much under construction, games that target FyreVM work best, Inform6-compiled Glulx games seem to work okay, Inform7 not so much.
+
+#### in your terminal
+
+You can compile a simple Node.js and readline based command line tool.
 
     $ cd examples/node
     $ tsc
     $ node runGameImage.js yourGameImageFile.ulx
     
  Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.   
+
+#### in your browser
+
+    $ cd examples/web
+    $ tsc
+    $ open webworker.html
+    
+This will play the image `game.ulx` found in the same directory. The repository contains a stub, that you want to replace with your real game file. Keep the name at `game.ulx` (or change it in the HTML file).
+
+
 
 ### Running unit tests
 

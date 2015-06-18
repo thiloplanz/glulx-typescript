@@ -171,10 +171,13 @@ module FyreVM {
 	}
 	
 	export interface ChannelData {
-		[channel: string] : string; 
+		[channel: string] : string | number; 
 		MAIN?: string;
 		PRPT?: string;	// prompt
 		LOCN?: string;  // location
+		SCOR?: number;  // score
+		TIME?: number;  // time (hhmm)
+		TURN?: number;  // turn count
 	}
 	
 	
@@ -223,7 +226,7 @@ module FyreVM {
 			let r : ChannelData= {};
 			for (let c in channelData) {
 				let s = channelData[c];
-				if (s.length){
+				if (s || s === 0){
 					r[c] = s;
 					channelData[c] = '';		
 				}

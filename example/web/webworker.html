@@ -1,0 +1,116 @@
+<html>
+<!--
+// Written in 2015 by Thilo Planz 
+// To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
+// to this software to the public domain worldwide. This software is distributed without any warranty. 
+// http://creativecommons.org/publicdomain/zero/1.0/	
+-->	
+<head>
+	<style>
+		.header { display: inline-block; width: 30%; }
+		body { padding-top: 40px; padding-left: 200px; padding-right: 200px;}
+		#status { 
+			background-color: black; 
+			color: yellow; 
+			width: 500px;
+			height: 20pt; 
+			font-size: 16pt; 
+			text-align: center;
+			position: fixed;
+			top: 0px;
+			}
+		#main { height: 75%; overflow: scroll; margin: 20 0; white-space: pre-wrap}
+	</style>
+</head>	
+	
+<body>
+	<div id='status'></div>
+	<h1 id='LOCN'></h1>
+	<div>
+		<b id='SCOR' class='header'></b>
+		<b id='TURN' class='header'></b>
+		<b id='TIME' class='header'></b>	
+	</div>
+	<div id='MAIN'></div>
+	<div id='PRPT'></div>	
+</body>	
+	
+<script>
+	function setText(id, text){
+		document.getElementById(id).textContent = text;
+	}
+	
+	var promptLine;
+	function getInput(){
+		var div = document.getElementById('PRPT');
+		div.innerHTML = '<form onsubmit="sendCommand(); return false;">'+promptLine+' <input size=80></input><form>';
+		var input = div.getElementsByTagName('INPUT')[0];
+		input.focus();
+		input.scrollIntoView();	
+	}
+	
+	function sendCommand(){
+		var div = document.getElementById('PRPT');
+		var input = div.getElementsByTagName('INPUT')[0];
+		var command = input.value;
+		div.innerHTML = '';
+		w.postMessage({lineInput: command});
+		setText('status', 'processing ...');
+		setText('MAIN', '\n\n\n... '+command);
+	}
+	
+	
+	setText("status", "loading game image");
+	var w = new Worker("webworker.js");
+	w.onmessage = function(ev){
+		var d = ev.data;
+		if (d){
+			switch(d.state){
+				case 0:
+					setText('status', 'loaded game image');
+					break;
+				case 1:
+					setText('status', '');
+					break;
+				case 2:
+				case 3:
+					setText('status', 'waiting for your input...');
+					getInput();
+					break;
+				case 4:
+					setText('status', 'game over');
+					break;
+				case 5:
+					setText('status', 'ERROR! '+d.errorMessage);
+					break;
+			}
+			
+			var c = d.channelData;
+			if (c){
+				if (c.MAIN){
+					setText('MAIN',c.MAIN);
+				}
+				if (c.LOCN){
+					setText('LOCN', c.LOCN);
+				}
+				if (c.SCOR || c.SCOR === 0){
+					setText('SCOR', "Score: "+c.SCOR);
+				}
+				if (c.TURN){
+					setText('TURN', "Turn: "+c.TURN);
+				}
+				if (c.TIME){
+					setText('TIME', Math.floor(c.TIME / 100) +":"+c.TIME % 100);
+				}
+				if (c.PRPT){
+					promptLine = c.PRPT;
+				}
+			}
+		}
+	};
+	
+	w.postMessage({loadImage: 'game.ulx'});
+	w.postMessage({start: true});
+		
+</script>	
+</html>
