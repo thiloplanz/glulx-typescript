@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"out": "tests.js"
+	},
+	"files": [
+		"core-tests-on-node.ts"
+	]
+}

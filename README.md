@@ -6,18 +6,33 @@ This project is an attempt to implement Glulx in TypeScript.
 
 It is based heavily on the [FyreVM](https://github.com/ChicagoDave/FyreVM) (a C# implementation). In particular, it also makes use of the contextual Channel IO layer introduced in FyreVM.
 
------
+### Playing a game image
 
-Right now, all you can do is run some unit tests for core engine functionality.
+If you have a GLULX game image (a .ulx file), you can compile a simple Node.js and readline based command line tool and use that to play the game (if it works... this is all still very much under construction, games that target FyreVM work best, Inform6-compiled Glulx games seem to work okay, Inform7 not so much).
+
+    $ cd examples/node
+    $ tsc
+    $ node runGameImage.js yourGameImageFile.ulx
+    
+ Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.   
+
+### Running unit tests
+
+
+There are some unit tests for core engine functionality that you can run on Node.js or in a browser.
+
+#### using nodeunit
 
 You need Node.js and nodeunit installed (as well as a TypeScript 1.5 compiler).
 
 Then you can compile everything in this project and run the test suite:
 
+    $ cd test/node
     $ tsc  
-    $ nodeunit test.js 
+    $ nodeunit tests.js 
    
-Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.
+
+#### in the browser
 
 
 You can also run the same unit tests in your browser instead of on Node.js:

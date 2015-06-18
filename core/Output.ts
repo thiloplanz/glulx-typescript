@@ -172,6 +172,9 @@ module FyreVM {
 	
 	export interface ChannelData {
 		[channel: string] : string; 
+		MAIN?: string;
+		PRPT?: string;	// prompt
+		LOCN?: string;  // location
 	}
 	
 	

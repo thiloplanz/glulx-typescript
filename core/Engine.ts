@@ -6,6 +6,7 @@
 
 /// <reference path='Opcodes.ts' />
 /// <reference path='Output.ts' />
+/// <reference path='UlxImage.ts' />
 
 module FyreVM {
 	
