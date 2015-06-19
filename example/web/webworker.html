@@ -40,21 +40,35 @@
 		document.getElementById(id).textContent = text;
 	}
 	
+	var lineInput = "lineInput";
+	var keyInput = "keyInput";
+	
 	var promptLine;
-	function getInput(){
+	function getLineInput(){
 		var div = document.getElementById('PRPT');
-		div.innerHTML = '<form onsubmit="sendCommand(); return false;">'+promptLine+' <input size=80></input><form>';
+		div.innerHTML = '<form onsubmit="sendCommand(lineInput); return false;">'+promptLine+' <input size=80></input><form>';
 		var input = div.getElementsByTagName('INPUT')[0];
 		input.focus();
 		input.scrollIntoView();	
 	}
 	
-	function sendCommand(){
+	function getKeyInput(){
+		var div = document.getElementById('PRPT');
+		div.innerHTML = '<form onsubmit="sendCommand(keyInput); return false;">'+promptLine+' <input size=80></input><form>';
+		var input = div.getElementsByTagName('INPUT')[0];
+		input.focus();
+		input.scrollIntoView();	
+	}
+
+
+	function sendCommand(key){
 		var div = document.getElementById('PRPT');
 		var input = div.getElementsByTagName('INPUT')[0];
 		var command = input.value;
 		div.innerHTML = '';
-		w.postMessage({lineInput: command});
+		var m = {};
+		m[key] = command;
+		w.postMessage(m);
 		setText('status', 'processing ...');
 		setText('MAIN', '\n\n\n... '+command);
 	}
@@ -73,9 +87,12 @@
 					setText('status', '');
 					break;
 				case 2:
+					setText('status', 'waiting for your input...');
+					getLineInput();
+				    break;
 				case 3:
 					setText('status', 'waiting for your input...');
-					getInput();
+					getKeyInput();
 					break;
 				case 4:
 					setText('status', 'game over');

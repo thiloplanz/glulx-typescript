@@ -41,11 +41,11 @@ module FyreVM {
 				this.run();
 				return;
 			}
-			if (data.lineInput){
+			if (data.lineInput || data.lineInput === ''){
 				this.engine.receiveLine(data.lineInput);
 				return;
 			}
-			if (data.keyInput){
+			if (data.keyInput || data.keyInput === ''){
 				this.engine.receiveKey(data.keyInput);
 				return;
 			}
@@ -78,7 +78,7 @@ module FyreVM {
 			let {loadImage} = data;
 			let worker = this;
 			let request = new XMLHttpRequest();
-			request.open("GET", loadImage+"?"+new Date());
+			request.open("GET", loadImage);
 			request.responseType = 'arraybuffer';
 			request.onload = function(){
 				if (request.status !== 200){

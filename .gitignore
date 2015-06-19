@@ -3,3 +3,4 @@ node_modules
 test.js
 tests.js
 runGameImage.js
+webworker.js
