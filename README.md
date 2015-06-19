@@ -22,9 +22,12 @@ You can compile a simple Node.js and readline based command line tool.
 
 #### in your browser
 
+There is a simple HTML page that can load and run a game image. You need to load it through a web server (even though all files are local, not Internet connection required). The easiest way to do that is to `npm install -g http-server` and use that to serve the page:
+
     $ cd examples/web
     $ tsc
-    $ open webworker.html
+    $ http-server
+    $ open http://0.0.0.0:8080/webworker.html
     
 This will play the image `game.ulx` found in the same directory. The repository contains a stub, that you want to replace with your real game file. Keep the name at `game.ulx` (or change it in the HTML file).
 

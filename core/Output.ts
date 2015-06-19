@@ -171,13 +171,18 @@ module FyreVM {
 	}
 	
 	export interface ChannelData {
-		[channel: string] : string | number; 
+		[channel: string] : string; 
 		MAIN?: string;
 		PRPT?: string;	// prompt
 		LOCN?: string;  // location
-		SCOR?: number;  // score
-		TIME?: number;  // time (hhmm)
-		TURN?: number;  // turn count
+		SCOR?: string;  // score
+		TIME?: string;  // time (hhmm)
+		TURN?: string;  // turn count
+		PLOG?: string;  // prologue,
+		DEAD?: string;  // Death text (shown when player dies)
+		ENDG?: string;  // End game text
+		INFO?: string;  // Story info text (comes out as JSON)
+		SNOT?: string;  //  Notify if score changes
 	}
 	
 	
@@ -226,7 +231,7 @@ module FyreVM {
 			let r : ChannelData= {};
 			for (let c in channelData) {
 				let s = channelData[c];
-				if (s || s === 0){
+				if (s){
 					r[c] = s;
 					channelData[c] = '';		
 				}
