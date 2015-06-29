@@ -4,12 +4,15 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../../core/Engine.ts' />
+/// <reference path='../../core/Opcodec.ts' />
 /// <reference path='../nodeunit.d.ts' />
 
 
 module FyreVM{
 	
 	export module NodeUnit {
+
+		let RAM = 0x03A0;
 
 		export function makeTestImage(m: MemoryAccess, ...code : any[]): UlxImage{
 			let c = 256;
@@ -18,7 +21,7 @@ module FyreVM{
 				version: 0x00030100,
 				startFunc: c,
 				stackSize: 1024,
-				ramStart: 0x03A0,
+				ramStart: RAM,
 				decodingTbl: 0x3B0
 			}, m, 0);
 			
@@ -55,8 +58,10 @@ module FyreVM{
 					return c;
 				}
 			}
-			throw `unknown opcode ${name}`
+			throw new Error(`unknown opcode ${name}`);
 		}
+		
+		
 
 		export function p_in(a:LoadOperandType, b:LoadOperandType|StoreOperandType = 0){
 			return a + (b << 4);
@@ -89,11 +94,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
-					p_out(StoreOperandType.ptr_16),
-					1, 1, 
-					0x03, 0xA0
+				encodeOpcode('add', 1, 1, RAM)
 			);
 			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 2, "1+1=2");
@@ -105,11 +106,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.int16, LoadOperandType.int16), 
-					p_out(StoreOperandType.ptr_16),
-					0x01, 0x0F, 0x02, 0xF0, 
-					0x03, 0xA0
+				encodeOpcode('add',0x010F, 0x02F0, RAM)
 			);
 	
 			stepImage(gameImage);
@@ -122,11 +119,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.int32, LoadOperandType.zero), 
-					p_out(StoreOperandType.ptr_16),
-					0x01, 0x0F, 0x02, 0xF0, 
-					0x03, 0xA0
+				encodeOpcode('add', 0x010F02F0, 0, RAM)
 			);
 	
 			stepImage(gameImage);
@@ -139,12 +132,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.ptr_16, LoadOperandType.ptr_32), 
-					p_out(StoreOperandType.ptr_16),
-					0x03, 0xA0, 
-					0x00, 0x00, 0x03, 0xA0, 
-					0x03, 0xA0
+				encodeOpcode('add', '*03A0', '*000003A0', RAM)
 			);
 	
 			gameImage.writeInt32(0x03A0, 0x01020304);
@@ -158,10 +146,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.stack, LoadOperandType.stack), 
-					p_out(StoreOperandType.ptr_16),
-					0x03, 0xA0
+				encodeOpcode('add', 'pop', 'pop', RAM)
 			);
 	
 			gameImage.writeInt32(0x03A0, 0x01020304);
@@ -175,13 +160,9 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.ram_16, LoadOperandType.ram_8), 
-					p_out(StoreOperandType.ptr_16),
-					0, 0x10, 0x10, 
-					0x03, 0xA0
+				encodeOpcode('add', '*R:0010', '*R:10', RAM)
 			);
-	
+		
 			gameImage.writeInt32(0x03B0, 0x01020304);
 			stepImage(gameImage,1, test);
 			test.equals(gameImage.readInt32(0x03A0), 0x02040608, "ramStart := add 0x01020304, 0x01020304");
@@ -193,11 +174,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
-					p_out(StoreOperandType.ptr_32),
-					1, 1, 
-					0x00, 0x00, 0x03, 0xA0
+				encodeOpcode('add', 1, 1, '*000003A0')
 			);
 			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03A0), 2, "1+1=2");
@@ -209,11 +186,7 @@ module FyreVM{
 			
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
-					p_out(StoreOperandType.ram_32),
-					1, 1, 
-					0x00, 0x00, 0x00, 0x21
+				encodeOpcode('add', 1, 1, '*R:00000021')
 			);
 			stepImage(gameImage);
 			test.equals(gameImage.readInt32(0x03C1), 2, "1+1=2");
@@ -225,13 +198,8 @@ module FyreVM{
 		function(test: nodeunit.Test){
 			let gameImage = makeTestImage(m,
 				CallType.stack, 0x00, 0x00,  // type C0, no args
-				op('add'), 
-				    p_in(LoadOperandType.byte, LoadOperandType.byte), 
-					p_out(StoreOperandType.ptr_16),
-					1, 1, 
-					0x03, 0xA0,
-				op('return'),
-					p_in(LoadOperandType.zero)
+				encodeOpcode('add', 1, 1, RAM),
+				encodeOpcode('return', 0)
 			);
 			let engine = new Engine(gameImage);
 			engine.run();
