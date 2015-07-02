@@ -1,0 +1,39 @@
+<html>
+<!--
+// Written in 2015 by Thilo Planz 
+// To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
+// to this software to the public domain worldwide. This software is distributed without any warranty. 
+// http://creativecommons.org/publicdomain/zero/1.0/	
+-->	  
+<head>
+    <title>Interactive Fiction Angular2 Demo</title>
+    <script src='lib/traceur-runtime.js'></script>
+    <script src='lib/system@0.16.11.js'></script>
+    <script src='lib/angular2.a27.dev.js'></script>
+    <style>
+        #channel-MAIN{
+            columns: 300px 5; 
+            -webkit-columns: 300px 5;
+            -moz-columns: 300px 5;
+            height: 500px;
+            white-space: pre-wrap;
+            padding: 20 0 0 0
+        } 
+        .header{
+            display: inline-block;
+            width: 20%;
+        }       
+    </style>
+</head>
+<body>  
+    <!-- The app component created in app.ts -->
+    <my-app></my-app>
+    <script>
+        System.config({ paths: { '*': 'lib/*.js' } });
+        System.import("app").then(function(app){
+            app.init();
+        });
+    </script>
+    
+</body>
+</html>

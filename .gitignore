@@ -1,6 +1,9 @@
 node-v0.12.4-darwin-x64
 node_modules
+typings
 test.js
 tests.js
 runGameImage.js
 webworker.js
+app.js
+webworker.d.ts

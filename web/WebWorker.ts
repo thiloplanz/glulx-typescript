@@ -61,7 +61,9 @@ module FyreVM {
 				if (this.queue.length === 0){
 					delete this.queue;
 				}
-				this.handleMessage(ev);
+				if (ev){
+					this.handleMessage(ev);
+				}
 			}
 		}
 		

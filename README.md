@@ -22,7 +22,7 @@ You can compile a simple Node.js and readline based command line tool.
 
 #### in your browser
 
-There is a simple HTML page that can load and run a game image. You need to load it through a web server (even though all files are local, not Internet connection required). The easiest way to do that is to `npm install -g http-server` and use that to serve the page:
+There is a simple HTML page that can load and run a game image. You need to load it through a web server (even though all files are local, no Internet connection required). The easiest way to do that is to `npm install -g http-server` and use that to serve the page:
 
     $ cd examples/web
     $ tsc
