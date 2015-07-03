@@ -12,7 +12,7 @@
  * "Client-side" code to communicate with an EngineWrapper WebWorker.
  */
  
- import {Component, View, bootstrap} from 'angular2/angular2';
+ import {Component, View, bootstrap, coreDirectives, ElementRef, NgZone} from 'angular2/angular2';
 
 
 class WebWorkerClient{
@@ -48,6 +48,10 @@ class WebWorkerClient{
 			this.worker.postMessage({lineInput: line});
 		}
 		
+		sendKeyInput(key:string){
+			this.worker.postMessage({keyInput: key});
+		}
+		
 		private onmessage(ev: MessageEvent){
 			let d : FyreVM.EngineWrapperState = ev.data;
 			if (d){
@@ -75,6 +79,8 @@ class WebWorkerClient{
 			if (!c) return null;
 			return c[name];
 		}
+		
+		
 	}
 
 
@@ -90,44 +96,88 @@ class WebWorkerClient{
 
 // Annotation section
 @Component({
-  selector: 'my-app',
+  selector: 'body',
   appInjector: [WebWorkerClient]
 })
 @View({
-  template: `
-<button (click)="loadAndStart()" >START</button>
-<b id='channel-LOCN' class='header'>{{worker.getChannel('LOCN')}}</b>
-<b id='channel-SCOR' class='header'>{{worker.getChannel('SCOR')}}</b>
-<b id='channel-TURN' class='header'>{{worker.getChannel('TURN')}}</b>
-<b id='channel-TIME' class='header'>{{worker.getChannel('TIME')}}</b>
-<div id='channel-MAIN'>{{worker.getChannel('MAIN')}}</div>
-<div id='PRPT'>
-<form (submit)="sendCommand($event)"><input size=80></input></form>
-</div>
-  `
+  directives: [ coreDirectives],
+  templateUrl: 'app.html'
 })
 // Component controller
 class MyAppComponent {
-  worker: WebWorkerClient;
- 
   
-  constructor(worker: WebWorkerClient) {
-     this.worker = worker;
+  userInput = "";
+  
+  constructor(public worker: WebWorkerClient) {
+	  // TODO: find out how one is supposed to do this in Angular2
+	  window['handleKey'] = window['zone'].bind(this.handleKey.bind(this));
   }
   
   loadAndStart(){
 	  // TODO: make this configurable
-	  this.worker.loadImage('game.ulx');
+	  this.worker.loadImage('shadow-2.1.ulx');
 	  this.worker.startGame();
   }
   
-  sendCommand($event){
-	  let input = $event.target[0];
-	  let command = input.value;
-	  this.worker.sendLineInput(command);
-	  input.value = '';
-	  return false;
+  handleKey($event:KeyboardEvent){
+		$event.preventDefault();
+		$event.stopPropagation();
+		if ($event.type === 'keyup'){
+			let state = this.worker.engineState;
+			if (state === FyreVM.EngineState.waitingForLineInput){
+				let key = $event.key;
+				if (key && key.length === 1){
+					this.userInput += key;
+					return;
+				}
+				
+				let code = $event.keyCode;
+				switch(code){
+					case 8: // backspace
+						let l = this.userInput.length;
+						if (l){
+							this.userInput = this.userInput.substr(0, l-1);
+						}
+						return;
+					case 13: // enter
+						this.worker.sendLineInput(this.userInput);
+						this.userInput = '';
+						return;
+				}
+				
+			}
+			if (state === FyreVM.EngineState.waitingForKeyInput){
+				let key = $event.key;
+				if (key && key.length === 1){
+					this.worker.sendKeyInput(key);
+					return;
+				}
+			}
+		}
   }
+  
+  get prompt(){
+	let state = this.worker.engineState;
+	if (state === FyreVM.EngineState.waitingForLineInput)
+		return ( this.worker.getChannel('PRPT') || '>' ) + this.userInput;
+    if (state === FyreVM.EngineState.waitingForKeyInput)
+		return '...';
+	return '';
+  }
+ 
+  get time(){
+	  let x = parseInt(this.worker.getChannel('TIME'));
+	  let hours = printf02d(Math.floor(x / 100));
+	  let mins = printf02d(x % 100);
+	  return `${hours}:${mins}`;
+  }
+  
+}
+
+function printf02d(x:number) : string{
+	if (x < 10)
+	  return `0${x}`;
+	return "" + x;
 }
 
 

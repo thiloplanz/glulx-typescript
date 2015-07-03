@@ -1,0 +1,26 @@
+<button 
+	*ng-if="worker.engineState === -1" 
+	(click)="loadAndStart()" >
+	START
+	</button>
+
+<div id='main' 
+	*ng-if="worker.getChannel('MAIN')"
+	>
+
+	<h3 id='channel-LOCN'>{{worker.getChannel('LOCN')}}, {{time}}</h3>
+	
+	<b id='channel-SCOR' >Score: {{worker.getChannel('SCOR')}}</b>
+	
+	<hr/>
+
+	<span id='channel-MAIN'>{{worker.getChannel('MAIN')}}</span>
+
+	<div id='PRPT'>{{prompt}}</div>
+
+</div>
+
+<div id='pageNumber' 
+	*ng-if="worker.getChannel('TURN')">
+	- {{worker.getChannel('TURN')}} -
+</div>
