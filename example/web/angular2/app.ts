@@ -125,31 +125,36 @@ class MyAppComponent {
 		if ($event.type === 'keyup'){
 			let state = this.worker.engineState;
 			if (state === FyreVM.EngineState.waitingForLineInput){
-				let key = $event.key;
-				if (key && key.length === 1){
+				let key = getKey($event);
+				if (key === null)
+					return;
+				if (key.length === 1){
 					this.userInput += key;
 					return;
 				}
-				
-				let code = $event.keyCode;
-				switch(code){
-					case 8: // backspace
+				switch(key){
+					case 'Backspace': 
 						let l = this.userInput.length;
 						if (l){
 							this.userInput = this.userInput.substr(0, l-1);
 						}
 						return;
-					case 13: // enter
+					case 'Enter':
 						this.worker.sendLineInput(this.userInput);
 						this.userInput = '';
 						return;
 				}
-				
 			}
 			if (state === FyreVM.EngineState.waitingForKeyInput){
-				let key = $event.key;
-				if (key && key.length === 1){
+				let key = getKey($event);
+				if (key === null)
+					return;
+				if (key.length === 1){
 					this.worker.sendKeyInput(key);
+					return;
+				}
+				if (key === 'Enter'){
+					this.worker.sendKeyInput('\n');
 					return;
 				}
 			}
@@ -173,6 +178,23 @@ class MyAppComponent {
   }
   
 }
+
+function getKey($event:KeyboardEvent): string{
+	// this is the standard way, but not implemented on all browsers
+	let key = $event.key;
+	if (key) return key;
+	// use the deprecated "keyCode" as a fallback	
+	let code = $event.keyCode;
+	if (code >= 31 && code < 127){
+		key = String.fromCharCode(code);
+		if ($event.shiftKey) return key.toUpperCase();
+		return key.toLowerCase();
+	}
+	if (code === 8) return 'Backspace';
+	if (code === 13) return 'Enter';
+	return null;
+}
+
 
 function printf02d(x:number) : string{
 	if (x < 10)
