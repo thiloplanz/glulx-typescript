@@ -14,6 +14,13 @@
 /// <reference path='../core/EngineWrapper.ts' />
 
 module FyreVM {
+
+	interface FileReaderSync {
+	    readAsArrayBuffer(blob: Blob): any;
+	}
+	declare var FileReaderSync: {
+    	new(): FileReaderSync;
+	}
 	
 	export class WebWorker{
 		
@@ -21,7 +28,13 @@ module FyreVM {
 		
 		private queue: MessageEvent[];
 		
+		private error: string;
+		
 		onMessage(ev: MessageEvent){
+			// don't do anything when in error state
+			if (this.error){
+				return;
+			}
 			// just queue it if we are busy
 			if (this.queue){
 				this.queue.push(ev);
@@ -61,12 +74,15 @@ module FyreVM {
 				if (this.queue.length === 0){
 					delete this.queue;
 				}
-				this.handleMessage(ev);
+				if (ev){
+					this.handleMessage(ev);
+				}
 			}
 		}
 		
 		onEngineError(message: string){
 			this.queue = null;
+			this.error = message;
 			this.onEngineUpdate({
 				state: EngineState.error,
 				errorMessage: message
@@ -76,6 +92,13 @@ module FyreVM {
 		
 		loadImage(data){
 			let {loadImage} = data;
+			
+			if (loadImage instanceof File){
+				this.loadImageFromBuffer(new FileReaderSync().readAsArrayBuffer(loadImage));
+				return;
+			}
+			
+			
 			let worker = this;
 			let request = new XMLHttpRequest();
 			request.open("GET", loadImage);
@@ -85,19 +108,22 @@ module FyreVM {
 					worker.onEngineError(`${request.status} ${request.statusText} ${loadImage}`);
 					return;
 				}
-				try{
-					let arrayBuffer: ArrayBuffer = request.response;
-					let image = new Uint8ArrayMemoryAccess(0, 0);
-					image['buffer'] = new Uint8Array(arrayBuffer);
-					image['maxSize'] = arrayBuffer.byteLength;
-					worker.engine.load(image);
-				}
-				catch (e){
-					worker.onEngineError(e.toString());
-				}
+				worker.loadImageFromBuffer(request.response);
 			}
 			this.queue = this.queue || [];
 			request.send();
+		}
+		
+		private loadImageFromBuffer(arrayBuffer: ArrayBuffer){
+			try{
+				let image = new Uint8ArrayMemoryAccess(0, 0);
+				image['buffer'] = new Uint8Array(arrayBuffer);
+				image['maxSize'] = arrayBuffer.byteLength;
+				this.engine.load(image);
+			}
+			catch (e){
+				this.onEngineError(e.toString());
+			}
 		}
 		
 		run(){
