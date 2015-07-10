@@ -235,7 +235,7 @@ module FyreVM {
 	 */
 	export class Uint8ArrayMemoryAccess implements MemoryAccess {
 		
-		private buffer: Uint8Array;
+		public buffer: Uint8Array;
 		
 		private maxSize: number;
 		

@@ -9,6 +9,7 @@
 /// <reference path='../core/UlxImageTest.ts' />
 /// <reference path='../core/EngineTest.ts' />
 /// <reference path='../core/OpcodesTest.ts' />
+/// <reference path='../core/QuetzalTest.ts' />
 
 function addTests(tests){
 
@@ -21,5 +22,7 @@ function addTests(tests){
 	FyreVM.NodeUnit.addEngineTests(tests, buffer);
 
 	FyreVM.NodeUnit.addOpcodeTests(tests, buffer);
+	
+	FyreVM.NodeUnit.addQuetzalTests(tests);
 
 }
