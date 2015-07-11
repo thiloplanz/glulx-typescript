@@ -39,7 +39,7 @@ module FyreVM{
 		}
 		
 		writeInt32(offset: number, value: number){
-			this.buffer.writeUInt32BE(value, offset || 0);
+			this.buffer.writeUInt32BE(value >>> 0, offset || 0);
 		}
 		
 		readASCII(offset: number, length: number): string{
