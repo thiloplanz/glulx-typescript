@@ -120,8 +120,7 @@ module FyreVM {
 		// the image has access to the MemoryAccess object
 		// (which the Engine does not)
 		allocateStack(): MemoryAccess {
-			// TODO: using copy is ugly, we just need a new buffer
-			return this.memory.copy(0, this.getStackSize());
+			return new Uint8ArrayMemoryAccess(4 * this.getStackSize());
 		}
 	
 		readByte(address: number) : number {
