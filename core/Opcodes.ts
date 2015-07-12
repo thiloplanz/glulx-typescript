@@ -121,10 +121,10 @@ module FyreVM {
 				function(a,b){ return uint32(int32(a)*int32(b))});
 		
 			opcode(0x13, 'div', 2, 1,
-				function(a,b){ return int32(int32(a) / int32(b))});
+				function(a,b){ return uint32(int32(a) / int32(b))});
 		
 			opcode(0x14, 'mod', 2, 1,
-				function(a,b){ return int32(a) % int32(b)});
+				function(a,b){ return uint32(int32(a) % int32(b))});
 	
 			// TODO: check the specs
 			opcode(0x15, 'neg', 1, 1,
