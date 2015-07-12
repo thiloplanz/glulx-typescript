@@ -390,14 +390,16 @@ module FyreVM {
 
 			opcode(0x4B, "aloadbit", 2, 1,
 				function(array: number, index: number){
-					let address = array + Math.floor(index / 8);
-					index %= 8;
-					if (index < 0){
-						address--;
-						index += 8;
+					index = int32(index);
+					let bitx = index & 7;
+					let address = array;
+					if (index >= 0){
+						address += (index>>3);
+					}else{
+						address -= (1+((-1-index)>>3));
 					}
 					let byte =  this.image.readByte(uint32(address));
-					return byte & (1 << index) ? 1 : 0;
+					return byte & (1 << bitx) ? 1 : 0;
 				});
 
 			opcode(0x4C, "astore", 3, 0,
@@ -421,17 +423,19 @@ module FyreVM {
 
 			opcode(0x4F, "astorebit", 3, 0,
 				function(array: number, index: number, value: number){
-					let address = array + Math.floor(index / 8);
-					index %= 8;
-					if (index < 0){
-						address--;
-						index += 8;
+					index = int32(index);
+					let bitx = index & 7;
+					let address = array;
+					if (index >= 0){
+						address += (index>>3);
+					}else{
+						address -= (1+((-1-index)>>3));
 					}
 					let byte =  this.image.readByte(address);
 					if (value === 0){
-						byte &= ~(1 << index);
+						byte &= ~(1 << bitx);
 					}else{
-						byte |= (1 << index);
+						byte |= (1 << bitx);
 					}
 					this.image.writeBytes(address, byte);
 				}
