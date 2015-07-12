@@ -147,23 +147,20 @@ module FyreVM {
 			opcode(0x1B, 'bitnot', 1, 1,
 				function(x){ x = ~uint32(x); if (x<0) return 1 + x + 0xFFFFFFFF; return x; });
 	
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1C, 'shiftl', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return 0;
+					if (uint32(b) >= 32) return 0;
 					return a << b});
 
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1D, 'sshiftr', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return (a & 0x80000000) ? 0 : 0xFFFFFFFF;
-					return a >> b});
+					if (uint32(b) >= 32) return (a & 0x80000000) ? 0xFFFFFFFF : 0;
+					return uint32(int32(a) >> b)});
 			
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1E, 'ushiftr', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return 0;
-					return a >> b});
+					if (uint32(b) >= 32) return 0;
+					return uint32(uint32(a) >>> b)});
 					
 					
 			opcode(0x20, 'jump', 1, 0, 
