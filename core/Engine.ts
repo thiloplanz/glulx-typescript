@@ -860,6 +860,7 @@ module FyreVM {
 		  }
 
  		  streamNumCore(x: number){
+			    x = x | 0;
 			    if (this.outputSystem === IOSystem.Filter){
 					this.pushCallStub(GLULX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
 					let num = x.toString();

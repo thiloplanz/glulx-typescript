@@ -90,22 +90,13 @@ module FyreVM {
 	
 	// coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
-		if (x < 0){
-			x = 0xFFFFFFFF + x  + 1;
-		}
-		if (x > 0xFFFFFFFF){
-			x %= 0x100000000;
-		}
-		return x;
+		return x >>> 0;
 	}
 	
 	// coerce uint32 number into  (signed!) int32 range
 	
 	function int32(x: number) :number{
-		if (x > 0xF0000000){
-			x = - (0xFFFFFFFF - x + 1);
-		}
-		return x;
+		return x | 0;
 	}
 	
 	
@@ -127,13 +118,13 @@ module FyreVM {
 				function(a,b){ return uint32(a-b)});				
 		
 			opcode(0x12, 'mul', 2, 1,
-				function(a,b){ return uint32(a*b)});
+				function(a,b){ return uint32(int32(a)*int32(b))});
 		
 			opcode(0x13, 'div', 2, 1,
-				function(a,b){ return Math.floor(a / b)});
+				function(a,b){ return int32(int32(a) / int32(b))});
 		
 			opcode(0x14, 'mod', 2, 1,
-				function(a,b){ return a % b});
+				function(a,b){ return int32(a) % int32(b)});
 	
 			// TODO: check the specs
 			opcode(0x15, 'neg', 1, 1,

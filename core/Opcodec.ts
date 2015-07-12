@@ -22,13 +22,7 @@ module FyreVM {
 	
 	// coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
-		if (x < 0){
-			x = 0xFFFFFFFF + x  + 1;
-		}
-		if (x > 0xFFFFFFFF){
-			x %= 0x100000000;
-		}
-		return x;
+		return x >>> 0;
 	}
 	function uint16(x: number) :number{
 		if (x < 0){

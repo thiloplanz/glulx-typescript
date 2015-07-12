@@ -277,8 +277,7 @@ module FyreVM {
 		}
 		
 		writeInt32(offset: number, value: number){
-			if (value < 0 || value > 0xFFFFFFFF)
-				throw new Error(`${value} is out of range for uint32`);
+			value = value >>> 0;
 			this.set(offset, [ value >> 24, value >> 16 & 0xFF, value >> 8 & 0xFF, value & 0xFF])
 		}
 		
