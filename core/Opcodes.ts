@@ -150,7 +150,7 @@ module FyreVM {
 			opcode(0x1C, 'shiftl', 2, 1,
 				function(a,b){ 
 					if (uint32(b) >= 32) return 0;
-					return a << b});
+					return uint32(a << b)});
 
 			opcode(0x1D, 'sshiftr', 2, 1,
 				function(a,b){ 
