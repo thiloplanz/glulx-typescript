@@ -7,6 +7,7 @@
 /// <reference path='Opcodes.ts' />
 /// <reference path='Output.ts' />
 /// <reference path='UlxImage.ts' />
+/// <reference path='Quetzal.ts' />
 
 module FyreVM {
 	
@@ -209,7 +210,7 @@ module FyreVM {
 	export class Engine{
 		
 		private image: UlxImage;
-		private stack: MemoryAccess;
+		private stack: Uint8ArrayMemoryAccess;
 		private decodingTable: number;
 		private SP: number;
 		private FP: number;
@@ -250,7 +251,7 @@ module FyreVM {
 			if (major == 3 && minor > 1)
 				throw new Error("Game version is out of the supported range");
 			this.image = gameFile;
-			this.stack = gameFile.allocateStack();
+			this.stack = new Uint8ArrayMemoryAccess(gameFile.getStackSize());
 		}
 		
 		/**
@@ -918,6 +919,68 @@ module FyreVM {
 			 	this.outputReady(pack);
 			 }
 		  }
+		  
+		  
+		  saveToQuetzal(destType, destAddr) : Quetzal{
+			  
+			  let quetzal = this.image.saveToQuetzal();
+			  
+			  // 'Stks' is the contents of the stack, with a stub on top
+              // identifying the destination of the save opcode.
+         	  this.pushCallStub(destType, destAddr, this.PC, this.FP);
+			  let trimmed = this.stack.copy(0, this.SP);
+			  quetzal.setChunk('Stks', Uint8ArrayMemoryAccess.toArrayBuffer(trimmed));
+		      this.popCallStub();
+			  
+			  // 'MAll' is the list of heap blocks
+			  if (this.heap){
+				  quetzal.setChunk('MAll', this.heap.save());
+			  }
+			  
+			  return quetzal;
+			  
+		  }
+		  
+		  loadFromQuetzal(quetzal: Quetzal){
+			  // make sure the save file matches the game file
+           	  let ifhd1 = new Uint8Array(quetzal.getChunk('IFhd'));
+			  if (ifhd1.byteLength !== 128){
+			  	throw new Error('Missing or invalid IFhd block');
+			  }
+			  let {image} = this;
+			  for (let i=0; i<128; i++){
+				  if (ifhd1[i] !== image.readByte(i))
+				  	throw new Error("Saved game doesn't match this story file");
+			  }
+			  // load the stack
+			  let newStack = quetzal.getChunk("Stks");
+			  if (!newStack){
+				  throw new Error("Missing Stks block");
+			  }
+			  this.stack.buffer.set(new Uint8Array(newStack));
+			  this.SP = newStack.byteLength;
+			  // restore RAM
+			  image.restoreFromQuetzal(quetzal);
+			 
+			  // pop a call stub to restore registers
+			  let stub = this.popCallStub();
+			  this.PC = stub.PC;
+			  this.FP = stub.framePtr;
+			  this.frameLen = this.stack.readInt32(this.FP);
+			  this.localsPos = this.stack.readInt32(this.FP + 4);
+			  this.execMode = ExecutionMode.Code;
+			  
+			  // restore the heap if available
+			  let heapChunk = quetzal.getChunk("MAll");
+			  if (heapChunk){
+				  this.heap = HeapAllocator.restore(heapChunk, image['memory']);
+			  }
+			  // give the original save opcode a result of -1
+			  // to show that it's been restored
+			  this.performDelayedStore(stub.destType, stub.destAddr, 0xFFFFFFFF);
+		  }
+		  
+		  
 
          /**  Reloads the initial contents of memory (except the protected area)
          * and starts the game over from the top of the main function.

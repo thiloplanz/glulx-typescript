@@ -167,10 +167,15 @@ module FyreVM {
 					}
 				}
 				if (typeof(x) === 'string'){
+					if (x === 'push'){
+						sig.push(StoreOperandType.stack);
+						continue;
+					}
 					if (x.indexOf("*") === 0){
 						parsePtr(x, params, i, sig);
 						continue;
 					}
+					
 				}
 				throw new Error(`unsupported store argument ${x} for ${name}(${JSON.stringify(params)})`)
 			}

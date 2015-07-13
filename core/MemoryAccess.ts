@@ -122,6 +122,56 @@ module FyreVM {
 		}
 		
 		/**
+		 * saves the heap state into a ArrayBuffer.
+		 * Does not include the memory itself, only the block allocation information.
+		 */
+		 save(): ArrayBuffer {
+			 let count = this.blockCount() ;
+			 let result = new Uint8ArrayMemoryAccess(8 + count * 8);
+			 result.writeInt32(0, this.heapAddress);
+			 result.writeInt32(4, count);
+			 let {blocks} = this;
+			 for(let i=0; i<count; i++){
+				 result.writeInt32(8*i+8, blocks[i].offset);
+				 result.writeInt32(8*i*12, blocks[i].length);
+			 }
+			 return result.buffer;
+		 }
+		 
+		 /**
+		  * restores the heap state from an ArrayBuffer (as created by the "save" method)
+		  */
+		static restore(buffer: ArrayBuffer, memory: MemoryAccess) : HeapAllocator{
+			let m = new Uint8ArrayMemoryAccess(0);
+			m.buffer = new Uint8Array(buffer);
+			let count = m.readInt32(4);
+		
+			if (count === 0)
+				return null;
+		
+			let heap = new HeapAllocator(m.readInt32(0), memory);
+			let nextAddress = heap.heapAddress;
+			for (let i=0; i<count; i++){
+				let start = m.readInt32(8*i+8);
+				let length = m.readInt32(8*i+12);
+				heap.blocks.push(new HeapEntry(start, length));
+				if (nextAddress < start){
+					heap.freeList.push(new HeapEntry(nextAddress, start-nextAddress));
+				}
+				nextAddress = start+length;
+			}
+			
+			heap.endMem = nextAddress;
+			heap.heapExtent = nextAddress - heap.heapAddress;
+			if (!heap.memory.setEndMem(heap.endMem)){
+				throw new Error("Can't allocate VM memory to fit saved heap")
+			}
+			// TODO: sort blocklist and freelist
+			return heap;
+		}
+		
+		
+		/**
 		 * allocates a new block on the heap
 		 * @return the address of the new block, or null if allocation failed
 		 */
@@ -333,6 +383,17 @@ module FyreVM {
 			return this.buffer.length;
 		}
 		
+		static toArrayBuffer(m: MemoryAccess) : ArrayBuffer{
+			if (m instanceof Uint8ArrayMemoryAccess){
+				return m.buffer;
+			}
+			let l = m.size();
+			let x = new Uint8Array(l);
+			for (let i=0; i<l; i++){
+				x[i] = m.readByte(i);
+			}
+			return x;
+		}
 	}
 	
 	

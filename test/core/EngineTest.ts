@@ -206,6 +206,39 @@ module FyreVM{
 			test.done();
 		}
 		
+		tests.Engine.saveToQuetzal =
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				encodeOpcode('add', 100, 11, 'push'),
+				encodeOpcode('return', 0)
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			let q = engine.saveToQuetzal(0,0);
+			test.equal(q.getChunk('IFhd').byteLength, 128, 'game file identifier present');
+			test.equal(q.getChunk('MAll'), undefined, 'no heap');
+			let stack = new Uint8ArrayMemoryAccess(0);
+			stack.buffer = new Uint8Array(q.getChunk('Stks'));
+			test.equal(stack.readInt32(12), 111, 'result data found in saved stack')
+			test.done();
+		}
+		
+		tests.Engine.quetzalRoundTrip =
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				encodeOpcode('add', 100, 11, 'push'),
+				encodeOpcode('return', 0)
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			let q = engine.saveToQuetzal(0,0);
+			engine = new Engine(gameImage);
+			engine.loadFromQuetzal(q);
+			test.equal(engine['stack'].readInt32(12), 111, 'result data found in saved stack');
+			test.done();
+		}
 
 		}
 		

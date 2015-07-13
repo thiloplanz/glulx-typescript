@@ -687,10 +687,33 @@ module FyreVM {
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
 
-			opcode(0x125, 'saveundo', 0, 1, function(){
-				// TODO: implement save/restore
-				return 1;
+			opcode(0x125, 'saveundo', 0, 0, 
+				function(destType:number, destAddr:number){
+					let q = this.saveToQuetzal(destType, destAddr);
+					
+					if (this.undoBuffers){
+						// TODO make MAX_UNDO_LEVEL configurable
+						if (this.undoBuffers.length >= 3){
+							this.undoBuffers.unshift();
+						}
+						this.undoBuffers.push(q);
+					}else{
+						this.undoBuffers = [ q ];
+					}
+					this.performDelayedStore(destType, destAddr, 0);
 			}, OpcodeRule.DelayedStore);
+
+			opcode(0x126, 'restoreundo', 0, 0,
+				function(destType:number, destAddr:number){
+					if (this.undoBuffers && this.undoBuffers.length){
+						let q = this.undoBuffers.pop();
+						this.loadFromQuetzal(q);
+					}else{
+						this.performDelayedStore(destType, destAddr, 1);
+					}
+					
+				}, OpcodeRule.DelayedStore);
+
 
 			opcode(0x127, 'protect', 2, 0,
 				function(start, length){
