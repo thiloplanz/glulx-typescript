@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -251,7 +251,7 @@ module FyreVM {
 			if (major == 3 && minor > 1)
 				throw new Error("Game version is out of the supported range");
 			this.image = gameFile;
-			this.stack = new Uint8ArrayMemoryAccess(gameFile.getStackSize());
+			this.stack = new Uint8ArrayMemoryAccess(gameFile.getStackSize() * 4);
 		}
 		
 		/**
@@ -861,6 +861,7 @@ module FyreVM {
 		  }
 
  		  streamNumCore(x: number){
+			    x = x | 0;
 			    if (this.outputSystem === IOSystem.Filter){
 					this.pushCallStub(GLULX_STUB.RESUME_FUNC, 0, this.PC, this.FP);
 					let num = x.toString();

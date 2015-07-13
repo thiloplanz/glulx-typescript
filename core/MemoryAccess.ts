@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -327,8 +327,7 @@ module FyreVM {
 		}
 		
 		writeInt32(offset: number, value: number){
-			if (value < 0 || value > 0xFFFFFFFF)
-				throw new Error(`${value} is out of range for uint32`);
+			value = value >>> 0;
 			this.set(offset, [ value >> 24, value >> 16 & 0xFF, value >> 8 & 0xFF, value & 0xFF])
 		}
 		

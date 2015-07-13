@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -39,7 +39,7 @@ module FyreVM{
 		}
 		
 		writeInt32(offset: number, value: number){
-			this.buffer.writeUInt32BE(value, offset || 0);
+			this.buffer.writeUInt32BE(value >>> 0, offset || 0);
 		}
 		
 		readASCII(offset: number, length: number): string{
