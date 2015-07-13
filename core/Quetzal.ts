@@ -42,7 +42,7 @@ module FyreVM {
 				size ++;  // padding				
 			}
 			
-			let m = new Uint8ArrayMemoryAccess(size);
+			let m = new MemoryAccess(size);
 			m.writeByte(size-1, 0);
 			m.writeASCII(0, 'FORM'); // IFF tag
 			m.writeInt32(4, fileLength); 
@@ -62,7 +62,7 @@ module FyreVM {
 		
 		static load(buffer: ArrayBuffer): Quetzal {
 			let q = new Quetzal();
-			let m = new Uint8ArrayMemoryAccess(0);
+			let m = new MemoryAccess(0);
 			m.buffer = new Uint8Array(buffer);
 			let type = m.readASCII(0, 4);
 			if (type !== 'FORM' && type !== 'LIST' && type !== 'CAT_'){

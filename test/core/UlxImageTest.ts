@@ -50,7 +50,7 @@ module FyreVM{
 			let image = new UlxImage(m);
 			
 			let q = image.saveToQuetzal();
-			let umem = new Uint8ArrayMemoryAccess(0);
+			let umem = new MemoryAccess(0);
 			umem.buffer = new Uint8Array(q.getChunk('UMem'));
 			
 			test.equal(umem.readASCII(4, 11), 'Hello World');

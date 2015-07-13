@@ -210,7 +210,7 @@ module FyreVM {
 	export class Engine{
 		
 		private image: UlxImage;
-		private stack: Uint8ArrayMemoryAccess;
+		private stack: MemoryAccess;
 		private decodingTable: number;
 		private SP: number;
 		private FP: number;
@@ -251,7 +251,7 @@ module FyreVM {
 			if (major == 3 && minor > 1)
 				throw new Error("Game version is out of the supported range");
 			this.image = gameFile;
-			this.stack = new Uint8ArrayMemoryAccess(gameFile.getStackSize() * 4);
+			this.stack = new MemoryAccess(gameFile.getStackSize() * 4);
 		}
 		
 		/**
@@ -930,7 +930,7 @@ module FyreVM {
               // identifying the destination of the save opcode.
          	  this.pushCallStub(destType, destAddr, this.PC, this.FP);
 			  let trimmed = this.stack.copy(0, this.SP);
-			  quetzal.setChunk('Stks', Uint8ArrayMemoryAccess.toArrayBuffer(trimmed));
+			  quetzal.setChunk('Stks', trimmed.buffer);
 		      this.popCallStub();
 			  
 			  // 'MAll' is the list of heap blocks

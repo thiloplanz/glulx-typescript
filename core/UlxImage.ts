@@ -118,13 +118,13 @@ module FyreVM {
 		saveToQuetzal(): Quetzal {
 			let quetzal = new Quetzal();
 			// 'IFhd' identifies the first 128 bytes of the game file
-			quetzal.setChunk('IFhd', Uint8ArrayMemoryAccess.toArrayBuffer(this.original.copy(0, 128)));
+			quetzal.setChunk('IFhd', this.original.copy(0, 128).buffer);
 			// 'CMem' or 'UMem' are the compressed/uncompressed contents of RAM
            	// TODO: implement compression
 			let ramSize = this.getEndMem() - this.ramstart;
-			let umem = new Uint8ArrayMemoryAccess(ramSize+4);
+			let umem = new MemoryAccess(ramSize+4);
 			umem.writeInt32(0, ramSize);
-			umem.buffer.set(new Uint8Array(Uint8ArrayMemoryAccess.toArrayBuffer(this.memory)).subarray(this.ramstart, this.ramstart+ramSize), 4);
+			umem.buffer.set(new Uint8Array(this.memory.buffer).subarray(this.ramstart, this.ramstart+ramSize), 4);
 			quetzal.setChunk("UMem", umem.buffer);
 			return quetzal;
 		}
@@ -242,7 +242,7 @@ module FyreVM {
 			if (newRam){
 				let prot = this.copyProtectedRam(protectionStart, protectionLength);
 			
-				let r = new Uint8ArrayMemoryAccess(0);
+				let r = new MemoryAccess(0);
 				r.buffer= new Uint8Array(newRam);
 				let length = r.readInt32(0);
 				this.setEndMem(length + this.ramstart);

@@ -3,7 +3,6 @@
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
 
-/// <reference path='../../node/core-on-node.ts' />
 /// <reference path='../../core/Engine.ts' />
 /// <reference path='../core/MemoryAccessTest.ts' />
 /// <reference path='../core/UlxImageTest.ts' />
@@ -13,7 +12,7 @@
 
 function addTests(tests){
 
-	let buffer = new FyreVM.Uint8ArrayMemoryAccess(1000, 10240);
+	let buffer = new FyreVM.MemoryAccess(1000, 10240);
 
 	FyreVM.NodeUnit.addMemoryTests(tests, buffer);
 

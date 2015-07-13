@@ -14,7 +14,6 @@
  */
  
  /// <reference path='../../core/Engine.ts' />
-  /// <reference path='../../node/core-on-node.ts' />
  /// <reference path='../../node/node-0.11.d.ts' />
  
 let readline = require('readline'); 
@@ -24,7 +23,14 @@ let rl = readline.createInterface({
 	output: process.stdout
 });
 
-let testGame = FyreVM.BufferMemoryAccess.loadFile(process.argv[2]);
+
+let fs = require('fs');
+
+let buffer = fs.readFileSync(process.argv[2]);
+let testGame = new FyreVM.Uint8ArrayMemoryAccess(0);
+testGame.buffer = new Uint8Array(buffer);
+testGame['maxSize'] = testGame.buffer.byteLength * 2;
+
 let engine = new FyreVM.Engine(new FyreVM.UlxImage(testGame));
 
 // enable FyreVM extensions

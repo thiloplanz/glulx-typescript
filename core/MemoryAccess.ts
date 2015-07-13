@@ -6,85 +6,6 @@
 module FyreVM {
 	
 	/**
-	 * Abstraction for access to memory buffers
-	 * (because the Node.js and browser implementations are different)
-	 */
-	
-	export interface MemoryAccess {
-		/**
-		 * Reads a single byte (unsigned)
-		 */
-		 readByte(offset: number) : number;
-		 
-		 /**
-		 * Writes a single byte (unsigned).
-		 * Writes 0 when value is undefined or null.
-		 */
-		 writeByte(offset: number, value: number);
-		
-		/**
-		 * Reads an unsigned, big-endian, 16-bit number
-		 */
-		 readInt16(offset: number) : number;
-		
-		/**
-		 * Writes an unsigned, big-endian, 16-bit number.
-		 * Writes 0 when value is undefined or null.
-		 */
-		 writeInt16(offset: number, value: number);
-		 
-		 
-		 /**
-		 * Reads an unsigned, big-endian, 32-bit number
-		 */
-		 readInt32(offset: number) : number;
-		
-		/**
-		 * Writes an unsigned, big-endian, 32-bit number
-		 * Writes 0 when value is undefined or null.
-		 */
-		 writeInt32(offset: number, value: number);
-		 
-		 /**
-		  * Converts part of the buffer into a String,
-		  * assumes that the data is valid ASCII
-		  */
-		 readASCII(offset: number, length: number): string;
-		 
-		 /**
-		  * reads a 0-terminated C-string
-		  */
-		 readCString(offset: number): string;
-		 
-		 
-		 /**
-		  * Writes an ASCII String
-		  */
-		 writeASCII(offset: number, value: string);
-		 
-		 /**
-		  * Resizes the available memory
-		  */
-		 setEndMem(newEndMem: number): boolean;
-		 
-		 /**
-		  * Copy a part of the memory into a new buffer.
-		  * 
-		  * The length can be more than there is data
-		  * in the original buffer. In this case the
-		  * new buffer will contain unspecified data
-		  * at the end.
-		  */
-		  copy(offset: number, length: number): MemoryAccess;
-		  
-		  /**
-		   * returns the number of bytes available
-		   */
-		   size(): number;
-		  
-	}
-	
-	/**
 	 * a struct to keep track of heap fragments
 	 */
 	
@@ -127,7 +48,7 @@ module FyreVM {
 		 */
 		 save(): ArrayBuffer {
 			 let count = this.blockCount() ;
-			 let result = new Uint8ArrayMemoryAccess(8 + count * 8);
+			 let result = new MemoryAccess(8 + count * 8);
 			 result.writeInt32(0, this.heapAddress);
 			 result.writeInt32(4, count);
 			 let {blocks} = this;
@@ -142,7 +63,7 @@ module FyreVM {
 		  * restores the heap state from an ArrayBuffer (as created by the "save" method)
 		  */
 		static restore(buffer: ArrayBuffer, memory: MemoryAccess) : HeapAllocator{
-			let m = new Uint8ArrayMemoryAccess(0);
+			let m = new MemoryAccess(0);
 			m.buffer = new Uint8Array(buffer);
 			let count = m.readInt32(4);
 		
@@ -281,9 +202,10 @@ module FyreVM {
 	}
 	
 	/**
-	 * implementation of MemoryAccess using the ECMAScript 6 standard UInt8Array 
+	 *  Wrapper around ECMAScript 6 standard Uint8Array.
+	 *  Provides access to a memory buffer.
 	 */
-	export class Uint8ArrayMemoryAccess implements MemoryAccess {
+	export class MemoryAccess {
 		
 		public buffer: Uint8Array;
 		
@@ -294,16 +216,26 @@ module FyreVM {
 			this.maxSize = maxSize;
 		}
 		
+		/**
+		 * Reads a single byte (unsigned)
+		 */
 		readByte(offset: number){
 			return this.buffer[offset];
 		}
 		
+		 /**
+		 * Writes a single byte (unsigned).
+		 * Writes 0 when value is undefined or null.
+		 */
 		writeByte(offset: number, value:number){
 			if (value < 0 || value > 255)
 				throw new Error(`${value} is out of range for a byte`);
 			this.buffer[offset] = value;
 		}
 		
+		/**
+		 * Reads an unsigned, big-endian, 16-bit number
+		 */
 		readInt16(offset: number){
 			return (this.buffer[offset] * 256) + this.buffer[offset+1];
 		}
@@ -313,12 +245,19 @@ module FyreVM {
 			this.buffer.set(value, offset);
 		}
 		
+		/**
+		 * Writes an unsigned, big-endian, 16-bit number.
+		 * Writes 0 when value is undefined or null.
+		 */
 		writeInt16(offset: number, value: number){
 			if (value < 0 || value > 0xFFFF)
 				throw new Error(`${value} is out of range for uint16`);
 			this.set(offset, [value >> 8, value & 0xFF]);
 		}
 		
+		 /**
+		 * Reads an unsigned, big-endian, 32-bit number
+		 */
 		readInt32(offset: number){
 			return this.buffer[offset] * 0x1000000 
 			+ this.buffer[offset+1] * 0x10000 
@@ -326,11 +265,19 @@ module FyreVM {
 			+ this.buffer[offset+3];
 		}
 		
+		/**
+		 * Writes an unsigned, big-endian, 32-bit number
+		 * Writes 0 when value is undefined or null.
+		 */
 		writeInt32(offset: number, value: number){
 			value = value >>> 0;
 			this.set(offset, [ value >> 24, value >> 16 & 0xFF, value >> 8 & 0xFF, value & 0xFF])
 		}
 		
+		 /**
+		  * Converts part of the buffer into a String,
+		  * assumes that the data is valid ASCII
+		  */
 		readASCII(offset: number, length: number): string{
 			let len = 0, {buffer} = this, d = [];
 			while(len < length){
@@ -341,6 +288,9 @@ module FyreVM {
 			return String.fromCharCode(...d);
 		}
 		
+		 /**
+		  * reads a 0-terminated C-string
+		  */
 		readCString(offset:number): string{
 			let len = 0, {buffer} = this, d = [];
 			while(true){
@@ -353,7 +303,9 @@ module FyreVM {
 			return String.fromCharCode(...d);
 		}
 		
-		
+		 /**
+		  * Writes an ASCII String
+		  */
 		writeASCII(offset: number, value: string){
 			let codes = [];
 			for (let i=0; i<value.length; i++){
@@ -361,38 +313,41 @@ module FyreVM {
 			}
 			this.set(offset, codes);
 		}
-		 		 
+		 
+		  /**
+		  * Resizes the available memory
+		  */		 
 		setEndMem(newEndMem: number) : boolean {
 			if (newEndMem > this.maxSize)
 				return false;
 			return true;
 		}
 		
-		copy(offset: number, length: number) : Uint8ArrayMemoryAccess {
+		 /**
+		  * Copy a part of the memory into a new buffer.
+		  * 
+		  * The length can be more than there is data
+		  * in the original buffer. In this case the
+		  * new buffer will contain unspecified data
+		  * at the end.
+		  */
+		copy(offset: number, length: number) : MemoryAccess {
 			// TODO: range check
 			if (length > this.maxSize)
 				throw new Error(`Memory request for ${length} bytes exceeds limit of ${this.maxSize}`);
-			let result = new Uint8ArrayMemoryAccess(length);
+			let result = new MemoryAccess(length);
 			result.buffer.set(this.buffer.subarray(offset, offset+length));
 			result.maxSize = this.maxSize;
 			return result;
 		}
 		
+		 /**
+		   * returns the number of bytes available
+		   */
 		size(){
 			return this.buffer.length;
 		}
 		
-		static toArrayBuffer(m: MemoryAccess) : ArrayBuffer{
-			if (m instanceof Uint8ArrayMemoryAccess){
-				return m.buffer;
-			}
-			let l = m.size();
-			let x = new Uint8Array(l);
-			for (let i=0; i<l; i++){
-				x[i] = m.readByte(i);
-			}
-			return x;
-		}
 	}
 	
 	

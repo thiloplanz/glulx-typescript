@@ -218,7 +218,7 @@ module FyreVM{
 			let q = engine.saveToQuetzal(0,0);
 			test.equal(q.getChunk('IFhd').byteLength, 128, 'game file identifier present');
 			test.equal(q.getChunk('MAll'), undefined, 'no heap');
-			let stack = new Uint8ArrayMemoryAccess(0);
+			let stack = new MemoryAccess(0);
 			stack.buffer = new Uint8Array(q.getChunk('Stks'));
 			test.equal(stack.readInt32(12), 111, 'result data found in saved stack')
 			test.done();
