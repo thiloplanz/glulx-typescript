@@ -4,7 +4,6 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../../core/Engine.ts' />
-/// <reference path='../../core/Opcodec.ts' />
 /// <reference path='../nodeunit.d.ts' />
 
 

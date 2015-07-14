@@ -4,10 +4,11 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 
-/// <reference path='Opcodes.ts' />
+
 /// <reference path='Output.ts' />
 /// <reference path='UlxImage.ts' />
 /// <reference path='Quetzal.ts' />
+/// <reference path='Opcodec.ts' />
 
 module FyreVM {
 	
@@ -104,37 +105,6 @@ module FyreVM {
     }
 	
 	
-	export const enum LoadOperandType {
-		zero = 0,
-		byte = 1,
-		int16 = 2,
-		int32 = 3,
-		ptr_8 = 5,
-		ptr_16 = 6,
-		ptr_32 = 7,
-		stack = 8,
-		local_8 = 9,
-		local_16 = 10,
-		local_32 = 11,
-		ram_8 = 13,
-		ram_16 = 14,
-		ram_32 = 15
-	}
-	
-	export const enum StoreOperandType {
-		discard = 0,
-		ptr_8 = 5,
-		ptr_16 = 6,
-		ptr_32 = 7,
-		stack = 8,
-		local_8 = 9,
-		local_16 = 10,
-		local_32 = 11,
-		ram_8 = 13,
-		ram_16 = 14,
-		ram_32 = 15
-	}
-	
 	export const enum CallType {
 		stack = 0xC0,
 		localStorage = 0xC1
@@ -147,6 +117,7 @@ module FyreVM {
 		STORE_MEM = 1,
 		STORE_LOCAL = 2,
 		STORE_STACK = 3,
+		STORE_RAM = 4,
 		// DestType values for string printing
 		RESUME_HUFFSTR = 10,
 		RESUME_FUNC = 11,
@@ -419,17 +390,9 @@ module FyreVM {
 			  let {image} = this;
 			  switch(this.execMode){
 				  case ExecutionMode.Code:
+				    let decoded = decodeOpcode(image['memory'], this.PC);
 				  	// decode opcode number
-					let opnum = image.readByte(this.PC);
-					if (opnum >= 0xC0){
-						opnum = image.readInt32(this.PC) - 0xC0000000;
-						this.PC += 4;
-					} else if (opnum >= 0x80){
-						opnum = image.readInt16(this.PC) - 0x8000;
-						this.PC += 2;
-					} else{
-						this.PC++;
-					} 
+					let {opnum} = decoded;
 					// look up opcode info
 					let opcode = this.opcodes[opnum];
 					if (!opcode){
@@ -437,50 +400,12 @@ module FyreVM {
 					}
 					
 					// decode load-operands
+					let operandPos = decoded.start + decoded.length;
 					let opcount = opcode.loadArgs + opcode.storeArgs;
-					let operands = [];
-					if (opcode.rule === OpcodeRule.DelayedStore)
-						opcount++;
-					else if (opcode.rule === OpcodeRule.Catch)
-						opcount+= 2;
+					let operands = this.loadOperands(opcode, decoded);
 					
-					let operandPos = Math.floor( this.PC + (opcount+1) / 2);
-					for (let i=0; i<opcode.loadArgs; i++){
-						let type;
-						if (i%2 === 0){
-							type = image.readByte(this.PC) & 0xF;
-						}else{
-							type = (image.readByte(this.PC++) >> 4) & 0xF;
-						}
-						operandPos += this.decodeLoadOperand(opcode, type, operands, operandPos);
-					}
 					
-					// decode store-operands
-					let storePos = this.PC;
-					let resultTypes = [];
-					let resultAddrs = [];
-					for(let i=0; i<opcode.storeArgs; i++){
-						let type = i + opcode.loadArgs;
-						if (type%2 === 0){
-							type = image.readByte(this.PC) & 0xF;
-						}else{
-							type = (image.readByte(this.PC++) >> 4) & 0xF;
-						}
-						resultTypes[i] = type;
-						operandPos += this.decodeStoreOperand(opcode, type, resultAddrs, operandPos);
-					}
-				
-
-					if(opcode.rule === OpcodeRule.DelayedStore || opcode.rule === OpcodeRule.Catch){
-						let type = opcode.loadArgs + opcode.storeArgs;
-						if (type%2 === 0){
-							type = image.readByte(this.PC) & 0xF;
-						}else{
-							type = (image.readByte(this.PC++) >> 4) & 0xF;
-						}
-						operandPos += this.decodeDelayedStoreOperand(opcode, type, operands, operandPos);							
-					}
-
+/*
 					if (opcode.rule === OpcodeRule.Catch){
 						// decode final load operand for @catch
 						let type = opcode.loadArgs + opcode.storeArgs + 1;
@@ -489,17 +414,17 @@ module FyreVM {
 						}else{
 							type = (image.readByte(this.PC++) >> 4) & 0xF;
 						}
-						operandPos += this.decodeLoadOperand(opcode, type, operands, operandPos);
+					//	operandPos += this.decodeLoadOperand(opcode, type, operands, operandPos);
 					}
+*/
 
-
-//					console.info(opcode.name, operands, this.PC, operandPos);
+//					console.info(decoded);
 
 	
 					// call opcode implementation
 					this.PC = operandPos; // after the last operanc				
 					let result = opcode.handler.apply(this, operands);
-					if (resultTypes.length === 1 || result === 'wait'){
+					if (decoded.storeOperandType || result === 'wait'){
 						result = [ result ];
 					}
 					
@@ -508,14 +433,13 @@ module FyreVM {
 						// for asynchronous input, we need to stop right now
 						// until we are asked to resume
 						if ('wait' === result[0]){
-							this.resumeAfterWait_resultTypes = resultTypes;
-							this.resumeAfterWait_resultAddrs = resultAddrs;
+							this.resumeAfterWait_result = decoded;
 							
 							return 'wait';
 						}
 						
 						
-						this.storeResults(opcode.rule, resultTypes, resultAddrs, result );
+						this.storeResults(opcode.rule, decoded, result );
 					}
 					
 				  	break;
@@ -558,10 +482,7 @@ module FyreVM {
 		  }
 		  
 		  
-		  /**
-		   * @return how many extra bytes were read (so that operandPos can be advanced)
-		   */
-		  private decodeLoadOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
+		  private loadOperands(opcode: Opcode, decoded: DecodedOpcode){
 			  let {image, stack, FP, localsPos, frameLen} = this;
 			  function loadLocal(address: number){
 					address += FP + localsPos;
@@ -591,125 +512,44 @@ module FyreVM {
 						default: return image.readInt32(address);
 					}		  
 			  }
-
-			  switch(type){
-				  // immediates
-				  case LoadOperandType.zero: operands.push(0); return 0;
-				  case LoadOperandType.byte: operands.push(int8(image.readByte(operandPos))); return 1;
-				  case LoadOperandType.int16: operands.push(int16(image.readInt16(operandPos))); return 2;
-				  case LoadOperandType.int32: operands.push(int32(image.readInt32(operandPos))); return 4;
-				  // indirect
-				  case LoadOperandType.ptr_8: operands.push(loadIndirect(image.readByte(operandPos))); return 1;
-				  case LoadOperandType.ptr_16: operands.push(loadIndirect(image.readInt16(operandPos))); return 2;
-				  case LoadOperandType.ptr_32: operands.push(loadIndirect(image.readInt32(operandPos))); return 4;
-				  // stack
-				  case LoadOperandType.stack: 
-				  	 if (this.SP <= this.FP + this.frameLen)
-			 				throw new Error("Stack underflow");
-				  	operands.push(this.pop()); 
-					return 0;
-				  // indirect from RAM
-				  case LoadOperandType.ram_8: operands.push(loadIndirect(image.getRamAddress(image.readByte(operandPos)))); return 1;
-				  case LoadOperandType.ram_16: operands.push(loadIndirect(image.getRamAddress(image.readInt16(operandPos)))); return 2;
-				  case LoadOperandType.ram_32: operands.push(loadIndirect(image.getRamAddress(image.readInt32(operandPos)))); return 4;
-				  // local storage
-				  case LoadOperandType.local_8: operands.push(loadLocal(image.readByte(operandPos))); return 1;
-				  case LoadOperandType.local_16: operands.push(loadLocal(image.readInt16(operandPos))); return 2;
-				  case LoadOperandType.local_32: operands.push(loadLocal(image.readInt32(operandPos))); return 4;
-
-				  default: throw new Error(`unsupported load operand type ${type}`);
+			  let operands = [];
+			  for (let i=0; i<decoded.loadOperandTypes.length; i++){
+			  	  let type = decoded.loadOperandTypes[i];
+				  let op = decoded.loadOperands[i];
+				  switch(type){
+					  // immediates
+					  case LoadOperandType.zero: 
+					  case LoadOperandType.byte: 
+					  case LoadOperandType.int16:
+					  case LoadOperandType.int32: 
+					  		operands.push(op); break;
+					  // indirect
+					  case LoadOperandType.ptr_8: operands.push(loadIndirect(op)); break;
+					  case LoadOperandType.ptr_16: operands.push(loadIndirect(op)); break;
+					  case LoadOperandType.ptr_32: operands.push(loadIndirect(op)); break;
+					  // stack
+					  case LoadOperandType.stack: 
+					  	 if (this.SP <= this.FP + this.frameLen)
+				 				throw new Error("Stack underflow");
+					  	operands.push(this.pop()); 
+						break;
+					  // indirect from RAM
+					  case LoadOperandType.ram_8: operands.push(loadIndirect(image.getRamAddress(op))); break;
+					  case LoadOperandType.ram_16: operands.push(loadIndirect(image.getRamAddress(op))); break;
+					  case LoadOperandType.ram_32: operands.push(loadIndirect(image.getRamAddress(op))); break;
+					  // local storage
+					  case LoadOperandType.local_8: operands.push(loadLocal(op)); break;
+					  case LoadOperandType.local_16: operands.push(loadLocal(op)); break;
+					  case LoadOperandType.local_32: operands.push(loadLocal(op)); break;
+	
+					  default: throw new Error(`unsupported load operand type ${type}`);
+				  }
 			  }
+			  return operands;
 			  
 		  }
 		  
-		  /**
-		   * @return how many extra bytes were read (so that operandPos can be advanced)
-		   */
-		  private decodeStoreOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
-			  switch(type){
-				  case StoreOperandType.discard: 
-				  case StoreOperandType.stack:
-				  		return 0; 
-				  case StoreOperandType.ptr_8: 
-				  case StoreOperandType.local_8:
-				  		operands.push(this.image.readByte(operandPos)); 
-						return 1;
-				  case StoreOperandType.ptr_16:
-				  case StoreOperandType.local_16: 
-				  		operands.push(this.image.readInt16(operandPos)); 
-						return 2;
-				  case StoreOperandType.ptr_32: 
-				  case StoreOperandType.local_32:
-				  		operands.push(this.image.readInt32(operandPos)); 
-					 	return 4;
-				  case StoreOperandType.ram_8:
-				  		operands.push(this.image.getRamAddress(this.image.readByte(operandPos)));
-						return 1;  
-				  case StoreOperandType.ram_16:
-				  		operands.push(this.image.getRamAddress(this.image.readInt16(operandPos)));
-						return 2;  
-				  case StoreOperandType.ram_32:
-				  		operands.push(this.image.getRamAddress(this.image.readInt32(operandPos)));
-						return 4;  
-				  default: throw new Error(`unsupported store operand type ${type}`);
-			  }
-			  return operandPos;
-		  }
 		  
-		  /**
-		   * @return how many extra bytes were read (so that operandPos can be advanced)
-		   */
-		  private decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], operandPos: number){
-			  switch(type){
-				  case StoreOperandType.discard: 
-				  	operands.push(GLULX_STUB.STORE_NULL);
-					operands.push(0);
-				  	return 0;
-				  case StoreOperandType.ptr_8: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.readByte(operandPos));
-				  	return 1;
-				  case StoreOperandType.ptr_16: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.readInt16(operandPos));
-				  	return 2;
-				  case StoreOperandType.ptr_32: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.readInt32(operandPos)); 
-					return 4;
-				  case StoreOperandType.stack:
-				  	operands.push(GLULX_STUB.STORE_STACK);
-					operands.push(0);
-					return 0;  
-				  case StoreOperandType.local_8:
-				    operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(this.image.readByte(operandPos));
-				  	return 1;
-				  case StoreOperandType.local_16: 
-				  	operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(this.image.readInt16(operandPos));
-				  	return 2;
-				  case StoreOperandType.local_32: 
-				  	operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(this.image.readInt32(operandPos)); 
-					return 4;
-				  case StoreOperandType.ram_8:
-				    operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.getRamAddress(this.image.readByte(operandPos)));
-				  	return 1;
-				  case StoreOperandType.ram_16: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.getRamAddress(this.image.readInt16(operandPos)));
-				  	return 2;
-				  case StoreOperandType.ram_32: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(this.image.getRamAddress(this.image.readInt32(operandPos))); 
-					return 4;	
-					
-				  default: throw new Error(`unsupported delayed store operand type ${type}`);
-			  }
-			  return operandPos;
-		  }
 		  
 		  
 		  private performDelayedStore(type:number, address: number, value: number){
@@ -723,15 +563,21 @@ module FyreVM {
 		  }
 		  
 		  
-		  private storeResults(rule: OpcodeRule, resultTypes: number[], resultAddrs: number[], results: number[]){
-		  	    for (let i=0; i<results.length; i++){
+		  private storeResults(rule: OpcodeRule, decoded: DecodedOpcode, results: number[]){
+		  	  let type = decoded.storeOperandType;
+			  for (let i=0; i<results.length; i++){
 				  let value = results[i];
-				  let type = resultTypes[i];
 				  switch(type){
 					  case StoreOperandType.discard: return;
+					  case StoreOperandType.ram_8:
+					  case StoreOperandType.ram_16:
+					  case StoreOperandType.ram_32:
+					     // write to RAM
+						this.image.write(rule, this.image.getRamAddress(decoded.storeOperand) , value);
+						break;
 					  case 5: case 6: case 7: case 13: case 14: case 15:
 					  	// write to memory
-						this.image.write(rule, resultAddrs[i], value);
+						this.image.write(rule, decoded.storeOperand, value);
 						break;
 					  case StoreOperandType.stack:
 					  	// push onto stack
@@ -741,7 +587,7 @@ module FyreVM {
 					  case StoreOperandType.local_16:
 					  case StoreOperandType.local_32:
 						// write to local storage
-						let address = resultAddrs[i] + this.FP + this.localsPos;
+						let address = decoded.storeOperand + this.FP + this.localsPos;
 						let limit = this.FP + this.frameLen;
 						switch(rule){
 							case OpcodeRule.Indirect8Bit:
@@ -1088,13 +934,12 @@ module FyreVM {
 			  return 'wait';   	
 		  }
 		  
-		  private resumeAfterWait_resultTypes : number[];
-		  private resumeAfterWait_resultAddrs : number[];
+		  private resumeAfterWait_result : DecodedOpcode;
 		  
 		  private resumeAfterWait(result?: number[]){
 			  if (result){
-				  this.storeResults(null, this.resumeAfterWait_resultTypes, this.resumeAfterWait_resultAddrs, result );
-				  this.resumeAfterWait_resultAddrs = this.resumeAfterWait_resultTypes = null;
+				  this.storeResults(null, this.resumeAfterWait_result, result );
+				  this.resumeAfterWait_result = null;
 			  }
 			  
 			  while (this.running){
