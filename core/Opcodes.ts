@@ -679,6 +679,54 @@ module FyreVM {
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
 
+			opcode(0x123, 'save', 1, 0,
+				function(X, destType:number, destAddr:number){
+					// TODO: find out what that one argument X does ...
+					let engine: Engine = this;
+					if (engine.saveRequested){
+						let q = engine.saveToQuetzal(destType, destAddr);
+						let resume = this.resumeAfterWait.bind(this);
+						
+						let callback = function(success:boolean){
+							if (success){
+								engine['performDelayedStore'](destType, destAddr, 0);
+							}else{
+								engine['performDelayedStore'](destType, destAddr, 1);
+							}
+							resume();
+						}
+						engine.saveRequested(q, callback);
+						let wait: any = 'wait';
+						return wait;
+					}
+					engine['performDelayedStore'](destType, destAddr, 1);	
+				},
+				OpcodeRule.DelayedStore
+			)
+			
+			opcode(0x124, "restore", 1, 0,
+				function(X, destType:number, destAddr:number){
+					// TODO: find out what that one argument X does ...
+					let engine: Engine = this;
+					if (engine.loadRequested){
+						let resume = this.resumeAfterWait.bind(this);
+						let callback = function(quetzal:Quetzal){
+							if (quetzal){
+								engine.loadFromQuetzal(quetzal);
+								resume();
+								return;
+							}
+							engine['performDelayedStore'](destType, destAddr, 1);
+						}
+						engine.loadRequested(callback);
+						let wait: any = 'wait';
+						return wait;
+					}
+					engine['performDelayedStore'](destType, destAddr, 1);
+				},
+				OpcodeRule.DelayedStore
+			)
+
 			opcode(0x125, 'saveundo', 0, 0, 
 				function(destType:number, destAddr:number){
 					let q = this.saveToQuetzal(destType, destAddr);

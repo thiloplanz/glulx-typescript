@@ -63,6 +63,21 @@ module FyreVM {
 		(): void
 	}	
 	
+	// A delegate that receives a Quetzal when the user
+	// requests to save the game
+	export interface SaveGameEventHandler {
+		(quetzal: Quetzal, callback: SavedGameCallback) : void
+	}
+	export interface SavedGameCallback {
+		(success: boolean);
+	}
+	
+	export interface LoadGameEventHandler {
+		(callback: QuetzalReadyCallback) : void
+	}
+	export interface QuetzalReadyCallback {
+		(quetzal: Quetzal);
+	}
     /** 
 	 *  Describes the task that the interpreter is currently performing.
     */
@@ -239,6 +254,8 @@ module FyreVM {
 		lineWanted: LineWantedEventHandler;
 		keyWanted: KeyWantedEventHandler;
 		transitionRequested: TransitionRequestedEventHandler;
+		saveRequested: SaveGameEventHandler;
+		loadRequested: LoadGameEventHandler;
 		
 		
 		constructor(gameFile: UlxImage){
@@ -482,7 +499,7 @@ module FyreVM {
 					// call opcode implementation
 					this.PC = operandPos; // after the last operanc				
 					let result = opcode.handler.apply(this, operands);
-					if (resultTypes.length == 1){
+					if (resultTypes.length === 1 || result === 'wait'){
 						result = [ result ];
 					}
 					
@@ -743,7 +760,7 @@ module FyreVM {
 								this.stack.writeInt32(address, value);
 								return;
 						}					  
-					  default: throw new Error(`unsupported store result mode ${type}`);
+					  default: throw new Error(`unsupported store result mode ${type} for result ${i} of ${results}`);
 				  }	
 			  }
 		  }
