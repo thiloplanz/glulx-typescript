@@ -1,9 +1,10 @@
-<button 
-	*ng-if="worker.engineState === -1" 
-	(click)="loadAndStart()" >
+<div  *ng-if="worker.engineState === -1" > 
+	 <b>Select a game image (ULX file) from your computer</b>
+	<input type="file" id='gameImage' />
+	<button (click)="loadAndStart()" >
 	START
 	</button>
-
+</div>
 <div id='main' 
 	*ng-if="worker.getChannel('MAIN')"
 	>

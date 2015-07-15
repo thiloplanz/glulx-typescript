@@ -155,6 +155,23 @@ module FyreVM{
 			test.done();	
 		}
 		
+		tests.Engine.testLoadOperandTypeLocal =
+		function (test: nodeunit.Test){
+			
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x04, 0x02, 0x00, 0x00,  // type C0, two locals
+				encodeOpcode('copy', 12, 'Fr:00'),
+				encodeOpcode('copy', 19, 'Fr:04'),
+				encodeOpcode('add', 'Fr:00', 'Fr:04', RAM)
+			);
+	
+			gameImage.writeInt32(0x03A0, 0x01020304);
+			stepImage(gameImage,3, test);
+			test.equals(gameImage.readInt32(0x03A0), 31, "ramStart := add 12, 19");
+			test.done();	
+		}
+		
+		
 		tests.Engine.testLoadOperandTypeRAM =
 		function (test: nodeunit.Test){
 			
@@ -206,6 +223,39 @@ module FyreVM{
 			test.done();
 		}
 		
+		tests.Engine.saveToQuetzal =
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				encodeOpcode('add', 100, 11, 'push'),
+				encodeOpcode('return', 0)
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			let q = engine.saveToQuetzal(0,0);
+			test.equal(q.getChunk('IFhd').byteLength, 128, 'game file identifier present');
+			test.equal(q.getChunk('MAll'), undefined, 'no heap');
+			let stack = new MemoryAccess(0);
+			stack.buffer = new Uint8Array(q.getChunk('Stks'));
+			test.equal(stack.readInt32(12), 111, 'result data found in saved stack')
+			test.done();
+		}
+		
+		tests.Engine.quetzalRoundTrip =
+		function(test: nodeunit.Test){
+			let gameImage = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				encodeOpcode('add', 100, 11, 'push'),
+				encodeOpcode('return', 0)
+			);
+			let engine = new Engine(gameImage);
+			engine.run();
+			let q = engine.saveToQuetzal(0,0);
+			engine = new Engine(gameImage);
+			engine.loadFromQuetzal(q);
+			test.equal(engine['stack'].readInt32(12), 111, 'result data found in saved stack');
+			test.done();
+		}
 
 		}
 		

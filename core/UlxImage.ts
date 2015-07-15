@@ -115,15 +115,20 @@ module FyreVM {
 			return this.memory.readInt32(GLULX_HDR.DECODINGTBL_OFFSET);
 		}
 		
-		// a bit weird to have this method here,
-		// but it is a convenient place, because
-		// the image has access to the MemoryAccess object
-		// (which the Engine does not)
-		allocateStack(): MemoryAccess {
-			// TODO: using copy is ugly, we just need a new buffer
-			return this.memory.copy(0, this.getStackSize());
+		saveToQuetzal(): Quetzal {
+			let quetzal = new Quetzal();
+			// 'IFhd' identifies the first 128 bytes of the game file
+			quetzal.setChunk('IFhd', this.original.copy(0, 128).buffer);
+			// 'CMem' or 'UMem' are the compressed/uncompressed contents of RAM
+           	// TODO: implement compression
+			let ramSize = this.getEndMem() - this.ramstart;
+			let umem = new MemoryAccess(ramSize+4);
+			umem.writeInt32(0, ramSize);
+			umem.buffer.set(new Uint8Array(this.memory.buffer).subarray(this.ramstart, this.ramstart+ramSize), 4);
+			quetzal.setChunk("UMem", umem.buffer);
+			return quetzal;
 		}
-	
+		
 		readByte(address: number) : number {
 			return this.memory.readByte(address);
 		}
@@ -203,6 +208,18 @@ module FyreVM {
 		* Use the optional "protection" parameters to preserve a RAM region
 		*/
 		revert(protectionStart=0, protectionLength=0){
+			let prot = this.copyProtectedRam(protectionStart, protectionLength);
+			this.loadFromOriginal();	
+			if (prot){
+				let d = [];
+				for(let i=0; i<protectionLength; i++){
+					d.push(prot.readByte(i));
+				}
+				this.writeBytes(protectionStart, ...d);
+			}
+		}
+		
+		private copyProtectedRam(protectionStart, protectionLength) : MemoryAccess {
 			let prot : MemoryAccess= null;
 			if (protectionLength > 0){
 				if (protectionStart + protectionLength > this.getEndMem()){
@@ -216,13 +233,35 @@ module FyreVM {
 				}
 				prot = this.memory.copy(start + this.ramstart, protectionLength);
 			}
-			this.loadFromOriginal();	
-			if (prot){
-				let d = [];
-				for(let i=0; i<protectionLength; i++){
-					d.push(prot.readByte(i));
+			return prot;
+		}
+		
+		restoreFromQuetzal(quetzal: Quetzal, protectionStart=0, protectionLength=0){
+			// TODO: support compressed RAM
+			let newRam = quetzal.getChunk('UMem');
+			if (newRam){
+				let prot = this.copyProtectedRam(protectionStart, protectionLength);
+			
+				let r = new MemoryAccess(0);
+				r.buffer= new Uint8Array(newRam);
+				let length = r.readInt32(0);
+				this.setEndMem(length + this.ramstart);
+				let i=4;
+				let j=this.ramstart;
+				while(i<newRam.byteLength){
+					this.memory.writeByte(j++, r.readByte(i++));
 				}
-				this.writeBytes(protectionStart, ...d);
+				
+				if (prot){
+					let d = [];
+					for(let i=0; i<protectionLength; i++){
+						d.push(prot.readByte(i));
+					}
+					this.writeBytes(protectionStart, ...d);
+				}
+				
+			}else{
+				throw new Error("Missing CMem/UMem blocks");
 			}
 		}
 		

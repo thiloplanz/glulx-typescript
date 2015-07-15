@@ -114,8 +114,8 @@ class MyAppComponent {
   }
   
   loadAndStart(){
-	  // TODO: make this configurable
-	  this.worker.loadImage('shadow-2.1.ulx');
+	  let file = document.getElementById('gameImage')['files'][0];
+	  this.worker.loadImage(file);
 	  this.worker.startGame();
   }
   

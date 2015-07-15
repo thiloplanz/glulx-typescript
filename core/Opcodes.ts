@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -90,22 +90,13 @@ module FyreVM {
 	
 	// coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
-		if (x < 0){
-			x = 0xFFFFFFFF + x  + 1;
-		}
-		if (x > 0xFFFFFFFF){
-			x %= 0x100000000;
-		}
-		return x;
+		return x >>> 0;
 	}
 	
 	// coerce uint32 number into  (signed!) int32 range
 	
 	function int32(x: number) :number{
-		if (x > 0xF0000000){
-			x = - (0xFFFFFFFF - x + 1);
-		}
-		return x;
+		return x | 0;
 	}
 	
 	
@@ -127,13 +118,13 @@ module FyreVM {
 				function(a,b){ return uint32(a-b)});				
 		
 			opcode(0x12, 'mul', 2, 1,
-				function(a,b){ return uint32(a*b)});
+				function(a,b){ return uint32(int32(a)*int32(b))});
 		
 			opcode(0x13, 'div', 2, 1,
-				function(a,b){ return Math.floor(a / b)});
+				function(a,b){ return uint32(int32(a) / int32(b))});
 		
 			opcode(0x14, 'mod', 2, 1,
-				function(a,b){ return a % b});
+				function(a,b){ return uint32(int32(a) % int32(b))});
 	
 			// TODO: check the specs
 			opcode(0x15, 'neg', 1, 1,
@@ -156,23 +147,20 @@ module FyreVM {
 			opcode(0x1B, 'bitnot', 1, 1,
 				function(x){ x = ~uint32(x); if (x<0) return 1 + x + 0xFFFFFFFF; return x; });
 	
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1C, 'shiftl', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return 0;
-					return a << b});
+					if (uint32(b) >= 32) return 0;
+					return uint32(a << b)});
 
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1D, 'sshiftr', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return (a & 0x80000000) ? 0 : 0xFFFFFFFF;
-					return a >> b});
+					if (uint32(b) >= 32) return (a & 0x80000000) ? 0xFFFFFFFF : 0;
+					return uint32(int32(a) >> b)});
 			
-			// TODO: check if it works, JS has signed ints, we want uint
 			opcode(0x1E, 'ushiftr', 2, 1,
 				function(a,b){ 
-					if (b >= 32) return 0;
-					return a >> b});
+					if (uint32(b) >= 32) return 0;
+					return uint32(uint32(a) >>> b)});
 					
 					
 			opcode(0x20, 'jump', 1, 0, 
@@ -402,14 +390,16 @@ module FyreVM {
 
 			opcode(0x4B, "aloadbit", 2, 1,
 				function(array: number, index: number){
-					let address = array + Math.floor(index / 8);
-					index %= 8;
-					if (index < 0){
-						address--;
-						index += 8;
+					index = int32(index);
+					let bitx = index & 7;
+					let address = array;
+					if (index >= 0){
+						address += (index>>3);
+					}else{
+						address -= (1+((-1-index)>>3));
 					}
 					let byte =  this.image.readByte(uint32(address));
-					return byte & (1 << index) ? 1 : 0;
+					return byte & (1 << bitx) ? 1 : 0;
 				});
 
 			opcode(0x4C, "astore", 3, 0,
@@ -433,17 +423,19 @@ module FyreVM {
 
 			opcode(0x4F, "astorebit", 3, 0,
 				function(array: number, index: number, value: number){
-					let address = array + Math.floor(index / 8);
-					index %= 8;
-					if (index < 0){
-						address--;
-						index += 8;
+					index = int32(index);
+					let bitx = index & 7;
+					let address = array;
+					if (index >= 0){
+						address += (index>>3);
+					}else{
+						address -= (1+((-1-index)>>3));
 					}
 					let byte =  this.image.readByte(address);
 					if (value === 0){
-						byte &= ~(1 << index);
+						byte &= ~(1 << bitx);
 					}else{
-						byte |= (1 << index);
+						byte |= (1 << bitx);
 					}
 					this.image.writeBytes(address, byte);
 				}
@@ -687,10 +679,81 @@ module FyreVM {
 				
 			opcode(0x122, 'restart', 0, 0, Engine.prototype.restart);
 
-			opcode(0x125, 'saveundo', 0, 1, function(){
-				// TODO: implement save/restore
-				return 1;
+			opcode(0x123, 'save', 1, 0,
+				function(X, destType:number, destAddr:number){
+					// TODO: find out what that one argument X does ...
+					let engine: Engine = this;
+					if (engine.saveRequested){
+						let q = engine.saveToQuetzal(destType, destAddr);
+						let resume = this.resumeAfterWait.bind(this);
+						
+						let callback = function(success:boolean){
+							if (success){
+								engine['performDelayedStore'](destType, destAddr, 0);
+							}else{
+								engine['performDelayedStore'](destType, destAddr, 1);
+							}
+							resume();
+						}
+						engine.saveRequested(q, callback);
+						let wait: any = 'wait';
+						return wait;
+					}
+					engine['performDelayedStore'](destType, destAddr, 1);	
+				},
+				OpcodeRule.DelayedStore
+			)
+			
+			opcode(0x124, "restore", 1, 0,
+				function(X, destType:number, destAddr:number){
+					// TODO: find out what that one argument X does ...
+					let engine: Engine = this;
+					if (engine.loadRequested){
+						let resume = this.resumeAfterWait.bind(this);
+						let callback = function(quetzal:Quetzal){
+							if (quetzal){
+								engine.loadFromQuetzal(quetzal);
+								resume();
+								return;
+							}
+							engine['performDelayedStore'](destType, destAddr, 1);
+						}
+						engine.loadRequested(callback);
+						let wait: any = 'wait';
+						return wait;
+					}
+					engine['performDelayedStore'](destType, destAddr, 1);
+				},
+				OpcodeRule.DelayedStore
+			)
+
+			opcode(0x125, 'saveundo', 0, 0, 
+				function(destType:number, destAddr:number){
+					let q = this.saveToQuetzal(destType, destAddr);
+					
+					if (this.undoBuffers){
+						// TODO make MAX_UNDO_LEVEL configurable
+						if (this.undoBuffers.length >= 3){
+							this.undoBuffers.unshift();
+						}
+						this.undoBuffers.push(q);
+					}else{
+						this.undoBuffers = [ q ];
+					}
+					this.performDelayedStore(destType, destAddr, 0);
 			}, OpcodeRule.DelayedStore);
+
+			opcode(0x126, 'restoreundo', 0, 0,
+				function(destType:number, destAddr:number){
+					if (this.undoBuffers && this.undoBuffers.length){
+						let q = this.undoBuffers.pop();
+						this.loadFromQuetzal(q);
+					}else{
+						this.performDelayedStore(destType, destAddr, 1);
+					}
+					
+				}, OpcodeRule.DelayedStore);
+
 
 			opcode(0x127, 'protect', 2, 0,
 				function(start, length){

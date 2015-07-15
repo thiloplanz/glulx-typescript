@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -22,13 +22,7 @@ module FyreVM {
 	
 	// coerce Javascript number into uint32 range
 	function uint32(x:number) : number{
-		if (x < 0){
-			x = 0xFFFFFFFF + x  + 1;
-		}
-		if (x > 0xFFFFFFFF){
-			x %= 0x100000000;
-		}
-		return x;
+		return x >>> 0;
 	}
 	function uint16(x: number) :number{
 		if (x < 0){
@@ -86,8 +80,15 @@ module FyreVM {
 		}
 		throw new Error(`unsupported address specification ${x}`);
 	}
-	
-	
+	function parseLocal(x: string, params: any[], i: number, sig: number[]){
+		// Fr:00
+		if (x.length == 5){
+			sig.push(LoadOperandType.local_8);
+			params[i] = parseHex(x.substring(3));
+			return;
+		}	
+		throw new Error(`unsupported local frame address specification ${x}`);
+	}
 		
 	/**
 	 * encode an opcode and its parameters 
@@ -149,6 +150,10 @@ module FyreVM {
 					parsePtr(x, params, i, sig);
 					continue;
 				}
+				if (x.indexOf("Fr:") === 0){
+					parseLocal(x, params, i, sig);
+					continue;
+				}
 			}
 			throw new Error(`unsupported load argument ${x} for ${name}(${JSON.stringify(params)})`);
 		}
@@ -167,10 +172,19 @@ module FyreVM {
 					}
 				}
 				if (typeof(x) === 'string'){
+					if (x === 'push'){
+						sig.push(StoreOperandType.stack);
+						continue;
+					}
 					if (x.indexOf("*") === 0){
 						parsePtr(x, params, i, sig);
 						continue;
 					}
+					if (x.indexOf("Fr:") === 0){
+						parseLocal(x, params, i, sig);
+						continue;
+					}
+					
 				}
 				throw new Error(`unsupported store argument ${x} for ${name}(${JSON.stringify(params)})`)
 			}
@@ -207,7 +221,7 @@ module FyreVM {
 				result.push(x & 0xFF);
 				continue;
 			}
-			if (s === LoadOperandType.ptr_8 || s === LoadOperandType.ram_8){
+			if (s === LoadOperandType.ptr_8 || s === LoadOperandType.ram_8 || s === LoadOperandType.local_8){
 				result.push(x);
 				continue;
 			}

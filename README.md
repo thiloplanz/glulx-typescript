@@ -29,8 +29,7 @@ There is a simple HTML page that can load and run a game image. You need to load
     $ http-server
     $ open http://0.0.0.0:8080/webworker.html
     
-This will play the image `game.ulx` found in the same directory. The repository contains a stub, that you want to replace with your real game file. Keep the name at `game.ulx` (or change it in the HTML file).
-
+Select a game image (ULX file) from your local file system to press START. 
 
 
 ### Running unit tests

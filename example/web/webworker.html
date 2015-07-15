@@ -24,7 +24,7 @@
 </head>	
 	
 <body>
-	<div id='status'></div>
+	<div id='status'>please select the game image</div>
 	<h1 id='LOCN'></h1>
 	<div>
 		<b id='SCOR' class='header'></b>
@@ -32,7 +32,11 @@
 		<b id='TIME' class='header'></b>	
 	</div>
 	<div id='MAIN'></div>
-	<div id='PRPT'></div>	
+	<div id='PRPT'></div>
+	<div id='selectFile'>
+		<input type="file" id='gameImage' />
+		<button onclick='loadGameImage()'>START</button>
+	</div>	
 </body>	
 	
 <script>
@@ -74,7 +78,6 @@
 	}
 	
 	
-	setText("status", "loading game image");
 	var w = new Worker("webworker.js");
 	w.onmessage = function(ev){
 		var d = ev.data;
@@ -84,7 +87,7 @@
 					setText('status', 'loaded game image');
 					break;
 				case 1:
-					setText('status', '');
+					setText('status', '... running ...');
 					break;
 				case 2:
 					setText('status', 'waiting for your input...');
@@ -126,8 +129,14 @@
 		}
 	};
 	
-	w.postMessage({loadImage: 'game.ulx'});
-	w.postMessage({start: true});
-		
+	
+	function loadGameImage(){
+		var file = document.getElementById('gameImage').files[0];
+		setText("status", "loading game image");
+		setText('selectFile', '');
+		w.postMessage({loadImage: file});
+		w.postMessage({start: true});
+			
+	}		
 </script>	
 </html>

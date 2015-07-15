@@ -14,7 +14,6 @@
  */
  
  /// <reference path='../../core/Engine.ts' />
-  /// <reference path='../../node/core-on-node.ts' />
  /// <reference path='../../node/node-0.11.d.ts' />
  
 let readline = require('readline'); 
@@ -24,7 +23,14 @@ let rl = readline.createInterface({
 	output: process.stdout
 });
 
-let testGame = FyreVM.BufferMemoryAccess.loadFile(process.argv[2]);
+
+let fs = require('fs');
+
+let buffer = fs.readFileSync(process.argv[2]);
+let testGame = new FyreVM.MemoryAccess(0);
+testGame.buffer = new Uint8Array(buffer);
+testGame['maxSize'] = testGame.buffer.byteLength * 2;
+
 let engine = new FyreVM.Engine(new FyreVM.UlxImage(testGame));
 
 // enable FyreVM extensions
@@ -47,7 +53,20 @@ engine.lineWanted = function (callback){
 
 engine.keyWanted = engine.lineWanted;
 engine.transitionRequested = glk_window_clear;
-
+engine.saveRequested = function(quetzal:FyreVM.Quetzal, callback){
+	fs.writeFileSync(process.argv[2]+".fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
+	callback(true);
+}
+engine.loadRequested = function(callback){
+	let x = fs.readFileSync(process.argv[2]+".fyrevm_saved_game");
+	if (x){
+		let q = FyreVM.Quetzal.load(new Uint8Array(x));
+		callback(q);
+	}else{
+		console.error("could not find the save game file");
+		callback(null);
+	}
+}
 engine.outputReady = function (x){
 	if (engine['glkHandlers']){
 		engine['glkHandlers'][0x2A] = glk_window_clear;
