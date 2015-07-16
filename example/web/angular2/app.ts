@@ -12,7 +12,7 @@
  * "Client-side" code to communicate with an EngineWrapper WebWorker.
  */
  
- import {Component, View, bootstrap, coreDirectives, ElementRef, NgZone} from 'angular2/angular2';
+import {Component, View, bootstrap, coreDirectives, ElementRef, NgZone} from 'angular2/angular2';
 
 
 class WebWorkerClient{
@@ -42,6 +42,7 @@ class WebWorkerClient{
 		
 		startGame(){
 			this.worker.postMessage({start: true});
+			this.worker.postMessage({enableSaveGame: true});
 		}
 		
 		sendLineInput(line:string){
@@ -56,6 +57,13 @@ class WebWorkerClient{
 			let d : FyreVM.EngineWrapperState = ev.data;
 			if (d){
 				console.info(d);
+				if (d.state === FyreVM.EngineState.waitingForGameSavedConfirmation){
+					this.saveGameToLocalStorage(d);
+				}
+				if (d.state === FyreVM.EngineState.waitingForLoadSaveGame){
+					this.getSaveGameFromLocalStorage(d);
+				}
+		
 				let me = this;
 				this.zone.run(function(){
 					me.state = d;
@@ -80,6 +88,26 @@ class WebWorkerClient{
 			return c[name];
 		}
 		
+		saveGameToLocalStorage(data){
+			// use IFhd to differentiate between multiple game images
+			var key = 'fyrevm_saved_game_' + base64(data['quetzal.IFhd']);
+			var q = base64(data.quetzal);
+			localStorage[key] = q;
+			delete data.quetzal;
+			this.worker.postMessage({saveSuccessful: true});
+			
+		}
+		
+		getSaveGameFromLocalStorage(data: FyreVM.EngineWrapperState){
+				var key = 'fyrevm_saved_game_' + base64(data['quetzal.IFhd']);
+				var q = localStorage[key];
+				if (!q){
+					this.worker.postMessage({restore: false});
+					return;
+				}
+				// send as data: URL to get native Base64 decoding
+				this.worker.postMessage({restore: 'data:application/octet-stream;base64,'+q});
+		}
 		
 	}
 
@@ -202,6 +230,18 @@ function printf02d(x:number) : string{
 	return "" + x;
 }
 
+// http://jsperf.com/tobase64-implementations/10
+// http://stackoverflow.com/a/9458996/14955
+function base64(data){
+	if (!data) return null;
+	var bytes = new Uint8Array(data);
+	var len = bytes.byteLength;
+	var chArray = new Array(len);
+	for (var i = 0; i < len; i++) {
+		chArray[i] = String.fromCharCode(bytes[i]);
+ 	}
+	return btoa(chArray.join(""));
+}		
 
 
 export function init(){

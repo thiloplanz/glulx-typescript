@@ -2,7 +2,7 @@
 
 This is a demonstration of how to present an interactive fiction game in a web browser.
 
-The UI is written using the Angular2 framework, the game engine is running as a WebWorker (the exact same code as in the minimal HTML example).
+The UI is written using the Angular2 framework, the [game engine is running as a Web Worker](../../../web/WebWorker.md) (the exact same code as in the minimal HTML example).
 
 ### Setting up the build environment
 
@@ -14,7 +14,7 @@ You need to install the TypeScript bindings for Angular2. This can be done via t
     
 ### Compile the game engine and the application
     
-Then you can compile the WebWorker with the game engine
+Then you can compile the Web Worker with the game engine
 
     $ tsc -d --out ../webworker.js ../../../web/WebWorker.ts 
     

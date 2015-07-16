@@ -12,7 +12,7 @@ module FyreVM {
 	 * an OpcodeHandler takes any number of arguments (all numbers)
 	 * and returns nothing, or a number, or multiple numbers
 	 */
-	interface OpcodeHandler{
+	export interface OpcodeHandler{
 		(...any:number[]) : void | number | number[]
 	}
 	
