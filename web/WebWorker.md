@@ -34,20 +34,29 @@ As a side-effect of this arrangement, the engine is pretty easy to embed into a 
     </script>
     
 
+Also see the [example code](../example/web/webworker.html).
+
 ------
 
 ### Message Format
 
+The Web Worker that runs the game engine communicates with the outside world using messages that you send to it with `w.postMessage(payload)` and receive from it using the `w.onmessage` callback.
+
 #### messages from the engine
 
-TODO. Mostly (from [EngineWrapper.ts](../core/EngineWrapper.ts)):
+When the engine wants to tell you (or needs to do) something,
+it will send you a message, which mostly conforms to the [EngineWrapperState interface](../core/EngineWrapper.ts).
 
-	export interface EngineWrapperState {
-		state: EngineState,
-		channelData?: ChannelData,
-		errorMessage?: string,
+    w.onmessage = function(ev : MessageEvent){
+		  let d : EngineWrapperState = ev.data;
+		  let state: EngineState = d.state;
+		  	
 	}
 
+###### EngineState
+
+It contains an `EngineState` that you need to inspect
+to figure out what kind of message this is, and what you need to do about it.
 
     export const enum EngineState {
 		loaded = 1,
@@ -61,8 +70,33 @@ TODO. Mostly (from [EngineWrapper.ts](../core/EngineWrapper.ts)):
 		waitingForLoadSaveGame = 54	
 	}
 	
+###### engine output	
+	
+The game output is sent via Channels. You should display them to the user as appropriate.
+
+     console.info(d.channelData.MAIN)
+     
+     	
+###### user input
+
+When the game needs input from the user (such as the next command), it sends a message with the state `waitingForLineInput` or `waitingForKeyInput`. When you have that input, you need to send it back via a `lineInput` or `keyInput` command.
+
+	
 
 #### commands to the engine
+
+    export interface WebWorkerCommand {
+		// actions
+		loadImage? : File|string,
+		start?: boolean,
+		lineInput?: string,
+		keyInput?: string,
+		saveSuccessful?: boolean
+		restore?: ArrayBuffer|string|boolean,
+		// configuration
+		enableSaveGame? : boolean,
+	}
+
 
 ##### loadImage
 

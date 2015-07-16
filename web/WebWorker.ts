@@ -21,6 +21,20 @@ module FyreVM {
 	declare var FileReaderSync: {
     	new(): FileReaderSync;
 	}
+
+
+	export interface WebWorkerCommand {
+		// actions
+		loadImage? : File|string,
+		start?: boolean,
+		lineInput?: string,
+		keyInput?: string,
+		saveSuccessful?: boolean
+		restore?: ArrayBuffer|string|boolean,
+		// configuration
+		enableSaveGame? : boolean,
+	}
+
 	
 	export class WebWorker{
 		
@@ -44,7 +58,7 @@ module FyreVM {
 		}
 		
 		private handleMessage(ev: MessageEvent)	{
-			let {data} = ev;
+			let data : WebWorkerCommand = ev.data;
 			if (!data) return;
 			
 			// configuration
@@ -82,12 +96,15 @@ module FyreVM {
 			if (data.restore){
 				// raw data
 				if (data.restore instanceof ArrayBuffer){
-					this.engine.receiveSavedGame(Quetzal.load(data.restore));
+					// TODO: how to cast properly ?
+					let ab : any = data.restore;
+					this.engine.receiveSavedGame(Quetzal.load(ab));
 				}
 				// URL
 				let request = new XMLHttpRequest();
 				let worker = this;
-				request.open("GET", data.restore);
+				let url : any = data.restore;
+				request.open("GET", url);
 				request.responseType = 'arraybuffer';
 				request.onload = function(){
 					if (request.status !== 200){
