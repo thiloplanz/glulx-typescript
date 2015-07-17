@@ -558,6 +558,7 @@ module FyreVM {
 				  case GLULX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
 				  case GLULX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
 				  case GLULX_STUB.STORE_STACK: this.push(value); return;
+				  case GLULX_STUB.STORE_RAM: this.image.writeInt32(this.image.getRamAddress(address), value); return;
 				  default: throw new Error(`unsupported delayed store mode ${type}`);
 			  }
 		  }
@@ -641,6 +642,9 @@ module FyreVM {
 						break;
 				  case GLULX_STUB.STORE_STACK:
 				  		this.push(result);
+						break;
+				  case GLULX_STUB.STORE_RAM:
+				  		this.image.writeInt32(this.image.getRamAddress(stub.destAddr), result);
 						break;
 				  case GLULX_STUB.RESUME_FUNC:
 				  		// resume executing in the same call frame
