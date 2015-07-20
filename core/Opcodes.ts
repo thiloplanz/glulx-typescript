@@ -57,34 +57,30 @@ module FyreVM {
             /// Reads a line from the user: args[1] = buffer, args[2] = buffer size.
             /// </summary>
             ReadLine = 1,
+			  /// <summary>
+            /// Reads a character from the user: result = the 16-bit Unicode value.
+            /// </summary>
+            ReadKey = 2,
             /// <summary>
             /// Converts a character to lowercase: args[1] = the character,
             /// result = the lowercased character.
             /// </summary>
-            ToLower = 2,
+            ToLower = 3,
             /// <summary>
             /// Converts a character to uppercase: args[1] = the character,
             /// result = the uppercased character.
             /// </summary>
-            ToUpper = 3,
+            ToUpper = 4,
             /// <summary>
             /// Selects an output channel: args[1] = an OutputChannel value (see Output.cs).
             /// </summary>
-            Channel = 4,
-            /// <summary>
-            /// Reads a character from the user: result = the 16-bit Unicode value.
-            /// </summary>
-            ReadKey = 5,
+            Channel = 5, 
             /// <summary>
             /// Registers a veneer function address or constant value: args[1] = a
             /// VeneerSlot value (see Veneer.cs), args[2] = the function address or
             /// constant value, result = nonzero if the value was accepted.
             /// </summary>
-            SetVeneer = 6,
-            /// <summary>
-            /// Tells the UI a device handled transition is requested. (press a button, touch screen, etc).
-            /// </summary>
-            RequestTransition = 7
+            SetVeneer = 6
         }
 
 	

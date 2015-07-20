@@ -56,13 +56,7 @@ module FyreVM {
 	export interface OutputReadyEventHandler{
 		(package: ChannelData) : void
 	}
-	
-
-	// TODO: find out what this does
-	export interface TransitionRequestedEventHandler {
-		(): void
-	}	
-	
+		
 	// A delegate that receives a Quetzal when the user
 	// requests to save the game
 	export interface SaveGameEventHandler {
@@ -253,7 +247,6 @@ module FyreVM {
 		outputReady: OutputReadyEventHandler;
 		lineWanted: LineWantedEventHandler;
 		keyWanted: KeyWantedEventHandler;
-		transitionRequested: TransitionRequestedEventHandler;
 		saveRequested: SaveGameEventHandler;
 		loadRequested: LoadGameEventHandler;
 		
@@ -1029,11 +1022,6 @@ module FyreVM {
 				  case FyreCall.SetVeneer:
 				  	console.warn(`ignoring veneer ${x} ${y}`);
 					return 1;
-				  case FyreCall.RequestTransition:
-				    if (this.transitionRequested){
-						this.transitionRequested();
-					return;
-					}
 				  default:
 				  	throw new Error(`Unrecognized FyreVM system call ${call}(${x},${y})`);	  
 			  }
