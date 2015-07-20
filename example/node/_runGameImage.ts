@@ -71,7 +71,8 @@ engine.outputReady = function (x){
 	if (engine['glkHandlers']){
 		engine['glkHandlers'][0x2A] = glk_window_clear;
 	}
-	process.stdout.write(x.MAIN);
+	if (x.MAIN !== undefined)
+		process.stdout.write(x.MAIN);
 	prompt_line = x.PRPT || prompt_line;
 	room = x.LOCN || room;
 }
