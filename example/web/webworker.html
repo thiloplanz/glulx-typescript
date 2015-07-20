@@ -142,9 +142,15 @@
 		var file = document.getElementById('gameImage').files[0];
 		setText("status", "loading game image");
 		setText('selectFile', '');
-		w.postMessage({loadImage: file});
-		w.postMessage({start: true});
-		w.postMessage({enableSaveGame: true});
+		var reader = new FileReader();
+		reader.onload = function(ev){
+			// "transfer" the buffer, not copy 
+			// https://developer.mozilla.org/en-US/docs/Web/API/Worker/postMessage#Transfer_Example
+			w.postMessage({loadImage: ev.target.result}, [ev.target.result]);
+			w.postMessage({start: true});
+			w.postMessage({enableSaveGame: true});
+		}
+		reader.readAsArrayBuffer(file);
 			
 	}
 	

@@ -37,7 +37,13 @@ class WebWorkerClient{
 		}
 		
 		loadImage(url){
-			this.worker.postMessage({loadImage: url});
+			// "transfer" the buffer, not copy 
+			// https://developer.mozilla.org/en-US/docs/Web/API/Worker/postMessage#Transfer_Example
+			if (url instanceof ArrayBuffer){
+				this.worker.postMessage({loadImage: url}, [url]);
+			}else{
+				this.worker.postMessage({loadImage: url});
+			}
 		}
 		
 		startGame(){
@@ -143,8 +149,13 @@ class MyAppComponent {
   
   loadAndStart(){
 	  let file = document.getElementById('gameImage')['files'][0];
-	  this.worker.loadImage(file);
-	  this.worker.startGame();
+	  let reader = new FileReader();
+	  let w = this.worker;
+	  reader.onload = function(ev){
+			w.loadImage(ev.target['result']);
+			w.startGame();
+		}
+	  reader.readAsArrayBuffer(file);
   }
   
   handleKey($event:KeyboardEvent){

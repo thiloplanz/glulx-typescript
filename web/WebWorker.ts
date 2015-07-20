@@ -25,7 +25,7 @@ module FyreVM {
 
 	export interface WebWorkerCommand {
 		// actions
-		loadImage? : File|string,
+		loadImage? : ArrayBuffer|string,
 		start?: boolean,
 		lineInput?: string,
 		keyInput?: string,
@@ -164,8 +164,8 @@ module FyreVM {
 		loadImage(data){
 			let {loadImage} = data;
 			
-			if (loadImage instanceof File){
-				this.loadImageFromBuffer(new FileReaderSync().readAsArrayBuffer(loadImage));
+			if (loadImage instanceof ArrayBuffer){
+				this.loadImageFromBuffer(loadImage);
 				return;
 			}
 			

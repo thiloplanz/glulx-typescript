@@ -87,7 +87,7 @@ When the game needs input from the user (such as the next command), it sends a m
 
     export interface WebWorkerCommand {
 		// actions
-		loadImage? : File|string,
+		loadImage? : ArrayBuffer|string,
 		start?: boolean,
 		lineInput?: string,
 		keyInput?: string,
@@ -100,7 +100,7 @@ When the game needs input from the user (such as the next command), it sends a m
 
 ##### loadImage
 
-`w.postMessage({loadImage: file})`, where `file` can be a `File` object or a URL (a string).
+`w.postMessage({loadImage: file})`, where `file` can be an `ArrayBuffer` object or a URL (a string).
        
 ##### start
 
