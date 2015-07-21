@@ -52,7 +52,6 @@ engine.lineWanted = function (callback){
 }
 
 engine.keyWanted = engine.lineWanted;
-engine.transitionRequested = glk_window_clear;
 engine.saveRequested = function(quetzal:FyreVM.Quetzal, callback){
 	fs.writeFileSync(process.argv[2]+".fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
 	callback(true);
