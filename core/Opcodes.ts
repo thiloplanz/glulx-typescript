@@ -80,7 +80,11 @@ module FyreVM {
             /// VeneerSlot value (see Veneer.cs), args[2] = the function address or
             /// constant value, result = nonzero if the value was accepted.
             /// </summary>
-            SetVeneer = 6
+            SetVeneer = 6,
+			/// XML Filtering will turn things into XAML tags for Silverlight or WPF.
+			XMLFilter = 7,
+			/// styles: { Roman = 1, Bold = 2, Italic = 3, Fixed = 4, Variable = 5,}
+			SetStyle = 8
         }
 
 	

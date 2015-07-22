@@ -1022,6 +1022,12 @@ module FyreVM {
 				  case FyreCall.SetVeneer:
 				  	console.warn(`ignoring veneer ${x} ${y}`);
 					return 1;
+				  case FyreCall.SetStyle:
+				  	// ignore
+					return 1;
+				  case FyreCall.XMLFilter:
+				  	// ignore
+					return 1;
 				  default:
 				  	throw new Error(`Unrecognized FyreVM system call ${call}(${x},${y})`);	  
 			  }
