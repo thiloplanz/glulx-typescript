@@ -71,6 +71,10 @@ module FyreVM {
 		}	
 	}
 	
+	/**
+	 * decode a single opcode found at position "offset" in the "code"
+	 */
+	
 	export function decodeOpcode(code: MemoryAccess, offset: number) : DecodedOpcode{
 		initOpcodes();
 		// decode opcode number
@@ -169,6 +173,94 @@ module FyreVM {
 		 
 	}
 	
+	
+	
+	/**
+	 * decodes a complete "code block" sequence of opcodes, usally a function body.
+	 * 
+	 * - follows every path of execution
+	 * - at start, there is only one path
+	 * - branching instructions (conditional jumps) create extra paths
+	 * - a path ends with "return" or a jump into code already processed
+	 * 
+	 */
+	
+	export function decodeCodeBlock(code: MemoryAccess, offset: number) : DecodedOpcode[]{
+		// TODO? order by opcode start offset (can get out-of-order because of jumps)
+		return _decodeCodeBlock(code, offset, 2, []);
+	}
+	
+	
+	function _decodeCodeBlock(code: MemoryAccess, offset: number, jumpVector, stopList) : DecodedOpcode[] {
+		// return 0 / return 1
+		if (jumpVector === 0 || jumpVector === 1)
+			return [];
+		let target = offset + jumpVector - 2;
+		let l = stopList.length;
+		for(let i=0; i<l; i++){
+			if (stopList[i].start === target)
+				return [];
+		}
+		offset = offset + jumpVector - 2;
+	
+		let op = decodeOpcode(code, offset); 
+		let r = [ op ];
+		while (true){
+			offset += op.length;
+		
+			switch(op.opcode){
+				case 'return':
+		 		    return r;
+				
+				case 'jz':
+				case 'jnz':
+				case 'jeq':
+				case 'jne':
+				case 'jlt':
+				case 'jge':
+				case 'jgt':
+				case 'jle':
+				case 'jltu':
+				case 'jgeu':
+				case 'jgtu':
+				case 'jleu':
+			    case 'jump':
+				case 'jumpabs':
+				 {
+					// jump target is last argument
+					let j = op.loadOperandTypes.length - 1;
+					let type = op.loadOperandTypes[j];
+					if (type === LoadOperandType.zero || type === LoadOperandType.byte || type === LoadOperandType.int16 || type === LoadOperandType.int32){
+						let jumpVector = op.loadOperands[j];
+						if (op.opcode === 'jumpabs'){
+							jumpVector = jumpVector - offset + 2;
+						}		
+						let branch = _decodeCodeBlock(code, offset, jumpVector, r)
+						r.push.apply(r, branch);
+						if (op.opcode === 'jump' || op.opcode === 'jumpabs'){
+							return r;
+						}
+						// continue with the "else"
+						branch = _decodeCodeBlock(code, offset, 2, r)
+						r.push.apply(r, branch);
+						return r;
+						
+					}
+					else{
+						throw new Error("dynamic jump targets not supported!");
+					}
+				}
+				
+			}
+			op =  decodeOpcode(code, offset);
+			r.push(op);
+		}
+	}
+	
+	
+	
+	
+	
 	 /**
 	   * @return how many extra bytes were read (so that operandPos can be advanced)
 	   */
@@ -239,61 +331,61 @@ module FyreVM {
 	  }
 
 
-		/**
-		   * @return how many extra bytes were read (so that operandPos can be advanced)
-		   */
-		  function decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], code: MemoryAccess, operandPos: number){
-			  switch(type){
-				  case StoreOperandType.discard: 
-				  	operands.push(GLULX_STUB.STORE_NULL);
-					operands.push(0);
-				  	return 0;
-				  case StoreOperandType.ptr_8: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(code.readByte(operandPos));
-				  	return 1;
-				  case StoreOperandType.ptr_16: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(code.readInt16(operandPos));
-				  	return 2;
-				  case StoreOperandType.ptr_32: 
-				  	operands.push(GLULX_STUB.STORE_MEM);
-					operands.push(code.readInt32(operandPos)); 
-					return 4;
-				  case StoreOperandType.stack:
-				  	operands.push(GLULX_STUB.STORE_STACK);
-					operands.push(0);
-					return 0;  
-				  case StoreOperandType.local_8:
-				    operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(code.readByte(operandPos));
-				  	return 1;
-				  case StoreOperandType.local_16: 
-				  	operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(code.readInt16(operandPos));
-				  	return 2;
-				  case StoreOperandType.local_32: 
-				  	operands.push(GLULX_STUB.STORE_LOCAL);
-					operands.push(code.readInt32(operandPos)); 
-					return 4;
-				  case StoreOperandType.ram_8:
-				    operands.push(GLULX_STUB.STORE_RAM);
-					operands.push(code.readByte(operandPos));
-				  	return 1;
-				  case StoreOperandType.ram_16: 
-				  	operands.push(GLULX_STUB.STORE_RAM);
-					operands.push(code.readInt16(operandPos));
-				  	return 2;
-				  case StoreOperandType.ram_32: 
-				  	operands.push(GLULX_STUB.STORE_RAM);
-					operands.push(code.readInt32(operandPos)); 
-					return 4;	
-					
-				  default: throw new Error(`unsupported delayed store operand type ${type}`);
-			  }
-			  return operandPos;
+	/**
+	   * @return how many extra bytes were read (so that operandPos can be advanced)
+	   */
+	  function decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], code: MemoryAccess, operandPos: number){
+		  switch(type){
+			  case StoreOperandType.discard: 
+			  	operands.push(GLULX_STUB.STORE_NULL);
+				operands.push(0);
+			  	return 0;
+			  case StoreOperandType.ptr_8: 
+			  	operands.push(GLULX_STUB.STORE_MEM);
+				operands.push(code.readByte(operandPos));
+			  	return 1;
+			  case StoreOperandType.ptr_16: 
+			  	operands.push(GLULX_STUB.STORE_MEM);
+				operands.push(code.readInt16(operandPos));
+			  	return 2;
+			  case StoreOperandType.ptr_32: 
+			  	operands.push(GLULX_STUB.STORE_MEM);
+				operands.push(code.readInt32(operandPos)); 
+				return 4;
+			  case StoreOperandType.stack:
+			  	operands.push(GLULX_STUB.STORE_STACK);
+				operands.push(0);
+				return 0;  
+			  case StoreOperandType.local_8:
+			    operands.push(GLULX_STUB.STORE_LOCAL);
+				operands.push(code.readByte(operandPos));
+			  	return 1;
+			  case StoreOperandType.local_16: 
+			  	operands.push(GLULX_STUB.STORE_LOCAL);
+				operands.push(code.readInt16(operandPos));
+			  	return 2;
+			  case StoreOperandType.local_32: 
+			  	operands.push(GLULX_STUB.STORE_LOCAL);
+				operands.push(code.readInt32(operandPos)); 
+				return 4;
+			  case StoreOperandType.ram_8:
+			    operands.push(GLULX_STUB.STORE_RAM);
+				operands.push(code.readByte(operandPos));
+			  	return 1;
+			  case StoreOperandType.ram_16: 
+			  	operands.push(GLULX_STUB.STORE_RAM);
+				operands.push(code.readInt16(operandPos));
+			  	return 2;
+			  case StoreOperandType.ram_32: 
+			  	operands.push(GLULX_STUB.STORE_RAM);
+				operands.push(code.readInt32(operandPos)); 
+				return 4;	
+				
+			  default: throw new Error(`unsupported delayed store operand type ${type}`);
 		  }
-	
+		  return operandPos;
+	  }
+
 			
 	
 	// coerce Javascript number into uint32 range
@@ -539,5 +631,9 @@ module FyreVM {
 		
 		return result;
 	}
+	
+	
+	
+	
 	
 }

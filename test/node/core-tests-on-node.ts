@@ -9,6 +9,7 @@
 /// <reference path='../core/EngineTest.ts' />
 /// <reference path='../core/OpcodesTest.ts' />
 /// <reference path='../core/QuetzalTest.ts' />
+/// <reference path='../core/OpcodecTest.ts' />
 
 let buffer = new FyreVM.MemoryAccess(1000, 10240);
 
@@ -21,5 +22,7 @@ FyreVM.NodeUnit.addEngineTests(exports, buffer);
 FyreVM.NodeUnit.addOpcodeTests(exports, buffer);
 
 FyreVM.NodeUnit.addQuetzalTests(exports);
+
+FyreVM.NodeUnit.addOpcodecTests(exports);
 
 
