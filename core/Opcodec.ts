@@ -101,7 +101,7 @@ module FyreVM {
 		// look up opcode info
 		let opcode = opcodes_array[opnum];
 		if (!opcode){
-			throw new Error(`Unrecognized opcode ${opnum}`);
+			throw new Error(`Unrecognized opcode ${opnum} at ${offset}`);
 		}
 		// decode load-operand types
 		let opcount = opcode.loadArgs + opcode.storeArgs;
@@ -535,8 +535,12 @@ module FyreVM {
 		}		
 		
 		let {loadArgs, storeArgs, code} = opcode;
-		if (params.length != loadArgs + storeArgs){
-			throw new Error(`opcode '${name}' requires ${loadArgs+storeArgs} arguments, but you gave me ${params.length}: ${JSON.stringify(params)}`);
+		let extraArgs = 0;
+		if (opcode.rule === OpcodeRule.DelayedStore){
+			extraArgs++;
+		}
+		if (params.length != loadArgs + storeArgs + extraArgs){
+			throw new Error(`opcode '${name}' requires ${loadArgs+storeArgs+extraArgs} arguments, but you gave me ${params.length}: ${JSON.stringify(params)}`);
 		}
 		
 		// opcode
@@ -593,8 +597,8 @@ module FyreVM {
 			throw new Error(`unsupported load argument ${x} for ${name}(${JSON.stringify(params)})`);
 		}
 		// storeArg signature
-		if (storeArgs){
-			for (; i<loadArgs+storeArgs; i++){
+		if (storeArgs || extraArgs){
+			for (; i<loadArgs+storeArgs+extraArgs; i++){
 				let x = params[i];
 				if (x === null || x === StoreOperandType.discard){
 					sig.push(StoreOperandType.discard);

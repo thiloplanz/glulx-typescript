@@ -17,6 +17,17 @@ module FyreVM{
 				let m = new MemoryAccess(10240);
 				tests.Opcodec = {};
 				
+				
+				tests.Opcodec.testEncodeOpcode_DelayedStore =
+				function(test: nodeunit.Test){
+					let [ oc1, oc2, load, store, addr1, addr2, addr3, addr4, arg0, rest ] = encodeOpcode('callfi', 0xa5fc6, 1, StoreOperandType.discard);
+					test.equal(oc1 * 0x100+  oc2 , 0x8161);
+					test.equal(addr2 *0x10000 + addr3 *0x100 + addr4, 0xa5fc6);
+					test.equal(arg0, 1);
+					test.equal(rest, undefined);
+					test.done();
+				}
+				
 				tests.Opcodec.testDecodeFunction = 
 				function(test: nodeunit.Test){
 					let gameImage = makeTestImage(m,
