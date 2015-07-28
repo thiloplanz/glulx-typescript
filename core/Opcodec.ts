@@ -238,7 +238,7 @@ module FyreVM {
 	}
 	
 	
-	function _decodeCodeBlock(code: MemoryAccess, offset: number, jumpVector, stopList) : DecodedOpcode[] {
+	function _decodeCodeBlock(code: MemoryAccess, offset: number, jumpVector, stopList: DecodedOpcode[]) : DecodedOpcode[] {
 		// return 0 / return 1
 		if (jumpVector === 0 || jumpVector === 1)
 			return [];
@@ -249,10 +249,10 @@ module FyreVM {
 				return [];
 		}
 		offset = offset + jumpVector - 2;
-	
 		let op = decodeOpcode(code, offset); 
 		let r = [ op ];
 		while (true){
+			stopList.push(op);
 			offset += op.length;
 		
 			switch(op.opcode){
@@ -281,14 +281,16 @@ module FyreVM {
 						let jumpVector = op.loadOperands[j];
 						if (op.opcode === 'jumpabs'){
 							jumpVector = jumpVector - offset + 2;
-						}		
-						let branch = _decodeCodeBlock(code, offset, jumpVector, r)
+						}
+								
+						let branch = _decodeCodeBlock(code, offset, jumpVector, stopList)
 						r.push.apply(r, branch);
 						if (op.opcode === 'jump' || op.opcode === 'jumpabs'){
 							return r;
 						}
+						stopList.push.apply(stopList, branch);
 						// continue with the "else"
-						branch = _decodeCodeBlock(code, offset, 2, r)
+						branch = _decodeCodeBlock(code, offset, 2, stopList)
 						r.push.apply(r, branch);
 						return r;
 						

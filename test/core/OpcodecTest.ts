@@ -43,6 +43,31 @@ module FyreVM{
 					test.done();
 				}
 				
+				tests.Opcodec.testDecodeFunction_0xaf20 = 
+				function(test: nodeunit.Test){
+					// taken from real game image, used to cause an infinite loop
+					let gameImage = makeTestImage(m,
+						CallType.localStorage, 0x00, 0x00, 
+						encodeOpcode('callfi', 0xa5fc6, 1, StoreOperandType.discard),
+						encodeOpcode('jnz', "*R:80", 0x13),
+						encodeOpcode('copy', 1, "*R:0314"),
+						encodeOpcode('callfi', 0xa5e5e, 2,  StoreOperandType.discard),
+						encodeOpcode('jump', 0xed - 0xff - 1),
+						encodeOpcode('callfi', 0xa5e5e, 3,  'push'),
+						encodeOpcode('jnz', 'pop', 5),
+						encodeOpcode('return', 1),
+						encodeOpcode('jump', 0xdb - 0xff - 1),
+						encodeOpcode('return', 1) // this is never reached
+					)
+					let f = decodeFunction(m, 256);
+					test.equals(f.opcodes.length, 9, 'just 9, because final return is dead code');
+					test.equals(f.locals_32, 0);
+					test.equals(f.callType, CallType.localStorage);
+					test.done();
+				}
+				
+				
+				
 				tests.Opcodec.testDecodeCodeBlock =
 				function(test: nodeunit.Test){
 					
