@@ -55,6 +55,15 @@ module FyreVM {
 		length: number
 	}
 	
+	export interface DecodedFunction{
+		start: number,
+		opcodes: DecodedOpcode[],
+		callType: CallType,
+		locals_32: number,
+		locals_16: number,
+		locals_8: number
+	}
+	
 	// build a map of all opcodes by name
 	// TODO: remove ugly cyclic dependency on Engine implementation
 	// for now, lazy load	
@@ -173,10 +182,48 @@ module FyreVM {
 		 
 	}
 	
+	/**
+	 * decodes a function starting at "offset".
+	 * 
+	 */
+	export function decodeFunction(code: MemoryAccess, offset: number) : DecodedFunction {
+		
+		let pos = offset;
+		let callType = code.readByte(pos++);
+		if (callType !== CallType.localStorage && callType !== CallType.stack)
+			throw new Error(`not a function at ${offset}, got ${callType} instead of a CallType`);
+		
+		let locals_32 = 0;
+		let locals_16 = 0;
+		let locals_8 = 0;
+		
+		while(true){
+			let type = code.readByte(pos++);
+			let count = code.readByte(pos++);
+			if (type === 0 || count === 0) break;
+			switch(type){
+				case 1:	locals_8 += count; break;
+				case 2: locals_16 += count; break;
+				case 4: locals_32 += count; break;
+				default: throw new Error(`unsupported locals type ${type}`);
+			}
+		}
+		
+		let opcodes = decodeCodeBlock(code, pos);
+		
+		return {
+			start: offset,
+			callType: callType,
+			locals_32: locals_32,
+			locals_16: locals_16,
+			locals_8: locals_8,
+			opcodes: opcodes
+		}
+	}
 	
 	
 	/**
-	 * decodes a complete "code block" sequence of opcodes, usally a function body.
+	 * decodes a complete "code block" sequence of opcodes, usually a function body.
 	 * 
 	 * - follows every path of execution
 	 * - at start, there is only one path

@@ -4,3 +4,6 @@ test.js
 tests.js
 runGameImage.js
 webworker.js
+typings
+app.js
+webworker.d.ts

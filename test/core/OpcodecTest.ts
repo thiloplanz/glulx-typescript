@@ -17,6 +17,21 @@ module FyreVM{
 				let m = new MemoryAccess(10240);
 				tests.Opcodec = {};
 				
+				tests.Opcodec.testDecodeFunction = 
+				function(test: nodeunit.Test){
+					let gameImage = makeTestImage(m,
+						CallType.stack, 0x04, 0x02, 0x00, 0x00, // type C0, two locals
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('return', 'pop')
+					)
+					let f = decodeFunction(m, 256);
+					test.equals(f.opcodes.length, 2);
+					test.equals(f.locals_32, 2);
+					test.equals(f.locals_16, 0);
+					test.equals(f.callType, CallType.stack);
+					test.done();
+				}
+				
 				tests.Opcodec.testDecodeCodeBlock =
 				function(test: nodeunit.Test){
 					
