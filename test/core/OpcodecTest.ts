@@ -40,6 +40,8 @@ module FyreVM{
 					test.equals(f.locals_32, 2);
 					test.equals(f.locals_16, 0);
 					test.equals(f.callType, CallType.stack);
+					test.equals(f.opcodes.writesToMemory, false);
+					test.equals(f.opcodes.usesStack, true);
 					test.done();
 				}
 				
@@ -62,6 +64,8 @@ module FyreVM{
 					let f = decodeFunction(m, 256);
 					test.equals(f.opcodes.length, 9, 'just 9, because final return is dead code');
 					test.equals(f.locals_32, 0);
+					test.equals(f.opcodes.writesToMemory, true);
+					test.equals(f.opcodes.usesStack, true);
 					test.equals(f.callType, CallType.localStorage);
 					test.done();
 				}

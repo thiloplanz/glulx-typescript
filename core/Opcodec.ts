@@ -55,9 +55,14 @@ module FyreVM {
 		length: number
 	}
 	
+	export interface DecodedBlock extends Array<DecodedOpcode>{
+		usesStack?: boolean,
+		writesToMemory?: boolean
+	}
+	
 	export interface DecodedFunction{
 		start: number,
-		opcodes: DecodedOpcode[],
+		opcodes: DecodedBlock,
 		callType: CallType,
 		locals_32: number,
 		locals_16: number,
@@ -232,13 +237,13 @@ module FyreVM {
 	 * 
 	 */
 	
-	export function decodeCodeBlock(code: MemoryAccess, offset: number) : DecodedOpcode[]{
+	export function decodeCodeBlock(code: MemoryAccess, offset: number) : DecodedBlock{
 		// TODO? order by opcode start offset (can get out-of-order because of jumps)
 		return _decodeCodeBlock(code, offset, 2, []);
 	}
 	
 	
-	function _decodeCodeBlock(code: MemoryAccess, offset: number, jumpVector, stopList: DecodedOpcode[]) : DecodedOpcode[] {
+	function _decodeCodeBlock(code: MemoryAccess, offset: number, jumpVector, stopList: DecodedOpcode[]) : DecodedBlock {
 		// return 0 / return 1
 		if (jumpVector === 0 || jumpVector === 1)
 			return [];
@@ -250,13 +255,39 @@ module FyreVM {
 		}
 		offset = offset + jumpVector - 2;
 		let op = decodeOpcode(code, offset); 
-		let r = [ op ];
+		let r : DecodedBlock = [ op ];
+		let writesToMemory = false;
+		let usesStack = false;
 		while (true){
+			if (op.storeOperandType && !writesToMemory){
+				switch( op.storeOperandType){
+					case StoreOperandType.ptr_8:
+					case StoreOperandType.ptr_16:
+					case StoreOperandType.ptr_32:
+					case StoreOperandType.ram_8:
+					case StoreOperandType.ram_16:
+					case StoreOperandType.ram_32:
+						writesToMemory = true;
+				}
+			}
+			if (op.storeOperandType === StoreOperandType.stack)
+				usesStack = true;
+			if (!usesStack){
+				for(let i=0; i<op.loadOperandTypes.length; i++){
+					if (op.loadOperandTypes[i]===LoadOperandType.stack){
+						usesStack = true;
+						break;
+					}
+				}
+			}
+			
 			stopList.push(op);
 			offset += op.length;
 		
 			switch(op.opcode){
 				case 'return':
+					r.usesStack = usesStack;
+					r.writesToMemory = writesToMemory;
 		 		    return r;
 				
 				case 'jz':
@@ -285,13 +316,20 @@ module FyreVM {
 								
 						let branch = _decodeCodeBlock(code, offset, jumpVector, stopList)
 						r.push.apply(r, branch);
+						usesStack = usesStack || branch.usesStack;
+						writesToMemory = writesToMemory || branch.writesToMemory;
+					
 						if (op.opcode === 'jump' || op.opcode === 'jumpabs'){
+							r.usesStack = usesStack ;
+							r.writesToMemory = writesToMemory;
 							return r;
 						}
 						stopList.push.apply(stopList, branch);
 						// continue with the "else"
 						branch = _decodeCodeBlock(code, offset, 2, stopList)
 						r.push.apply(r, branch);
+						r.usesStack = usesStack || branch.usesStack;
+						r.writesToMemory = writesToMemory || branch.writesToMemory;
 						return r;
 						
 					}
