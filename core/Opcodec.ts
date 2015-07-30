@@ -10,6 +10,11 @@
 module FyreVM {
 	
 		
+	export const enum CallType {
+		stack = 0xC0,
+		localStorage = 0xC1
+	}
+		
 	export const enum LoadOperandType {
 		zero = 0,
 		byte = 1,
@@ -49,6 +54,8 @@ module FyreVM {
 		loadOperandTypes: LoadOperandType[],
 		storeOperand? : number
 		storeOperandType? : StoreOperandType,
+		delayedStore?: number,
+		delayedStoreType? : StoreOperandType,
 		/** the byte position in memory where this opcode was found */
 		start: number,
 		/** number of bytes that were used to encode this operation */
@@ -157,7 +164,6 @@ module FyreVM {
 			r.length = operandPos - offset;
 		}
 				
-		//  TODO: handle this nicer somehow		
 		// handle extra store operand for delayed store opcodes and "catch"
 		if(opcode.rule === OpcodeRule.DelayedStore || opcode.rule === OpcodeRule.Catch){
 			let type = opcode.loadArgs + opcode.storeArgs;
@@ -167,11 +173,14 @@ module FyreVM {
 				type = (code.readByte(pos++) >> 4) & 0xF;
 			}
 		
-			operandPos += decodeDelayedStoreOperand(opcode, type, loadOperands, code, operandPos);							
+			operandPos += decodeDelayedStoreOperand(opcode, type, r, code, operandPos);							
 			r.length = operandPos - offset;
-			r.loadOperandTypes.push(LoadOperandType.int32, LoadOperandType.int32);	
 		}
 
+
+		if (opcode.rule === OpcodeRule.Catch){
+			throw new Error('decoding catch not implemented');
+		}
 /*					if (opcode.rule === OpcodeRule.Catch){
 						// decode final load operand for @catch
 						let type = opcode.loadArgs + opcode.storeArgs + 1;
@@ -421,51 +430,41 @@ module FyreVM {
 	/**
 	   * @return how many extra bytes were read (so that operandPos can be advanced)
 	   */
-	  function decodeDelayedStoreOperand(opcode: Opcode, type:number, operands: number[], code: MemoryAccess, operandPos: number){
+	  function decodeDelayedStoreOperand(opcode: Opcode, type:StoreOperandType, r: DecodedOpcode, code: MemoryAccess, operandPos: number){
+		  r.delayedStoreType = type
 		  switch(type){
 			  case StoreOperandType.discard: 
-			  	operands.push(GLULX_STUB.STORE_NULL);
-				operands.push(0);
+			  	r.delayedStore = 0;
 			  	return 0;
 			  case StoreOperandType.ptr_8: 
-			  	operands.push(GLULX_STUB.STORE_MEM);
-				operands.push(code.readByte(operandPos));
+			  	r.delayedStore = code.readByte(operandPos);
 			  	return 1;
 			  case StoreOperandType.ptr_16: 
-			  	operands.push(GLULX_STUB.STORE_MEM);
-				operands.push(code.readInt16(operandPos));
+				r.delayedStore = code.readInt16(operandPos);
 			  	return 2;
 			  case StoreOperandType.ptr_32: 
-			  	operands.push(GLULX_STUB.STORE_MEM);
-				operands.push(code.readInt32(operandPos)); 
+			  	r.delayedStore = code.readInt32(operandPos); 
 				return 4;
 			  case StoreOperandType.stack:
-			  	operands.push(GLULX_STUB.STORE_STACK);
-				operands.push(0);
+			  	r.delayedStore = 0;
 				return 0;  
 			  case StoreOperandType.local_8:
-			    operands.push(GLULX_STUB.STORE_LOCAL);
-				operands.push(code.readByte(operandPos));
+			    r.delayedStore = code.readByte(operandPos);
 			  	return 1;
 			  case StoreOperandType.local_16: 
-			  	operands.push(GLULX_STUB.STORE_LOCAL);
-				operands.push(code.readInt16(operandPos));
+			  	r.delayedStore = code.readInt16(operandPos);
 			  	return 2;
 			  case StoreOperandType.local_32: 
-			  	operands.push(GLULX_STUB.STORE_LOCAL);
-				operands.push(code.readInt32(operandPos)); 
+			  	r.delayedStore = code.readInt32(operandPos); 
 				return 4;
 			  case StoreOperandType.ram_8:
-			    operands.push(GLULX_STUB.STORE_RAM);
-				operands.push(code.readByte(operandPos));
+			    r.delayedStore = code.readByte(operandPos);
 			  	return 1;
 			  case StoreOperandType.ram_16: 
-			  	operands.push(GLULX_STUB.STORE_RAM);
-				operands.push(code.readInt16(operandPos));
+			  	r.delayedStore = code.readInt16(operandPos);
 			  	return 2;
 			  case StoreOperandType.ram_32: 
-			  	operands.push(GLULX_STUB.STORE_RAM);
-				operands.push(code.readInt32(operandPos)); 
+			  	r.delayedStore = code.readInt32(operandPos); 
 				return 4;	
 				
 			  default: throw new Error(`unsupported delayed store operand type ${type}`);

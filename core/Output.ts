@@ -50,6 +50,16 @@ module FyreVM {
 		throw new Error(`unsupported output system ${this.outputSystem}`);
 	}
 	
+	// Call stub type values for string printing
+	// (delayed store opcodes use StoreOperandType instead)
+	export const enum GLULX_STUB {
+		RESUME_HUFFSTR = 110,
+		RESUME_FUNC = 111,
+		RESUME_NUMBER = 112,
+		RESUME_CSTR = 113,
+		RESUME_UNISTR = 114
+	}
+	
 	
 	export const enum GLULX_HUFF {
 		// String decoding table: header field offsets

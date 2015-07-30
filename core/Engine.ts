@@ -105,27 +105,6 @@ module FyreVM {
     }
 	
 	
-	export const enum CallType {
-		stack = 0xC0,
-		localStorage = 0xC1
-	}
-	
-	// Call stub
-	export const enum GLULX_STUB {
-		// DestType values for function calls
-		STORE_NULL = 0,
-		STORE_MEM = 1,
-		STORE_LOCAL = 2,
-		STORE_STACK = 3,
-		STORE_RAM = 4,
-		// DestType values for string printing
-		RESUME_HUFFSTR = 10,
-		RESUME_FUNC = 11,
-		RESUME_NUMBER = 12,
-		RESUME_CSTR = 13,
-		RESUME_UNISTR = 14
-	}
-	
 	export const enum OpcodeRule {
 		// No special treatment
 		None,
@@ -147,7 +126,7 @@ module FyreVM {
 	class CallStub {
 		    /// The type of storage location (for function calls) or the
             /// previous task (for string printing).
-            destType : number
+            destType : GLULX_STUB | StoreOperandType
             /// The storage address (for function calls) or the digit
             /// being examined (for string printing).
             destAddr : number
@@ -404,6 +383,11 @@ module FyreVM {
 					let opcount = opcode.loadArgs + opcode.storeArgs;
 					let operands = this.loadOperands(opcode, decoded);
 					
+					// add the destType and destAddr of a delayed store to the operand array
+			  		if (decoded.delayedStoreType !== undefined){
+				  		operands.push(decoded.delayedStoreType);
+				  		operands.push(decoded.delayedStore);
+			  		}
 					
 /*
 					if (opcode.rule === OpcodeRule.Catch){
@@ -552,13 +536,23 @@ module FyreVM {
 		  
 		  
 		  
-		  private performDelayedStore(type:number, address: number, value: number){
+		  private performDelayedStore(type:StoreOperandType, address: number, value: number){
 			  switch(type){
-				  case GLULX_STUB.STORE_NULL: return;
-				  case GLULX_STUB.STORE_MEM: this.image.writeInt32(address, value); return;
-				  case GLULX_STUB.STORE_LOCAL: this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
-				  case GLULX_STUB.STORE_STACK: this.push(value); return;
-				  case GLULX_STUB.STORE_RAM: this.image.writeInt32(this.image.getRamAddress(address), value); return;
+				  case StoreOperandType.discard: return;
+				  case StoreOperandType.ptr_8:
+				  case StoreOperandType.ptr_16:
+				  case StoreOperandType.ptr_32:
+				  		 this.image.writeInt32(address, value); return;
+				  case StoreOperandType.local_8:
+				  case StoreOperandType.local_16:
+				  case StoreOperandType.local_32:
+				  		 this.stack.writeInt32(this.FP + this.localsPos + address, value); return;
+				  case StoreOperandType.stack: 
+				  		this.push(value); return;
+				  case StoreOperandType.ram_8: 
+				  case StoreOperandType.ram_16: 
+				  case StoreOperandType.ram_32: 
+				  		this.image.writeInt32(this.image.getRamAddress(address), value); return;
 				  default: throw new Error(`unsupported delayed store mode ${type}`);
 			  }
 		  }
@@ -633,17 +627,23 @@ module FyreVM {
 			  let newLocalsPos = this.stack.readInt32(newFP+4);
 			  
 			  switch(stub.destType){
-				  case GLULX_STUB.STORE_NULL: break;
-				  case GLULX_STUB.STORE_MEM:
+				  case StoreOperandType.discard: break;
+				  case StoreOperandType.ptr_8:
+				  case StoreOperandType.ptr_16:
+				  case StoreOperandType.ptr_32:
 				  		this.image.writeInt32(stub.destAddr, result);
 						break;
-				  case GLULX_STUB.STORE_LOCAL:
+				  case StoreOperandType.local_8:
+				  case StoreOperandType.local_16:
+				  case StoreOperandType.local_32:
 				  		this.stack.writeInt32(newFP + newLocalsPos+ stub.destAddr, result);
 						break;
-				  case GLULX_STUB.STORE_STACK:
+				  case StoreOperandType.stack:
 				  		this.push(result);
 						break;
-				  case GLULX_STUB.STORE_RAM:
+				  case StoreOperandType.ram_8:
+				  case StoreOperandType.ram_16:
+				  case StoreOperandType.ram_32:
 				  		this.image.writeInt32(this.image.getRamAddress(stub.destAddr), result);
 						break;
 				  case GLULX_STUB.RESUME_FUNC:
@@ -721,7 +721,7 @@ module FyreVM {
 		  
 		  streamUniCharCore(x: number){
 			    if (this.outputSystem === IOSystem.Filter){
-					this.performCall(this.filterAddress, [ x ], GLULX_STUB.STORE_NULL, 0, this.PC, false);
+					this.performCall(this.filterAddress, [ x ], StoreOperandType.discard, 0, this.PC, false);
 				}else{
 					SendCharToOutput.call(this, x);
 				}
@@ -845,7 +845,7 @@ module FyreVM {
 			  }
 			  // give the original save opcode a result of -1
 			  // to show that it's been restored
-			  this.performDelayedStore(stub.destType, stub.destAddr, 0xFFFFFFFF);
+			  this.performDelayedStore(<any>stub.destType, stub.destAddr, 0xFFFFFFFF);
 		  }
 		  
 		  
