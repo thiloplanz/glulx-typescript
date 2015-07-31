@@ -363,7 +363,8 @@ module FyreVM {
 	 * Note that this function deals in indexes (position in the DecodedBlock), not in byte offsets
 	 * 
 	 * @return For "normal" operands, a number (index into DecodedBlock), for a return "null", for a conditional jump
-	 * an array with two numbers (index for not taking the branch, index for taking the branch) 
+	 * an array with two numbers (index for not taking the branch, index for taking the branch -- the latter may be null
+	 * for a conditional return) 
 	 */
 	 
 	 export function findNextOpcodeInBlock(block: DecodedBlock, index: number) : number | number[]{
@@ -396,7 +397,7 @@ module FyreVM {
 		 if (opcode.indexOf('j') === 0){
 			 let jumpVector = getJumpVector(oc);
 			 // return "jumps""
-			 if (jumpVector === 1 || jumpVector === 0)  return null;
+			 if (jumpVector === 1 || jumpVector === 0)  return [result, null];
 			 let jumpTarget = jumpVector + target - 2;
 			 for (let i=0; i<block.length; i++){
 				 next = block[i];

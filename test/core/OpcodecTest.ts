@@ -141,6 +141,11 @@ module FyreVM{
 					test.equals(findNextOpcodeInBlock(f.opcodes, 4), 1);
 					test.equals(findNextOpcodeInBlock(f.opcodes, 5), null);
 				
+					gameImage = makeTestImage(m,
+						encodeOpcode('jne', 1, 1, 1), // return 1
+						encodeOpcode('jump', 0) // return 0
+					);
+					test.deepEqual(findNextOpcodeInBlock(decodeCodeBlock(m, 256), 0), [1, null]);
 					test.done();
 				}
 				
