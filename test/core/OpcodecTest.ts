@@ -120,6 +120,31 @@ module FyreVM{
 					test.done();
 				}
 
+				tests.Opcodec.testFindNextOpcode =
+				function(test: nodeunit.Test){
+					let gameImage = makeTestImage(m,
+						CallType.localStorage, 0x00, 0x00, 
+						encodeOpcode('callfi', 0xa5fc6, 1, StoreOperandType.discard),
+						encodeOpcode('jnz', "*R:80", 0x13),
+						encodeOpcode('copy', 1, "*R:0314"),
+						encodeOpcode('callfi', 0xa5e5e, 2,  StoreOperandType.discard),
+						encodeOpcode('jump', 0xed - 0xff - 1),
+						encodeOpcode('callfi', 0xa5e5e, 3,  'push'),
+						encodeOpcode('jnz', 'pop', 5),
+						encodeOpcode('return', 1),
+						encodeOpcode('jump', 0xdb - 0xff - 1),
+						encodeOpcode('return', 1) // this is never reached
+					)
+					let f = decodeFunction(m, 256);
+					test.equals(findNextOpcodeInBlock(f.opcodes, 0), 1);
+					test.deepEqual(findNextOpcodeInBlock(f.opcodes, 1), [6, 2]);
+					test.equals(findNextOpcodeInBlock(f.opcodes, 4), 1);
+					test.equals(findNextOpcodeInBlock(f.opcodes, 5), null);
+				
+					test.done();
+				}
+				
+
 			}
 			
 	}

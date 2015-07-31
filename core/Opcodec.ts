@@ -314,19 +314,12 @@ module FyreVM {
 			    case 'jump':
 				case 'jumpabs':
 				 {
-					// jump target is last argument
-					let j = op.loadOperandTypes.length - 1;
-					let type = op.loadOperandTypes[j];
-					if (type === LoadOperandType.zero || type === LoadOperandType.byte || type === LoadOperandType.int16 || type === LoadOperandType.int32){
-						let jumpVector = op.loadOperands[j];
-						if (op.opcode === 'jumpabs'){
-							jumpVector = jumpVector - offset + 2;
-						}
+				    let jumpVector = getJumpVector(op);
 								
-						let branch = _decodeCodeBlock(code, offset, jumpVector, stopList)
-						r.push.apply(r, branch);
-						usesStack = usesStack || branch.usesStack;
-						writesToMemory = writesToMemory || branch.writesToMemory;
+					let branch = _decodeCodeBlock(code, offset, jumpVector, stopList)
+					r.push.apply(r, branch);
+					usesStack = usesStack || branch.usesStack;
+					writesToMemory = writesToMemory || branch.writesToMemory;
 					
 						if (op.opcode === 'jump' || op.opcode === 'jumpabs'){
 							r.usesStack = usesStack ;
@@ -340,12 +333,7 @@ module FyreVM {
 						r.usesStack = usesStack || branch.usesStack;
 						r.writesToMemory = writesToMemory || branch.writesToMemory;
 						return r;
-						
-					}
-					else{
-						throw new Error("dynamic jump targets not supported!");
-					}
-				}
+				 }
 				
 			}
 			op =  decodeOpcode(code, offset);
@@ -353,8 +341,75 @@ module FyreVM {
 		}
 	}
 	
+	function getJumpVector(jump: DecodedOpcode){
+		// jump target is last argument
+		let j = jump.loadOperandTypes.length - 1;
+		let type = jump.loadOperandTypes[j];
+		if (type === LoadOperandType.zero || type === LoadOperandType.byte || type === LoadOperandType.int16 || type === LoadOperandType.int32){
+			let jumpVector = jump.loadOperands[j];
+			if (jump.opcode === 'jumpabs'){
+				jumpVector = jumpVector - jump.start - jump.length + 2;
+			}
+			return jumpVector;
+		}
+		else{
+			throw new Error("dynamic jump targets not supported!");
+		}
+	}
 	
-	
+	/**
+	 * returns the index of the "next" opcode.
+	 * 
+	 * Note that this function deals in indexes (position in the DecodedBlock), not in byte offsets
+	 * 
+	 * @return For "normal" operands, a number (index into DecodedBlock), for a return "null", for a conditional jump
+	 * an array with two numbers (index for not taking the branch, index for taking the branch) 
+	 */
+	 
+	 export function findNextOpcodeInBlock(block: DecodedBlock, index: number) : number | number[]{
+		 let oc = block[index];
+		 if (!oc) return null;
+		 let {opcode, start, length } = oc;
+		 if (opcode === 'return') return null;
+		 let target = start + length;
+		 if (opcode === 'jump' || opcode === 'jumpabs'){
+			 target = target + getJumpVector(oc) - 2;
+		 }
+		 // first try the next instruction, without jumps they are in sequence
+		 let result = index+1;
+		 let next = block[result];
+		
+		 if (!next || next.start !== target){
+			 for (let i=0; i<block.length; i++){
+				 next = block[i];
+				 if (next.start === target){
+				    result = i;
+				 	break;
+				 }	 
+			 }
+		 }
+		 if (!next || next.start !== target){
+			 throw new Error(`failed to find next instruction in block, should be at ${target}`);
+		 }
+		 if (opcode === 'jump' || opcode === 'jumpabs') return result; 
+		  
+		 if (opcode.indexOf('j') === 0){
+			 let jumpVector = getJumpVector(oc);
+			 // return "jumps""
+			 if (jumpVector === 1 || jumpVector === 0)  return null;
+			 let jumpTarget = jumpVector + target - 2;
+			 for (let i=0; i<block.length; i++){
+				 next = block[i];
+				 if (next.start === jumpTarget){
+					 return [result, i];
+				 }
+			 }
+			 
+			 throw new Error(`failed to find jump target instruction in block, should be at ${target}`);
+		 }
+		 
+		 return result;
+	 }
 	
 	
 	 /**
