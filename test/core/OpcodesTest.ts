@@ -171,6 +171,16 @@ module FyreVM{
 			
 		}
 		
+		function check_stack(m: MemoryAccess, test: nodeunit.Test, opcodes, expected, message){
+			let engine = stepImage(makeTestImage(m,
+				CallType.stack, 0x00, 0x00, 
+				opcodes
+			), 1, test);
+			
+			test.equal((<any>engine).pop(), expected, message);
+			
+		}
+		
 		export function addOpcodeTests(tests, m: MemoryAccess){
 			tests.Opcodes = { 
 				Arithmetics: {}, 
@@ -206,6 +216,11 @@ module FyreVM{
 		tests.Opcodes.Arithmetics.testMul = 
 		function(test: nodeunit.Test){
 			check_byte_byte_store(m, test, 'mul', 6, 7, 42);
+			
+			check_stack(m, test,
+				encodeOpcode('mul', 0x7FFFFFFF, 0x7FFFFFFF, 'push'),
+				1,  'no loss of precision in 32 bit range');
+			
 			test.done();	
 		}
 		

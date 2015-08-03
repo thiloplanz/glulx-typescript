@@ -118,7 +118,7 @@ module FyreVM {
 				function(a,b){ return uint32(a-b)});				
 		
 			opcode(0x12, 'mul', 2, 1,
-				function(a,b){ return uint32(int32(a)*int32(b))});
+				function(a,b){ return uint32((<any>Math).imul(int32(a),int32(b)))});
 		
 			opcode(0x13, 'div', 2, 1,
 				function(a,b){ return uint32(int32(a) / int32(b))});
