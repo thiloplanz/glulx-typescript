@@ -658,9 +658,10 @@ module FyreVM {
 						case Gestalt.Float:
 							return 0;
 						case Gestalt.IOSystem:
-							if (arg === 0) return 1;
-							if (arg === 20 && this.enableFyreVM) return 1;
-							if (arg == 2 && this.glkMode === GlkMode.Wrapper) return 1;
+							if (arg === 0) return 1;  // Null-IO
+							if (arg === 1) return 1;  // Filter
+							if (arg === 20 && this.enableFyreVM) return 1; // Channel IO
+							if (arg == 2 && this.glkMode === GlkMode.Wrapper) return 1; // Glk
 							return 0;
 						case Gestalt.MAllocHeap:
 							if (this.heap) return this.heap.heapAddress;

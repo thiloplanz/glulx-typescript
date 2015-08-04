@@ -1327,7 +1327,7 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Float, 0, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 20, 1);
-			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 1, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 1, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 2, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.MAllocHeap, 0, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.AccelFunc, 0, 0);
