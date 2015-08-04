@@ -717,7 +717,7 @@ module FyreVM {
 		  
 		  
 		  private storeResults(rule: OpcodeRule, resultTypes: number[], resultAddrs: number[], results: number[]){
-		  	    for (let i=0; i<results.length; i++){
+			 for (let i=0; i<results.length; i++){
 				  let value = results[i];
 				  let type = resultTypes[i];
 				  switch(type){
@@ -729,7 +729,7 @@ module FyreVM {
 					  case StoreOperandType.stack:
 					  	// push onto stack
 						this.push(value);
-						return;
+						break;
 					  case StoreOperandType.local_8:
 					  case StoreOperandType.local_16:
 					  case StoreOperandType.local_32:
@@ -741,18 +741,19 @@ module FyreVM {
 								if(address >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeByte(address, value);
-								return;
+								break;
 							case OpcodeRule.Indirect16Bit:
 								if(address+1 >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt16(address, value);
-								return;
+								break;
 							default:
 								if(address+3 >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt32(address, value);
-								return;
-						}					  
+								break;
+						}
+						break;					  
 					  default: throw new Error(`unsupported store result mode ${type} for result ${i} of ${results}`);
 				  }	
 			  }

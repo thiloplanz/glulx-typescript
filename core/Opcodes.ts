@@ -474,26 +474,36 @@ module FyreVM {
 				}
 			);
 
+			opcode(0x148, 'getiosys', 0, 2,
+				function(){
+					switch(this.outputSystem){
+						case IOSystem.Null:	return [0,0];
+						case IOSystem.Filter: return [1, this.filterAddress];
+						case IOSystem.Channels: return [20, 0];
+						case IOSystem.Glk: return [2, 0];	
+					}
+				}
+			);
 
 			opcode(0x149, 'setiosys', 2, 0,
 				function(system, rock){
 					switch(system){
 						case 0:
-							this['outputSystem'] = IOSystem.Null;
+							this.outputSystem = IOSystem.Null;
 							return;
 						case 1:
-							this['outputSystem'] = IOSystem.Filter;
-							this['filterAddress'] = rock;
+							this.outputSystem = IOSystem.Filter;
+							this.filterAddress = rock;
 							return;
 						case 2:
 							if (this.glkMode !== GlkMode.Wrapper)
 								throw new Error("Glk wrapper support has not been enabled");
-							this['outputSystem'] = IOSystem.Glk;
+							this.outputSystem = IOSystem.Glk;
 							return;
 						case 20:
 							if (!this.enableFyreVM)
 								throw new Error("FyreVM support has been disabled");
-							this['outputSystem'] = IOSystem.Channels;
+							this.outputSystem = IOSystem.Channels;
 							return;
 						default:
 							throw new Error(`Unrecognized output system ${system}`);

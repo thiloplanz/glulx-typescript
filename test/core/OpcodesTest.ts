@@ -978,6 +978,24 @@ module FyreVM{
 			test.done();	
 		}
 		
+		// This is interesting because "getiosys"
+		// has TWO store operands
+		tests.Opcodes.Output.getiosys = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setiosys'),
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					1, 99,
+				op('getiosys'),
+				    p_out(StoreOperandType.stack, StoreOperandType.stack)
+			);
+			let engine = stepImage(image, 2, test);
+			test.equal((<any>engine).pop(), 99);
+			test.equal((<any>engine).pop(), 1);
+			test.done();	
+		}
+		
 		tests.Opcodes.Output.streamchar = 
 		function(test: nodeunit.Test){
 			let image = makeTestImage(m,
