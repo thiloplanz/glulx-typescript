@@ -909,7 +909,7 @@ module FyreVM {
 		if (options & SearchOptions.ReturnIndex)
 			throw new Error("ReturnIndex option may not be used with linked search");
 		let node = start;
-		while (start){
+		while (node){
 			let cmp = compareKeys.call(this, key, node + keyOffset, keySize, options);
 			if (cmp === 0){
 				// found it
