@@ -46,6 +46,14 @@ module FyreVM {
             Acceleration = 9,
             AccelFunc = 10,
             Float = 11,
+			
+			/**  
+			 * ExtUndo (12): 
+			 * Returns 1 if the interpreter supports the hasundo and discardundo opcodes. 
+			 * (This must true for any terp supporting Glulx 3.1.3. On a terp which does not support undo functionality, 
+			 * these opcodes will be callable but will fail.)
+			 */
+			ExtUndo = 12 
         }
 		
 		/// <summary>
@@ -652,8 +660,9 @@ module FyreVM {
 						case Gestalt.Unicode:
 						case Gestalt.MemCopy:
 						case Gestalt.MAlloc:
-				 			return 1;
-						case Gestalt.Undo:
+				 		case Gestalt.Undo:
+						case Gestalt.ExtUndo:
+						 	return 1;
 						case Gestalt.Acceleration:
 						case Gestalt.Float:
 							return 0;
@@ -761,6 +770,25 @@ module FyreVM {
 					if (start < this.image.getEndMem()){
 						this.protectionStart = start;
 						this.protectionLength = length;
+					}
+				}
+			)
+			
+			opcode(0x128, 'hasundo', 0, 1,
+				// Test whether a VM state is available in temporary storage. 
+				// return 0 if a state is available, 1 if not. 
+				// If this returns 0, then restoreundo is expected to succeed.
+				function(){
+					if (this.undoBuffers && this.undoBuffers.length) return 0;
+					return 1;
+				}
+			)
+
+			opcode(0x129, 'discardundo', 0, 0,
+				// Discard a VM state (the most recently saved) from temporary storage. If none is available, this does nothing.
+				function(){
+					if (this.undoBuffers){
+						this.undoBuffers.pop();
 					}
 				}
 			)

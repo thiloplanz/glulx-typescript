@@ -1320,7 +1320,8 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.GlulxVersion, 0, 0x00030102);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.TerpVersion, 0, 0x00000001);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.ResizeMem, 0, 1);
-			check_byte_byte_store(m, test, 'gestalt', Gestalt.Undo, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Undo, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.ExtUndo, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Unicode, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.MemCopy, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Acceleration, 0, 0);
