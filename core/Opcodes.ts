@@ -412,7 +412,7 @@ module FyreVM {
 
 			opcode(0x4C, "astore", 3, 0,
 				function astore(array: number, index: number, value: number){
-					this.image.writeInt32(array+4*index, uint32(value));
+					this.image.writeInt32(array+4*int32(index), uint32(value));
 				}
 			);
 			
@@ -473,6 +473,20 @@ module FyreVM {
 					}
 				}
 			);
+			
+			opcode(0x140, 'getstringtbl', 0, 1,
+				function getstringtbl(){
+					return this.decodingTable;
+				}
+			);
+			
+			opcode(0x141, 'setstringtbl', 1, 0,
+				function setstringtbl(addr){
+					this.decodingTable = addr;
+				}
+			);
+			
+			
 
 			opcode(0x148, 'getiosys', 0, 2,
 				function getiosys(){
