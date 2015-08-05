@@ -52,8 +52,8 @@ module FyreVM {
 		opcode: string,
 		loadOperands: number[],
 		loadOperandTypes: LoadOperandType[],
-		storeOperand? : number
-		storeOperandType? : StoreOperandType,
+		storeOperands? : number[],
+		storeOperandTypes? : StoreOperandType[],
 		delayedStore?: number,
 		delayedStoreType? : StoreOperandType,
 		/** the byte position in memory where this opcode was found */
@@ -148,9 +148,7 @@ module FyreVM {
 		
 		// decode store-operands
 		let resultAddrs = [];
-		if (opcode.storeArgs > 1){
-			throw new Error(`cannot handle more than one store operand for ${JSON.stringify(r)}`)
-		}
+		let resultTypes = [];
 		for(let i=0; i<opcode.storeArgs; i++){
 			let type = i + opcode.loadArgs;
 			if (type%2 === 0){
@@ -159,8 +157,9 @@ module FyreVM {
 				type = (code.readByte(pos++) >> 4) & 0xF;
 			}
 			operandPos += decodeStoreOperand(opcode, type, resultAddrs,code, operandPos);
-			r.storeOperand = resultAddrs[0];
-			r.storeOperandType = type;
+			r.storeOperands = resultAddrs;
+			resultTypes.push(type);
+			r.storeOperandTypes = resultTypes;
 			r.length = operandPos - offset;
 		}
 				
@@ -207,27 +206,8 @@ module FyreVM {
 		let writesToMemory = false;
 		let usesStack = false;
 		while (true){
-			if (op.storeOperandType && !writesToMemory){
-				switch( op.storeOperandType){
-					case StoreOperandType.ptr_8:
-					case StoreOperandType.ptr_16:
-					case StoreOperandType.ptr_32:
-					case StoreOperandType.ram_8:
-					case StoreOperandType.ram_16:
-					case StoreOperandType.ram_32:
-						writesToMemory = true;
-				}
-			}
-			if (op.storeOperandType === StoreOperandType.stack)
-				usesStack = true;
-			if (!usesStack){
-				for(let i=0; i<op.loadOperandTypes.length; i++){
-					if (op.loadOperandTypes[i]===LoadOperandType.stack){
-						usesStack = true;
-						break;
-					}
-				}
-			}
+			writesToMemory = _writesToMemory(op, writesToMemory);
+			usesStack = _usesStack(op, usesStack);
 			
 			offset += op.length;
 		
@@ -324,27 +304,8 @@ module FyreVM {
 		let writesToMemory = false;
 		let usesStack = false;
 		while (true){
-			if (op.storeOperandType && !writesToMemory){
-				switch( op.storeOperandType){
-					case StoreOperandType.ptr_8:
-					case StoreOperandType.ptr_16:
-					case StoreOperandType.ptr_32:
-					case StoreOperandType.ram_8:
-					case StoreOperandType.ram_16:
-					case StoreOperandType.ram_32:
-						writesToMemory = true;
-				}
-			}
-			if (op.storeOperandType === StoreOperandType.stack)
-				usesStack = true;
-			if (!usesStack){
-				for(let i=0; i<op.loadOperandTypes.length; i++){
-					if (op.loadOperandTypes[i]===LoadOperandType.stack){
-						usesStack = true;
-						break;
-					}
-				}
-			}
+			writesToMemory = _writesToMemory(op, writesToMemory);
+			usesStack = _usesStack(op, usesStack);
 			
 			stopList.push(op);
 			offset += op.length;
@@ -395,6 +356,40 @@ module FyreVM {
 			op =  decodeOpcode(code, offset);
 			r.push(op);
 		}
+	}
+	
+	function _writesToMemory(op: DecodedOpcode, writesToMemory) : boolean{
+		if (writesToMemory) return true;
+		let s = op.storeOperandTypes;
+		if (!s) return false;
+		
+		for(let i=0; i<op.storeOperandTypes.length; i++){
+			switch( op.storeOperandTypes[i]){
+				case StoreOperandType.ptr_8:
+				case StoreOperandType.ptr_16:
+				case StoreOperandType.ptr_32:
+				case StoreOperandType.ram_8:
+				case StoreOperandType.ram_16:
+				case StoreOperandType.ram_32:
+					return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	function _usesStack(op: DecodedOpcode, usesStack) : boolean{
+		if (usesStack) return true;
+		let s = op.storeOperandTypes;
+		if (s && s[0] === StoreOperandType.stack) return  true;
+		if (s && s[1] === StoreOperandType.stack) return  true;
+		
+		for(let i=0; i<op.loadOperandTypes.length; i++){
+			if (op.loadOperandTypes[i]===LoadOperandType.stack){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	function getJumpVector(jump: DecodedOpcode){

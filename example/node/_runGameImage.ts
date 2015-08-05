@@ -52,7 +52,6 @@ engine.lineWanted = function (callback){
 }
 
 engine.keyWanted = engine.lineWanted;
-engine.transitionRequested = glk_window_clear;
 engine.saveRequested = function(quetzal:FyreVM.Quetzal, callback){
 	fs.writeFileSync(process.argv[2]+".fyrevm_saved_game", new Buffer(new Uint8Array(quetzal.serialize())));
 	callback(true);
@@ -71,7 +70,8 @@ engine.outputReady = function (x){
 	if (engine['glkHandlers']){
 		engine['glkHandlers'][0x2A] = glk_window_clear;
 	}
-	process.stdout.write(x.MAIN);
+	if (x.MAIN !== undefined)
+		process.stdout.write(x.MAIN);
 	prompt_line = x.PRPT || prompt_line;
 	room = x.LOCN || room;
 }

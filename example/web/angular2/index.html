@@ -1,0 +1,60 @@
+<html>
+<!--
+// Written in 2015 by Thilo Planz 
+// To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
+// to this software to the public domain worldwide. This software is distributed without any warranty. 
+// http://creativecommons.org/publicdomain/zero/1.0/	
+-->	  
+<head>
+    <title>Interactive Fiction Angular2 Demo</title>
+    <script src='lib/traceur-runtime.js'></script>
+    <script src='lib/system@0.16.11.js'></script>
+    <script src='lib/angular2.a27.dev.js'></script>
+    <style>
+        /** display the text in multiple columns,
+        * to make it more readable.
+        * Same idea as a newspaper
+        */
+        #main{
+            columns: 12em; 
+            -webkit-columns: 12em;
+            -moz-columns: 12em;
+            height: 500px;
+            white-space: pre-wrap;
+            color: black;
+            position: fixed;
+            top: 10px;
+            bottom: 30px;
+            left: 10px;
+            right: 0px;
+        } 
+        /* display TURN like the page number of a book */
+        #pageNumber{
+            text-align: center;
+            font-weight: bold;
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+        } 
+        
+        #PRPT{
+            font-family: monospace;
+            font-weight: bold;
+            font-size: x-large;
+            color: darkgrey;
+        }    
+    </style>
+</head>
+<body onkeyup="handleKey(event)" onkeydown="handleKey(event)">  
+    Loading ...
+</body>
+<script>
+        function handleKey(event){
+        }
+        
+        System.config({ paths: { '*': 'lib/*.js' } });
+        System.import("app").then(function(app){
+            app.init();
+        });
+</script>
+</html>

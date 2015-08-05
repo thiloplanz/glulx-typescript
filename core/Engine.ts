@@ -57,13 +57,7 @@ module FyreVM {
 	export interface OutputReadyEventHandler{
 		(package: ChannelData) : void
 	}
-	
-
-	// TODO: find out what this does
-	export interface TransitionRequestedEventHandler {
-		(): void
-	}	
-	
+		
 	// A delegate that receives a Quetzal when the user
 	// requests to save the game
 	export interface SaveGameEventHandler {
@@ -203,7 +197,6 @@ module FyreVM {
 		outputReady: OutputReadyEventHandler;
 		lineWanted: LineWantedEventHandler;
 		keyWanted: KeyWantedEventHandler;
-		transitionRequested: TransitionRequestedEventHandler;
 		saveRequested: SaveGameEventHandler;
 		loadRequested: LoadGameEventHandler;
 		
@@ -408,7 +401,9 @@ module FyreVM {
 					// call opcode implementation
 					this.PC = operandPos; // after the last operanc				
 					let result = opcode.handler.apply(this, operands);
-					if (decoded.storeOperandType || result === 'wait'){
+					let sot : any= decoded.storeOperandTypes;
+					sot = sot && sot.length;
+					if (sot === 1  || result === 'wait'){
 						result = [ result ];
 					}
 					
@@ -559,48 +554,50 @@ module FyreVM {
 		  
 		  
 		  private storeResults(rule: OpcodeRule, decoded: DecodedOpcode, results: number[]){
-		  	  let type = decoded.storeOperandType;
 			  for (let i=0; i<results.length; i++){
 				  let value = results[i];
+				  let type = decoded.storeOperandTypes[i];
+				  let addr = decoded.storeOperands[i];
 				  switch(type){
 					  case StoreOperandType.discard: return;
 					  case StoreOperandType.ram_8:
 					  case StoreOperandType.ram_16:
 					  case StoreOperandType.ram_32:
 					     // write to RAM
-						this.image.write(rule, this.image.getRamAddress(decoded.storeOperand) , value);
+						this.image.write(rule, this.image.getRamAddress(addr) , value);
 						break;
 					  case 5: case 6: case 7: case 13: case 14: case 15:
 					  	// write to memory
-						this.image.write(rule, decoded.storeOperand, value);
+						this.image.write(rule, addr, value);
 						break;
 					  case StoreOperandType.stack:
 					  	// push onto stack
 						this.push(value);
-						return;
+						break;
 					  case StoreOperandType.local_8:
 					  case StoreOperandType.local_16:
 					  case StoreOperandType.local_32:
 						// write to local storage
-						let address = decoded.storeOperand + this.FP + this.localsPos;
+						let address = addr + this.FP + this.localsPos;
 						let limit = this.FP + this.frameLen;
 						switch(rule){
 							case OpcodeRule.Indirect8Bit:
 								if(address >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeByte(address, value);
-								return;
+								break;
 							case OpcodeRule.Indirect16Bit:
 								if(address+1 >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt16(address, value);
-								return;
+								break;
 							default:
 								if(address+3 >= limit)
 									throw new Error("writing outside local storage bounds");
 								this.stack.writeInt32(address, value);
-								return;
-						}					  
+								break;
+						}
+						break;					  
 					  default: throw new Error(`unsupported store result mode ${type} for result ${i} of ${results}`);
 				  }	
 			  }
@@ -879,11 +876,12 @@ module FyreVM {
 				  case FyreCall.SetVeneer:
 				  	console.warn(`ignoring veneer ${x} ${y}`);
 					return 1;
-				  case FyreCall.RequestTransition:
-				    if (this.transitionRequested){
-						this.transitionRequested();
-					return;
-					}
+				  case FyreCall.SetStyle:
+				  	// ignore
+					return 1;
+				  case FyreCall.XMLFilter:
+				  	// ignore
+					return 1;
 				  default:
 				  	throw new Error(`Unrecognized FyreVM system call ${call}(${x},${y})`);	  
 			  }

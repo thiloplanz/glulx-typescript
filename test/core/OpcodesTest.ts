@@ -171,6 +171,16 @@ module FyreVM{
 			
 		}
 		
+		function check_stack(m: MemoryAccess, test: nodeunit.Test, opcodes, expected, message){
+			let engine = stepImage(makeTestImage(m,
+				CallType.stack, 0x00, 0x00, 
+				opcodes
+			), 1, test);
+			
+			test.equal((<any>engine).pop(), expected, message);
+			
+		}
+		
 		export function addOpcodeTests(tests, m: MemoryAccess){
 			tests.Opcodes = { 
 				Arithmetics: {}, 
@@ -206,6 +216,11 @@ module FyreVM{
 		tests.Opcodes.Arithmetics.testMul = 
 		function(test: nodeunit.Test){
 			check_byte_byte_store(m, test, 'mul', 6, 7, 42);
+			
+			check_stack(m, test,
+				encodeOpcode('mul', 0x7FFFFFFF, 0x7FFFFFFF, 'push'),
+				1,  'no loss of precision in 32 bit range');
+			
 			test.done();	
 		}
 		
@@ -963,6 +978,24 @@ module FyreVM{
 			test.done();	
 		}
 		
+		// This is interesting because "getiosys"
+		// has TWO store operands
+		tests.Opcodes.Output.getiosys = 
+		function(test: nodeunit.Test){
+			let image = makeTestImage(m,
+				CallType.stack, 0x00, 0x00,  // type C0, no args
+				op('setiosys'),
+				    p_in(LoadOperandType.byte, LoadOperandType.byte),
+					1, 99,
+				op('getiosys'),
+				    p_out(StoreOperandType.stack, StoreOperandType.stack)
+			);
+			let engine = stepImage(image, 2, test);
+			test.equal((<any>engine).pop(), 99);
+			test.equal((<any>engine).pop(), 1);
+			test.done();	
+		}
+		
 		tests.Opcodes.Output.streamchar = 
 		function(test: nodeunit.Test){
 			let image = makeTestImage(m,
@@ -1305,14 +1338,15 @@ module FyreVM{
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.GlulxVersion, 0, 0x00030102);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.TerpVersion, 0, 0x00000001);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.ResizeMem, 0, 1);
-			check_byte_byte_store(m, test, 'gestalt', Gestalt.Undo, 0, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.Undo, 0, 1);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.ExtUndo, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Unicode, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.MemCopy, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Acceleration, 0, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.Float, 0, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 0, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 20, 1);
-			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 1, 0);
+			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 1, 1);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.IOSystem, 2, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.MAllocHeap, 0, 0);
 			check_byte_byte_store(m, test, 'gestalt', Gestalt.AccelFunc, 0, 0);

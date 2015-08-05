@@ -20,16 +20,21 @@ You can compile a simple Node.js and readline based command line tool.
     
  Note that no command line arguments are required for `tsc`. All compiler configuration is contained in [tsconfig.json](tsconfig.json). If you are actively editing the files, you may want to add a `-w` ("watch") flag to the command, though, to have it recompile when the files are updated.   
 
-#### in your browser
+#### in your browser (simple)
 
 There is a simple HTML page that can load and run a game image. You need to load it through a web server (even though all files are local, no Internet connection required). The easiest way to do that is to `npm install -g http-server` and use that to serve the page:
 
     $ cd examples/web
     $ tsc
     $ http-server
-    $ open http://0.0.0.0:8080/webworker.html
+    $ open http://127.0.0.1:8080/webworker.html
     
 Select a game image (ULX file) from your local file system to press START. 
+
+#### in your browser (using Angular2)
+
+We also have [some example code](example/web/angular2/README.md) that shows how to integrate the game engine in an Angular2 application.
+
 
 
 ### Running unit tests
