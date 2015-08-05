@@ -119,6 +119,54 @@ module FyreVM{
 					
 					test.done();
 				}
+				
+				tests.Opcodec.testDecodeCodePath =
+				function(test: nodeunit.Test){
+					
+					let gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('return', 1)
+					);
+					test.equals(decodeCodePath(m, 256).length, 2);
+					
+					gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('jump', 1) // return 1
+					);
+					test.equals(decodeCodePath(m, 256).length, 2);
+					
+					gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('jump', 0) // return 0
+					);
+					test.equals(decodeCodePath(m, 256).length, 2);
+					
+					gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('jump', 2), // jump "+0"
+						encodeOpcode('jump', -1) // infinite loop
+					);
+					test.equals(decodeCodePath(m, 256).length, 2);
+					
+					gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('jne', 'Fr:00', 1, 5),  
+						encodeOpcode('return', 1), 
+						encodeOpcode('return', 0)
+					);
+					test.equals(decodeCodePath(m, 256).length, 3);
+				
+					gameImage = makeTestImage(m,
+						encodeOpcode('add', 1, 1, 'push'),
+						encodeOpcode('jne', 'Fr:00', 1, 2),  
+						encodeOpcode('return', 1)
+					);
+					test.equals(decodeCodePath(m, 256).length, 3);
+				
+					
+					
+					test.done();
+				}
 
 				tests.Opcodec.testFindNextOpcode =
 				function(test: nodeunit.Test){

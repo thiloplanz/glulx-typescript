@@ -197,6 +197,63 @@ module FyreVM {
 	}
 	
 	/**
+	 * decodes a "code-path" (see https://github.com/thiloplanz/glulx-typescript/issues/8) starting at the given offset. 
+	 */
+	 // TODO: we should also stop when we reach an existing jump target
+	 // (to avoid redundant compilation)
+	export function decodeCodePath(code: MemoryAccess, offset: number) : DecodedBlock {
+				let op = decodeOpcode(code, offset); 
+		let r : DecodedBlock = [ op ];
+		let writesToMemory = false;
+		let usesStack = false;
+		while (true){
+			if (op.storeOperandType && !writesToMemory){
+				switch( op.storeOperandType){
+					case StoreOperandType.ptr_8:
+					case StoreOperandType.ptr_16:
+					case StoreOperandType.ptr_32:
+					case StoreOperandType.ram_8:
+					case StoreOperandType.ram_16:
+					case StoreOperandType.ram_32:
+						writesToMemory = true;
+				}
+			}
+			if (op.storeOperandType === StoreOperandType.stack)
+				usesStack = true;
+			if (!usesStack){
+				for(let i=0; i<op.loadOperandTypes.length; i++){
+					if (op.loadOperandTypes[i]===LoadOperandType.stack){
+						usesStack = true;
+						break;
+					}
+				}
+			}
+			
+			offset += op.length;
+		
+			switch(op.opcode){
+				case 'return':
+				case 'jump':
+				case 'jumpabs':
+				case 'call':
+				case 'callf':
+				case 'callfi':
+				case 'callfii':
+				case 'callfiii':
+				case 'tailcall' :
+					r.usesStack = usesStack;
+					r.writesToMemory = writesToMemory;
+		 		    return r;
+				
+			}
+			op =  decodeOpcode(code, offset);
+			r.push(op);
+		}
+	}
+
+	
+	
+	/**
 	 * decodes a function starting at "offset".
 	 * 
 	 */
@@ -256,13 +313,12 @@ module FyreVM {
 		// return 0 / return 1
 		if (jumpVector === 0 || jumpVector === 1)
 			return [];
-		let target = offset + jumpVector - 2;
+		offset = offset + jumpVector - 2;
 		let l = stopList.length;
 		for(let i=0; i<l; i++){
-			if (stopList[i].start === target)
+			if (stopList[i].start === offset)
 				return [];
 		}
-		offset = offset + jumpVector - 2;
 		let op = decodeOpcode(code, offset); 
 		let r : DecodedBlock = [ op ];
 		let writesToMemory = false;
