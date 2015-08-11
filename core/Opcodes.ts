@@ -865,6 +865,7 @@ module FyreVM {
 			throw new Error("KeyIndirect option must be used when searching for a >4 byte key");
 		let returnIndex = options & SearchOptions.ReturnIndex;
 		let low =0, high = numStructs;
+		key = key >>> 0;
 		while (low < high){
 			let index = Math.floor((low+high) / 2);
 			let cmp = compareKeys.call(this, key, start + index*structSize + keyOffset, keySize, options);
@@ -888,7 +889,8 @@ module FyreVM {
 		if (keySize > 4 && !(options & SearchOptions.KeyIndirect) )
 			throw new Error("KeyIndirect option must be used when searching for a >4 byte key");
 		let returnIndex = options & SearchOptions.ReturnIndex;
-		for (let i = 0; i<numStructs; i++){
+		key = key >>> 0;
+		for (let i = 0; numStructs === -1 || i<numStructs; i++){
 			let cmp = compareKeys.call(this, key, start + i*structSize + keyOffset, keySize, options);
 			if (cmp === 0){
 				// found it
@@ -909,6 +911,7 @@ module FyreVM {
 		if (options & SearchOptions.ReturnIndex)
 			throw new Error("ReturnIndex option may not be used with linked search");
 		let node = start;
+		key = key >>> 0;
 		while (node){
 			let cmp = compareKeys.call(this, key, node + keyOffset, keySize, options);
 			if (cmp === 0){
