@@ -233,7 +233,10 @@ module FyreVM {
 		private filterAddress: number;
 		private outputBuffer = new OutputBuffer();
 		private heap: HeapAllocator;
-		private cycle = 0;
+		// counters to measure performance
+		private cycle = 0;	
+		private startTime = 0;
+		
 		private printingDigit = 0; // bit number for compressed strings, digit for numbers
         private protectionStart = 0;
 		private protectionLength = 0;
@@ -410,6 +413,7 @@ module FyreVM {
 		  */
 		  step(){
 			  let {image} = this;
+			  this.cycle++;
 			  switch(this.execMode){
 				  case ExecutionMode.Code:
 				  	// decode opcode number
@@ -1087,6 +1091,8 @@ module FyreVM {
 		  private resumeAfterWait_resultAddrs : number[];
 		  
 		  private resumeAfterWait(result?: number[]){
+			  this.cycle = 0;
+			  this.startTime = Date.now();
 			  if (result){
 				  this.storeResults(null, this.resumeAfterWait_resultTypes, this.resumeAfterWait_resultAddrs, result );
 				  this.resumeAfterWait_resultAddrs = this.resumeAfterWait_resultTypes = null;

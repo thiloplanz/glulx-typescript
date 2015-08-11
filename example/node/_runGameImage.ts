@@ -48,6 +48,8 @@ let prompt_line = "";
 let room = "";
 
 engine.lineWanted = function (callback){
+	let millis = Date.now() - engine['startTime']
+	console.info(`[cycles: ${engine['cycle']}  millis: ${millis}]`)
 	rl.question(`\u001b[1;36m${room} ${prompt_line}\u001b[0m`, callback);
 }
 
