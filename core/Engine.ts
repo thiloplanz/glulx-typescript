@@ -8,6 +8,7 @@
 /// <reference path='Output.ts' />
 /// <reference path='UlxImage.ts' />
 /// <reference path='Quetzal.ts' />
+/// <reference path='Veneer.ts' />
 
 module FyreVM {
 	
@@ -240,7 +241,7 @@ module FyreVM {
 		private printingDigit = 0; // bit number for compressed strings, digit for numbers
         private protectionStart = 0;
 		private protectionLength = 0;
-		
+		private veneer = {}
 		
 		// if turned off, no FyreVM functions are made available, just standard Glulx stuff
 		enableFyreVM = true;
@@ -835,8 +836,13 @@ module FyreVM {
 		  }
 		  
 		  performCall(address: number, args: number[], destType:number, destAddr: number, stubPC: number, tailCall = false){
-			  	// TODO: veneer.InterceptCall
-				
+			  	// intercept veneer calls
+				let veneer = this.veneer[address];
+				if (veneer) {
+					this.performDelayedStore(destType, destAddr, veneer.apply(this, args));
+					return;
+				}
+				  
 				if (tailCall){
 					// pop the current frame and use the call stub below it
 					this.SP = this.FP;
@@ -1025,8 +1031,7 @@ module FyreVM {
 				    this.outputBuffer.setChannel(x);
 				  	return;
 				  case FyreCall.SetVeneer:
-				  	console.warn(`ignoring veneer ${x} ${y}`);
-					return 1;
+				  	  return setSlotFyre.call(this, x, y) ? 1: 0;
 				  case FyreCall.SetStyle:
 				  	// ignore
 					return 1;
