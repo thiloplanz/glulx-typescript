@@ -72,6 +72,45 @@ module FyreVM {
          // TODO: readprop_err
      }
     
+    /**
+     * Registers a routine address or constant value, using the acceleration
+     * codes defined in the Glulx specification.
+     */
+    
+    export function setSlotGlulx(isParam: boolean, slot: number, value) : boolean {
+       if (isParam && slot === 6){
+           let image: UlxImage = this.image;
+           if (value != image.getRamAddress(SELF_OFFSET)){
+               throw new Error("Unexpected value for acceleration parameter 6");
+           return true;
+           }
+       } 
+       if (isParam){
+           switch(slot){
+               case 0: return setSlotFyre.call(this, VeneerSlot.classes_table, value);
+               case 1: return setSlotFyre.call(this, VeneerSlot.INDIV_PROP_START, value);
+               case 2: return setSlotFyre.call(this, VeneerSlot.Class, value);
+               case 3: return setSlotFyre.call(this, VeneerSlot.Object, value);
+               case 4: return setSlotFyre.call(this, VeneerSlot.Routine, value);
+               case 5: return setSlotFyre.call(this, VeneerSlot.String, value);
+               case 7: return setSlotFyre.call(this, VeneerSlot.NUM_ATTR_BYTES, value);
+               case 8: return setSlotFyre.call(this, VeneerSlot.cpv__start, value);
+               default: return false; 
+           }
+       }
+       switch(slot){
+               case 1: return setSlotFyre.call(this, VeneerSlot.Z__Region, value);
+               case 2: return setSlotFyre.call(this, VeneerSlot.CP__Tab, value);
+               case 3: return setSlotFyre.call(this, VeneerSlot.RA__Pr, value);
+               case 4: return setSlotFyre.call(this, VeneerSlot.RL__Pr, value);
+               case 5: return setSlotFyre.call(this, VeneerSlot.OC__Cl, value);
+               case 6: return setSlotFyre.call(this, VeneerSlot.RV__Pr, value);
+               case 7: return setSlotFyre.call(this, VeneerSlot.OP__Pr, value);
+               default: return false; 
+           
+       }
+    }
+    
     
     /**
      *  Registers a routine address or constant value, using the traditional

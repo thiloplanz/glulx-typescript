@@ -8,7 +8,6 @@
 /// <reference path='Output.ts' />
 /// <reference path='UlxImage.ts' />
 /// <reference path='Quetzal.ts' />
-/// <reference path='Veneer.ts' />
 
 module FyreVM {
 	

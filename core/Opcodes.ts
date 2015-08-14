@@ -5,6 +5,7 @@
 
 /// <reference path='../mersenne-twister.ts' />
 /// <reference path='GlkWrapper.ts' />
+/// <reference path='Veneer.ts' />
 
 module FyreVM {
 	
@@ -355,6 +356,16 @@ module FyreVM {
 					}
 					this.performCall(address, argv, 0, 0, 0, true);
 				});
+				
+			opcode(0x180, 'accelfunc', 2, 0,
+				function(slot, value){
+					setSlotGlulx.call(this, false, slot, value);
+				});	
+				
+			opcode(0x181, 'accelparam', 2, 0,
+				function(slot, value){
+					setSlotGlulx.call(this, true, slot, value);
+				});		
 			
 			opcode(0x40, "copy", 1, 1, 
 				function copy(x:number){
@@ -686,8 +697,8 @@ module FyreVM {
 						case Gestalt.MAlloc:
 				 		case Gestalt.Undo:
 						case Gestalt.ExtUndo:
-						 	return 1;
 						case Gestalt.Acceleration:
+						 	return 1;
 						case Gestalt.Float:
 							return 0;
 						case Gestalt.IOSystem:
