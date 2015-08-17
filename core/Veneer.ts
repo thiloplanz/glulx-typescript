@@ -63,14 +63,11 @@ module FyreVM {
          routine_mc : number,
          class_mc : number,
          object_mc : number,
-         // TODO: rt_err
          num_attr_bytes : number,
          classes_table: number,
          indiv_prop_start : number,
          cpv_start : number
-         // TODO: ofclass_err
-         // TODO: readprop_err
-     }
+       }
     
     /**
      * Registers a routine address or constant value, using the acceleration
@@ -142,7 +139,11 @@ module FyreVM {
              case VeneerSlot.INDIV_PROP_START: v.indiv_prop_start = value; return true;
              case VeneerSlot.cpv__start: v.cpv_start = value; return true;
              
-            
+             // run-time error handlers are just ignored (we log an error message instead, like Quixe does, no NestedCall a la FyreVM)
+             case VeneerSlot.RT__Err:
+             case VeneerSlot.ofclass_err:
+             case VeneerSlot.readprop_err:
+                return true;
             
              default: 
              		console.warn(`ignoring veneer ${slot} ${value}`);
@@ -179,8 +180,11 @@ module FyreVM {
         {
             if (Z__Region.call(this, obj) != 1)
             {
-                // TODO: NestedCall(rt_err_fn, 23, obj);
-                throw new Error('Run time error 23 for '+obj)
+                // error "handling" inspired by Quixe
+                // instead of doing a NestedCall to the supplied error handler
+                // just log an error message
+                console.error("[** Programming error: tried to find the \".\" of (something) **]");
+                return 0;
             }
             let image: UlxImage = this.image;
 	
@@ -238,8 +242,8 @@ module FyreVM {
     
                     if (Parent.call(this, cla) != v.class_mc)
                     {
-                        // TODO: NestedCall(rt_err_fn, ofclass_err, cla, 0xFFFFFFFF);
-                        throw new Error('Run time error for '+obj+" ofclass_err "+cla)
+                        console.error("[** Programming error: tried to apply 'ofclass' with non-class **]")   
+                        return 0;
                     }
     
                     let image: UlxImage = this.image;
@@ -338,8 +342,8 @@ module FyreVM {
 	
             if (address >= image.getEndMem())
             {
-                // TODO: NestedCall(rt_err_fn, 25);
-                throw new Error('Run time error 25')
+                console.error("[** Programming error: tried to read from word array beyond EndMem **]");
+                return 0;
             }
             return image.readInt32(address);
         }
@@ -359,9 +363,8 @@ module FyreVM {
                 if (id > 0 && id < v.indiv_prop_start)
                     return image.readInt32(v.cpv_start + 4 * id);
 
-                // TODO: NestedCall(rt_err_fn, readprop_err, obj, id);
-                // return 0;
-                throw new Error("Run time error readprop_err");
+                console.error("[** Programming error: tried to read (something) **]");
+                return 0;
             }
 
             return image.readInt32(addr);
@@ -409,8 +412,8 @@ module FyreVM {
 	        let address = array + 4 * offset;
             if (address >= image.getEndMem() || address < image.getRamAddress(0))
             {
-                // TODO: return e.NestedCall(rt_err_fn, 27);
-                throw new Error("run time error 27");
+                console.error("[** Programming error: tried to write to word array outside of RAM **]");
+                return 0;
             }
             else
             {
@@ -425,9 +428,10 @@ module FyreVM {
             let address = array + offset;
             let image: UlxImage = this.image;
 	       
-            if (address >= image.getEndMem())
-                // TODO: return e.NestedCall(rt_err_fn, 24);
-                throw new Error("run time error 24");
+            if (address >= image.getEndMem()){
+                console.error("[** Programming error: tried to read from byte array beyond EndMem **]");
+                return 0;
+            }
 
             return image.readByte(address);
         }
