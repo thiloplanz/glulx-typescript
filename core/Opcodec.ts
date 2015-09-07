@@ -221,6 +221,7 @@ module FyreVM {
 				case 'callfii':
 				case 'callfiii':
 				case 'tailcall' :
+				case 'quit' :
 					r.usesStack = usesStack;
 					r.writesToMemory = writesToMemory;
 		 		    return r;
