@@ -10,7 +10,7 @@ You need to install the TypeScript bindings for Angular2. This can be done via t
 
     $ npm install -g tsd
     $ cd examples/web/angular2
-    $ tsd install angular2/angular2 --resolve
+    $ tsd install angular2 -v 2.0.0-alpha.28 --resolve
     
 ### Compile the game engine and the application
     

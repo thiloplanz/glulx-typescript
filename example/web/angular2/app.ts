@@ -3,7 +3,7 @@
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/	
 
-/// <reference path="typings/angular2/angular2.d.ts" />
+/// <reference path="typings/angular2/angular2-2.0.0-alpha.28.d.ts" />
 
 /// <reference path="../webworker.d.ts" />
 
@@ -13,7 +13,7 @@
  */
  
 import {Component, View, bootstrap, coreDirectives, ElementRef, NgZone} from 'angular2/angular2';
-
+// FIXME: when updating to newer Angular2, coreDirectives => CORE_DIRECTIVES
 
 class WebWorkerClient{
 		

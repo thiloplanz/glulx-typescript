@@ -16,7 +16,7 @@ module FyreVM {
 	
 	    /// Identifies a veneer routine that is intercepted, or a constant that
         /// the replacement routine needs to use.
-        const enum VeneerSlot
+        export const enum VeneerSlot
         {
             // routine addresses
             Z__Region = 1,
