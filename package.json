@@ -1,0 +1,11 @@
+{
+  "name": "glulx-typescript",
+  "version": "0.0.1",
+  "description": "Glulx engine with FyreVM I/O.",
+  "license": "Public Domain",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-replace": "^0.5.4",
+    "gulp-tsc": "^1.1.4"
+  }
+}
