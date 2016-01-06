@@ -6,3 +6,12 @@ node_js:
 before_script:
   - npm install -g gulp
 script: gulp compile
+
+deploy:
+  provider: releases
+  api_key: "39d4cc6bd426fd05e24bf39069508bd5aeadcba6"
+  file:
+     - ""
+  skip_cleanup: true
+  on:
+    tags: true
