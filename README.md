@@ -1,5 +1,7 @@
 ## Glulx VM in TypeScript with Channel IO (work in progess)
 
+[![Build Status](https://travis-ci.org/ChicagoDave/glulx-typescript.svg)](https://travis-ci.org/ChicagoDave/glulx-typescript)
+
 [Glulx](http://en.wikipedia.org/wiki/Glulx) is a specification for a 32-bit virtual machine that runs Inform 6 and [Inform 7 story files](http://inform7.com).
 
 This project is an attempt to implement Glulx in TypeScript.
