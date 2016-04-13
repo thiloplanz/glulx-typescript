@@ -44,7 +44,7 @@ There are some unit tests for core engine functionality that you can run on Node
 
 #### using nodeunit
 
-You need Node.js and nodeunit installed (as well as a TypeScript 1.5 compiler).
+You need Node.js and nodeunit installed (as well as a TypeScript 1.8 compiler).
 
 Then you can compile everything in this project and run the test suite:
 

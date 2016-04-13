@@ -1,6 +1,5 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
 		"out": "runGameImage.js"
 	},
 	"files" : [ "_runGameImage.ts"]

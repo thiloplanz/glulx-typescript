@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz and Andrew Plotkin
+// Written from 2015 to 2016 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -650,7 +650,6 @@ module FyreVM {
 						return 4;  
 				  default: throw new Error(`unsupported store operand type ${type}`);
 			  }
-			  return operandPos;
 		  }
 		  
 		  /**
@@ -705,7 +704,6 @@ module FyreVM {
 					
 				  default: throw new Error(`unsupported delayed store operand type ${type}`);
 			  }
-			  return operandPos;
 		  }
 		  
 		  

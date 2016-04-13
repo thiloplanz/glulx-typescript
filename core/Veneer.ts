@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz and Andrew Plotkin
+// Written from 2015 to 2016 by Thilo Planz and Andrew Plotkin
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -79,8 +79,8 @@ module FyreVM {
            let image: UlxImage = this.image;
            if (value != image.getRamAddress(SELF_OFFSET)){
                throw new Error("Unexpected value for acceleration parameter 6");
-           return true;
            }
+           return true;
        } 
        if (isParam){
            switch(slot){

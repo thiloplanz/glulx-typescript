@@ -47,15 +47,15 @@ module FyreVM{
 		export function op(name: string) : any {
 			for (var c in opcodes) {
 				if (opcodes[c].name === name){
-					c = opcodes[c].code;
-					if (c >= 0x1000){
-						return [ 0xC0, 0x00, c >> 8, c & 0xFF ];
+					let code = opcodes[c].code;
+					if (code >= 0x1000){
+						return [ 0xC0, 0x00, code >> 8, code & 0xFF ];
 					}
-					if (c >= 0x80){
-						c = c + 0x8000;
-						return [ c >> 8, c & 0xFF ]
+					if (code >= 0x80){
+						code = code + 0x8000;
+						return [ code >> 8, code & 0xFF ]
 					}
-					return c;
+					return code;
 				}
 			}
 			throw new Error(`unknown opcode ${name}`);
