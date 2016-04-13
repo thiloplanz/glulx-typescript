@@ -1,0 +1,6 @@
+{
+	"compilerOptions": {
+		"out": "engineWrapper.js"
+	},
+	"files" : [ "_engineWrapper.ts"]
+}

@@ -7,3 +7,4 @@ runGameImage.js
 webworker.js
 app.js
 webworker.d.ts
+engineWrapper.js
