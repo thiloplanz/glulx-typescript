@@ -38,7 +38,7 @@ module FyreVM {
 	
 	export class WebWorker{
 		
-		private engine = new EngineWrapper(this.onEngineUpdate.bind(this));
+		private engine;
 		
 		private queue: MessageEvent[];
 		
@@ -63,7 +63,7 @@ module FyreVM {
 			
 			// configuration
 			if (data.enableSaveGame){
-				this.engine.canSaveGames = true;
+    			this.engine.canSaveGames = true;
 				return;
 			}
 			if (data.enableSaveGame === false){
@@ -82,15 +82,15 @@ module FyreVM {
 				return;
 			}
 			if (data.lineInput || data.lineInput === ''){
-				this.engine.receiveLine(data.lineInput);
+				this.onEngineUpdate(this.engine.receiveLine(data.lineInput));
 				return;
 			}
 			if (data.keyInput || data.keyInput === ''){
-				this.engine.receiveKey(data.keyInput);
+				this.onEngineUpdate(this.engine.receiveKey(data.keyInput));
 				return;
 			}
 			if (data.saveSuccessful || data.saveSuccessful === false){
-				this.engine.saveGameDone(data.saveSuccessful);
+				this.onEngineUpdate(this.engine.saveGameDone(data.saveSuccessful));
 				return;
 			}
 			if (data.restore){
@@ -98,7 +98,7 @@ module FyreVM {
 				if (data.restore instanceof ArrayBuffer){
 					// TODO: how to cast properly ?
 					let ab : any = data.restore;
-					this.engine.receiveSavedGame(Quetzal.load(ab));
+					this.onEngineUpdate(this.engine.receiveSavedGame(Quetzal.load(ab)));
 				}
 				// URL
 				let request = new XMLHttpRequest();
@@ -111,13 +111,13 @@ module FyreVM {
 						worker.onEngineError(`${request.status} ${request.statusText}`);
 						return;
 					}
-					worker.engine.receiveSavedGame(Quetzal.load(request.response));
+					worker.onEngineUpdate(worker.engine.receiveSavedGame(Quetzal.load(request.response)));
 				}
 				request.send();
 				return;
 			}
 			if (data.restore === false){
-				this.engine.receiveSavedGame(null);
+				this.onEngineUpdate(this.engine.receiveSavedGame(null));
 				return;
 			}
 			this.onEngineError(`unknown command ${JSON.stringify(data)}`);
@@ -190,15 +190,15 @@ module FyreVM {
 				let image = new MemoryAccess(0, 0);
 				image['buffer'] = new Uint8Array(arrayBuffer);
 				image['maxSize'] = arrayBuffer.byteLength;
-				this.engine.load(image);
-			}
+	            this.engine = new EngineWrapper(image, false)
+         	}
 			catch (e){
 				this.onEngineError(e.toString());
 			}
 		}
 		
 		run(){
-			this.engine.run();
+			this.onEngineUpdate(this.engine.run());
 		}
 		
 	}	

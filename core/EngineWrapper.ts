@@ -1,4 +1,4 @@
-// Written in 2015 by Thilo Planz 
+// Written in 2015 and 2016 by Thilo Planz 
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
@@ -7,18 +7,11 @@
  * A wrapper around Engine that can be communicates
  * via simple JSON-serializable messages.
  * 
- * All method calls designed to be used asynchronously,
- * with the EngineWrapperListener delegate receiving results.
- *
  */
 
 /// <reference path='Engine.ts' />
 module FyreVM{
-	
-	export interface EngineWrapperListener {
-		(state: EngineWrapperState) : void
-	}
-	
+    
 	export const enum EngineState {
 		loaded = 1,
 		running = 2,
@@ -34,124 +27,155 @@ module FyreVM{
 	export interface EngineWrapperState {
 		state: EngineState,
 		channelData?: ChannelData,
-		errorMessage?: string
+		errorMessage?: string,
+        gameBeingSaved?: Quetzal
 	}
 	
 	export class EngineWrapper{
 
-		private engine: Engine;
-	
-		private delegate : EngineWrapperListener;
-		
+		private engine: Engine
+        
+        private canSaveGames : boolean
+        
+        constructor(gameImage: MemoryAccess, canSaveGames: boolean = false){
+            this.canSaveGames = canSaveGames
+            let engine = this.engine = new Engine(new UlxImage(gameImage))
+            
+            // set up the callbacks
+            engine.outputReady = 
+                (channelData) => { 
+                    this.channelData = channelData 
+                }
+        
+            engine.keyWanted =
+                (cb) => this.waitState(cb, EngineState.waitingForKeyInput)
+            engine.lineWanted =
+                (cb) => this.waitState(cb, EngineState.waitingForLineInput)
+            engine.saveRequested =
+                (quetzal, cb) => {
+                    if (!this.canSaveGames) { return cb(false); }
+                    this.waitState(cb, EngineState.waitingForGameSavedConfirmation)
+                    this.gameBeingSaved = quetzal        
+                }
+             engine.loadRequested =
+                (cb) => {
+                     if (!this.canSaveGames) { return cb(null); } 
+                     this.waitState(cb, EngineState.waitingForLoadSaveGame);
+                }
+        }
+        
+        // when the engine returns from processing
+        // (because it is waiting for more input)
+        // it will have invoked one of several callbacks
+        // we use these to calculate the EngineState
+        // and store the callback used to resume processing
+        
+    	private resumeCallback;
+    
 		private engineState: EngineState;
+	    
+        private channelData: ChannelData;
+        
+        private gameBeingSaved: Quetzal;
+        
+        private waitState(resumeCallback, state: EngineState){
+            this.resumeCallback = resumeCallback
+            this.engineState = state
+        }
 		
-		private resumeCallback;
 		
-		gameBeingSaved: Quetzal;
-	
-		canSaveGames = false;
-	
-		constructor(del: EngineWrapperListener){
-			this.delegate = del;
-		}
-	
-		load(gameImage: MemoryAccess){
-			let image = new UlxImage(gameImage);
-			let engine = this.engine = new Engine(image);
-			engine.outputReady = this.fire.bind(this);
-			engine.keyWanted = this.keyWanted.bind(this);
-			engine.lineWanted = this.lineWanted.bind(this);
-			engine.saveRequested = this.saveRequested.bind(this);
-			engine.loadRequested = this.loadRequested.bind(this);
-			this.engineState = EngineState.loaded;
-			this.fire();
-		}
-		
-		run(){
+		run() : EngineWrapperState{
 			this.engineState=EngineState.running;
-			this.fire();
-			this.engine.run();
+            this.engine.run();
+			return this.currentState();
 		}
+        
+        private currentState() : EngineWrapperState {
+            switch(this.engineState){
+                case EngineState.waitingForKeyInput:
+                case EngineState.waitingForLineInput:
+                    return {
+                        state: this.engineState,
+                        channelData: this.channelData,
+                    }
+                case EngineState.waitingForGameSavedConfirmation:
+                    return {
+                        state: this.engineState,
+                        gameBeingSaved: this.gameBeingSaved
+                    }
+                case EngineState.waitingForLoadSaveGame:
+                    return {
+                        state: this.engineState
+                    }
+                default:
+                    console.error(`Unexpected engine state: ${this.engineState}`)
+                    return {
+                        state: this.engineState
+                    }
+            }
+        }
 		
-		private fire(channelData?:ChannelData){
-			this.delegate({state: this.engineState, channelData: channelData});
-		}
-		
-		private lineWanted(callback){
-			this.engineState = EngineState.waitingForLineInput;
-			this.resumeCallback = callback;
-			this.fire();
-		}
-		
-		private keyWanted(callback){
-			this.engineState = EngineState.waitingForKeyInput;
-			this.resumeCallback = callback;
-			this.fire();
-		}
-		
-		private saveRequested(quetzal: Quetzal, callback: SavedGameCallback){
-			if (this.canSaveGames){
-				this.gameBeingSaved = quetzal;
-				this.engineState = EngineState.waitingForGameSavedConfirmation;
-				this.resumeCallback = callback;
-				this.fire();
-			}else{
-				callback(false);
-			}
-		}
-		
-		
-		private loadRequested(callback: QuetzalReadyCallback){
-			if (this.canSaveGames){
-				this.engineState = EngineState.waitingForLoadSaveGame;
-				this.resumeCallback = callback;
-				this.fire();
-			}else{
-				callback(null);
-			}	
-		}
-		
-		receiveLine(line: string){
+		receiveLine(line: string) : EngineWrapperState{
 			if (this.engineState !== EngineState.waitingForLineInput)
-				return;
+				throw new Error("Illegal state, engine is not waiting for line input");
 			this.engineState = EngineState.running;
-			this.fire();
 			this.resumeCallback(line);
+            return this.currentState();
 		}
 
-		receiveKey(line: string){
+		receiveKey(line: string) : EngineWrapperState{
 			if (this.engineState !== EngineState.waitingForKeyInput)
-				return;
+			    throw new Error("Illegal state, engine is not waiting for key input");
 
 			this.engineState = EngineState.running;
-			this.fire();
 			this.resumeCallback(line);
+            return this.currentState();
 		}
 		
-		receiveSavedGame(quetzal: Quetzal){
+		receiveSavedGame(quetzal: Quetzal): EngineWrapperState{
 			if (this.engineState !== EngineState.waitingForLoadSaveGame)
-				return;
+			    throw new Error("Illegal state, engine is not waiting for a saved game to be loaded");
 				
 			this.engineState = EngineState.running;
-			this.fire();
 			this.resumeCallback(quetzal);
+            return this.currentState();
 		}
 		
-		saveGameDone(success: boolean){
+		saveGameDone(success: boolean) : EngineWrapperState{
 			if (this.engineState !== EngineState.waitingForGameSavedConfirmation)
-				return;
+			    throw new Error("Illegal state, engine is not waiting for a game to be saved");
 				
 			this.gameBeingSaved = null;
 			this.engineState = EngineState.running;
-			this.fire();
 			this.resumeCallback(success);
+            return this.currentState();
 		}
 
 		getIFhd(): Uint8Array{
-			if (this.engine){
-				return this.engine['image']['memory'].copy(0, 128).buffer;
-			}
-			return null;
+		    return this.engine['image']['memory'].copy(0, 128).buffer;
 		}
+        
+        /**
+         * convenience method to run "restore" and then
+         * feed it the given savegame
+         */
+        restoreSaveGame(quetzal: Quetzal) : EngineWrapperState{
+            let state = this.receiveLine("restore")
+            if (state.state !== EngineState.waitingForLoadSaveGame)
+                throw new Error("Illegal state, engine did not respond to RESTORE command");
+            return this.receiveSavedGame(quetzal)
+        }
+        
+        /**
+         * convenience method to run "save"
+         */
+        saveGame() : Quetzal {
+            let state = this.receiveLine("save")
+            if (state.state !== EngineState.waitingForGameSavedConfirmation)
+                throw new Error("Illegal state, engine did not respond to SAVE command");
+            let game = state.gameBeingSaved
+            this.saveGameDone(true)
+            return game
+        }
 	}
 }

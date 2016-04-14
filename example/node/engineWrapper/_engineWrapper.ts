@@ -48,62 +48,34 @@ if (fs.existsSync(sessionFile)){
     sessionData = FyreVM.Quetzal.load(new Uint8Array(fs.readFileSync(sessionFile)))
 }
 
-let game = new FyreVM.MemoryAccess(0)
-game.buffer = new Uint8Array(fs.readFileSync(imageFile))
-game['maxSize'] = game.buffer.byteLength * 2
 
-let engine = new FyreVM.EngineWrapper(onEngineUpdate)
-// tell the engine that we can save (and restore) games
-engine.canSaveGames = true
-
-
-let sentCommand = false
-// no need to send a command if there is none
 if (command === undefined){
     if (sessionData){
         console.error("Please specify a command or start a new session. This one is already in progress.")
         process.exit(1)
     }
-    sentCommand = true
 }
 
-function onEngineUpdate(ev: FyreVM.EngineWrapperState){
-    switch(ev.state){
-        case FyreVM.EngineState.waitingForLoadSaveGame:
-            // the engine is asking us for the saved game file
-            let s = sessionData
-            sessionData = null
-            engine.receiveSavedGame(s)
-            break;
-        case FyreVM.EngineState.waitingForGameSavedConfirmation:
-            // the engine is asking us to save the game
-            fs.writeFileSync(sessionFile, new Buffer(new Uint8Array(engine.gameBeingSaved.serialize())))
-            return;
-        case FyreVM.EngineState.waitingForLineInput:
-            // did we have an existing session? If so, load it
-            if (sessionData){
-                engine.receiveLine("restore")
-                return;
-            }
-            // have we already sent the command?
-            // if not, do it
-            if (!sentCommand){
-                sentCommand = true
-                engine.receiveLine(command)
-                return;
-            }
-            // otherwise, our command is done, save the game
-            engine.receiveLine("save");
-            break;
-        case FyreVM.EngineState.running:
-            // output the channel data, but only after we have sent our command
-            if (sentCommand && ev.channelData){
-                console.info(JSON.stringify(ev.channelData));
-            }
-            break;
-    }
-}
+let game = new FyreVM.MemoryAccess(0)
+game.buffer = new Uint8Array(fs.readFileSync(imageFile))
+game['maxSize'] = game.buffer.byteLength * 2
+
+let engine = new FyreVM.EngineWrapper(game, true)
 
 // load the image
-engine.load(game)
 engine.run();
+
+// did we have an existing session? If so, load it
+if (sessionData){
+   engine.restoreSaveGame(sessionData)
+}
+
+// is there a command? If so, run it
+if (command){
+    let result = engine.receiveLine(command)
+    console.info(JSON.stringify(result.channelData));   
+}
+
+// finally save the game
+fs.writeFileSync(sessionFile, 
+    new Buffer(new Uint8Array(engine.saveGame().serialize())))
