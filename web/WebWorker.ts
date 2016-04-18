@@ -187,10 +187,7 @@ module FyreVM {
 		
 		private loadImageFromBuffer(arrayBuffer: ArrayBuffer){
 			try{
-				let image = new MemoryAccess(0, 0);
-				image['buffer'] = new Uint8Array(arrayBuffer);
-				image['maxSize'] = arrayBuffer.byteLength;
-	            this.engine = new EngineWrapper(image, false)
+	            this.engine = EngineWrapper.loadFromArrayBuffer(arrayBuffer, false)
          	}
 			catch (e){
 				this.onEngineError(e.toString());

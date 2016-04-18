@@ -19,11 +19,7 @@ export function loadGameImage(){
     setText('selectFile', '');
     var reader = new FileReader();
     reader.onload = function(ev){
-        let arrayBuffer = ev.target['result']
-        let image = new FyreVM.MemoryAccess(0,0)
-        image['buffer'] = new Uint8Array(arrayBuffer);
-		image['maxSize'] = arrayBuffer.byteLength;
-        w = new FyreVM.EngineWrapper(image, false)
+        w = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, false)
         process(w.run())
        
     }

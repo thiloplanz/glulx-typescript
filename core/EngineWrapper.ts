@@ -64,6 +64,24 @@ module FyreVM{
                 }
         }
         
+        /** 
+         * convenience method to construct from an ArrayBuffer
+         */
+        static loadFromArrayBuffer(arrayBuffer: ArrayBuffer, canSaveGames: boolean = false) : EngineWrapper {
+            let image = new FyreVM.MemoryAccess(0,0)
+            image['buffer'] = new Uint8Array(arrayBuffer)
+		    image['maxSize'] = arrayBuffer.byteLength
+            return new EngineWrapper(image, canSaveGames)
+        }
+        
+        /**
+         * convenience method to construct from a FileReaderEvent
+         * (which is supposed to have been successful)
+         */
+        static loadFromFileReaderEvent(ev, canSaveGames: boolean = false) : EngineWrapper {
+            return EngineWrapper.loadFromArrayBuffer(ev.target['result'], canSaveGames)
+        }
+        
         // when the engine returns from processing
         // (because it is waiting for more input)
         // it will have invoked one of several callbacks
