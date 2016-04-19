@@ -1,15 +1,49 @@
 <html>
 <!--
-// Written in 2015 by Thilo Planz 
+// Written in 2015 and 2016 by Thilo Planz 
 // To the extent possible under law, I have dedicated all copyright and related and neighboring rights 
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/	
 -->	  
-<head>
-    <title>Interactive Fiction Angular2 Demo</title>
-    <script src='lib/traceur-runtime.js'></script>
-    <script src='lib/system@0.16.11.js'></script>
-    <script src='lib/angular2.a27.dev.js'></script>
+  <head>
+     <title>Interactive Fiction Angular2 Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">    
+   
+    <!-- 1. Load libraries -->
+    <!-- IE required polyfills, in this exact order -->
+    <script src="node_modules/es6-shim/es6-shim.min.js"></script>
+    <script src="node_modules/systemjs/dist/system-polyfills.js"></script>
+    <script src="node_modules/angular2/es6/dev/src/testing/shims_for_IE.js"></script>   
+
+    <script src="node_modules/angular2/bundles/angular2-polyfills.js"></script>
+    <script src="node_modules/systemjs/dist/system.src.js"></script>
+    <script src="node_modules/rxjs/bundles/Rx.js"></script>
+    <script src="node_modules/angular2/bundles/angular2.dev.js"></script>
+    
+    <!-- we don't use SystemJS to load the FyreVM core stuff,
+        as it is built without module system support -->
+    <script src="engineWrapper/engineWrapper.js"></script>
+
+    <!-- 2. Configure SystemJS -->
+    <script>
+      System.config({
+        packages: {        
+          app: {
+            format: 'register',
+            defaultExtension: 'js'
+          }
+        }
+      });
+      System.import('app/main')
+            .then(null, console.error.bind(console));
+            
+      function handleKey(event){
+        // will be re-assigned by app component
+        // to handle keyboard events on the body tag
+      }
+    </script>
+    
+    
     <style>
         /** display the text in multiple columns,
         * to make it more readable.
@@ -44,17 +78,13 @@
             color: darkgrey;
         }    
     </style>
-</head>
-<body onkeyup="handleKey(event)" onkeydown="handleKey(event)">  
-    Loading ...
-</body>
-<script>
-        function handleKey(event){
-        }
-        
-        System.config({ paths: { '*': 'lib/*.js' } });
-        System.import("app").then(function(app){
-            app.init();
-        });
-</script>
+    
+    
+    
+  </head>
+
+  <!-- 3. Display the application -->
+  <body onkeyup="handleKey(event)">
+    <my-app>Loading...</my-app>
+  </body>
 </html>

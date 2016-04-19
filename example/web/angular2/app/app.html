@@ -1,0 +1,27 @@
+<div  *ngIf="engineWrapper === null" > 
+	 <b>Select a game image (ULX file) from your computer</b>
+	<input type="file" id='gameImage' />
+	<button (click)="loadAndStart()" >
+	START
+	</button>
+</div>
+<div id='main' 
+	*ngIf="getChannel('MAIN')"
+	>
+
+	<h3 id='channel-LOCN'>{{getChannel('LOCN')}}, {{time}}</h3>
+	
+	<b id='channel-SCOR' >Score: {{getChannel('SCOR')}}</b>
+	
+	<hr/>
+
+	<span id='channel-MAIN'>{{getChannel('MAIN')}}</span>
+
+	<div id='PRPT'>{{prompt}}</div>
+
+</div>
+
+<div id='pageNumber' 
+	*ngIf="getChannel('TURN')">
+	- {{getChannel('TURN')}} -
+</div>

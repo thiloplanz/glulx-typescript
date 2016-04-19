@@ -2,32 +2,31 @@
 
 This is a demonstration of how to present an interactive fiction game in a web browser.
 
-The UI is written using the Angular2 framework, the [game engine is running as a Web Worker](../../../web/WebWorker.md) (the exact same code as in the minimal HTML example).
+The UI is written using the Angular2 framework, the game engine is embedded into it using the Engine Wrapper interface.
 
 ### Setting up the build environment
 
-You need to install the TypeScript bindings for Angular2. This can be done via the `tsd` tool.
+The example includes a `package.json`, so `npm` should be able
+to download everything you need.
 
-    $ npm install -g tsd
     $ cd examples/web/angular2
-    $ tsd install angular2 -v 2.0.0-alpha.28 --resolve
+    $ npm install
     
 ### Compile the game engine and the application
     
-Then you can compile the Web Worker with the game engine
+Then you can compile the game engine and the Angular2 application.
 
-    $ tsc -d --out ../webworker.js ../../../web/WebWorker.ts 
+    $ npm run tsc 
     
-and the Angular2 application
+Under the hood there are two compilation steps, first for the
+Engine Wrapper, then for the Angular2 application, look at `package.json` for details.
 
-    $ tsc
     
 ### Go play!
    
-You need to load it through a web server (even though all files are local, no Internet connection required). The easiest way to do that is to `npm install -g http-server` and use that to serve the page:
+You need to load it through a web server (even though all files are local, no Internet connection required). The easiest way to do that is to run it in developer mode
 
-    $ http-server ..
-    $ open http://127.0.0.1:8080/angular2/  
+    $ npm start
     
     
     

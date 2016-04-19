@@ -8,3 +8,6 @@ webworker.js
 app.js
 webworker.d.ts
 engineWrapper.js
+*.js.map
+engineWrapper.d.ts
+main.js
