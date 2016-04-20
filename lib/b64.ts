@@ -1,3 +1,7 @@
+// slightly adapted from https://github.com/beatgammit/base64-js
+
+module Base64 {
+
 var lookup = []
 var revLookup = []
 var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
@@ -101,4 +105,6 @@ export function fromByteArray (uint8) {
   parts.push(output)
 
   return parts.join('')
+}
+
 }
