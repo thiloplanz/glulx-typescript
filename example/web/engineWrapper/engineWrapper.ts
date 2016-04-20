@@ -10,6 +10,7 @@
 
 
 /// <reference path='../../../core/EngineWrapper.ts' />
+/// <reference path='../../../b64.ts' />
 
 module Example {
 
@@ -19,7 +20,7 @@ export function loadGameImage(){
     setText('selectFile', '');
     var reader = new FileReader();
     reader.onload = function(ev){
-        w = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, false)
+        w = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, true)
         process(w.run())
        
     }
@@ -61,10 +62,26 @@ function process(result: FyreVM.EngineWrapperState){
          case FyreVM.EngineState.completed:
             setText('status', 'game over');
 			break;
-         case FyreVM.EngineState.waitingForLoadSaveGame:
-         case FyreVM.EngineState.waitingForGameSavedConfirmation:
-            setText('status', "ERROR: saving games not implemented")
+         case FyreVM.EngineState.waitingForLoadSaveGame: {
+            let key = `fyrevm_saved_game_${Base64.fromByteArray(w.getIFhd())}`
+            let q = localStorage[key]
+            if (q) {
+                q = FyreVM.Quetzal.base64Decode(q)
+            }
+            setTimeout( 
+                () => process(w.receiveSavedGame(q))
+                , 0)
             break;
+         }
+         case FyreVM.EngineState.waitingForGameSavedConfirmation: {
+            let key = `fyrevm_saved_game_${Base64.fromByteArray(result.gameBeingSaved.getIFhdChunk())}`
+            let q = result.gameBeingSaved.base64Encode()
+            localStorage[key] = q
+            setTimeout( 
+                () => process(w.saveGameDone(true))
+                , 0)
+            break;
+         }
          default:
             setText('status', "ERROR: unexpected Engine state "+result.state)
             console.error(result);

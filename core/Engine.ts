@@ -962,7 +962,7 @@ module FyreVM {
 		  
 		  loadFromQuetzal(quetzal: Quetzal){
 			  // make sure the save file matches the game file
-           	  let ifhd1 = new Uint8Array(quetzal.getChunk('IFhd'));
+           	  let ifhd1 = new Uint8Array(quetzal.getIFhdChunk());
 			  if (ifhd1.byteLength !== 128){
 			  	throw new Error('Missing or invalid IFhd block');
 			  }

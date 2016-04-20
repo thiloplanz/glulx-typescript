@@ -4,6 +4,8 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='MemoryAccess.ts' />
+/// <reference path="../b64.ts" />
+
 
 module FyreVM {
 	
@@ -25,6 +27,10 @@ module FyreVM {
 		
 		getChunk(name: string): ArrayBuffer {
 			return this.chunks[name];
+		}
+		
+		getIFhdChunk(): ArrayBuffer {
+			return this.getChunk('IFhd')
 		}
 		
 		
@@ -86,6 +92,20 @@ module FyreVM {
 				pos += 8 + length;
 			}
 			return q;
+		}
+	
+		/**
+		 * convenience method to encode a Quetzal file as Base64
+		 */
+		base64Encode(){
+			return Base64.fromByteArray(new Uint8Array(this.serialize()))
+		}
+		
+		/**
+		 * convenience method to decode a Quetzal file from Base64
+		 */
+		static base64Decode(base64: string) : Quetzal {
+			return Quetzal.load(Base64.toByteArray(base64).buffer)
 		}
 	
 	}
