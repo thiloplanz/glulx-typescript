@@ -84,6 +84,12 @@ if (command){
     let result = engine.receiveLine(command)
     console.info(JSON.stringify(result.channelData));   
 }
+else {
+    // if not, print the initial output
+    if (result.channelData){
+        console.info(JSON.stringify(result.channelData));  
+    }
+}
 
 // finally save the game
 fs.writeFileSync(sessionFile, 
