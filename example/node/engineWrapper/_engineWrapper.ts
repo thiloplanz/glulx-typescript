@@ -60,10 +60,19 @@ let game = new FyreVM.MemoryAccess(0)
 game.buffer = new Uint8Array(fs.readFileSync(imageFile))
 game['maxSize'] = game.buffer.byteLength * 2
 
-let engine = new FyreVM.EngineWrapper(game, true)
 
 // load the image
-engine.run();
+let engine = new FyreVM.EngineWrapper(game, true)
+
+let result = engine.run();
+
+if (result.state !== FyreVM.EngineState.waitingForLineInput){
+    console.error(`engine does not accept input (state ${result.state})`);
+    if (result.channelData){
+        console.error(JSON.stringify(result.channelData))
+    }
+    process.exit(result.state)
+}
 
 // did we have an existing session? If so, load it
 if (sessionData){

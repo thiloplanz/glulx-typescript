@@ -109,7 +109,14 @@ module FyreVM{
 		}
         
         private currentState() : EngineWrapperState {
+            // check if the game is over
+            if (this.engineState === EngineState.running
+              && ! this.engine['running'] ){
+                  this.engineState = EngineState.completed;
+              }
+            
             switch(this.engineState){
+                case EngineState.completed:
                 case EngineState.waitingForKeyInput:
                 case EngineState.waitingForLineInput:
                     return {
