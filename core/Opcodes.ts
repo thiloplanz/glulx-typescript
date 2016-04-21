@@ -762,6 +762,7 @@ module FyreVM {
 								return;
 							}
 							engine['performDelayedStore'](destType, destAddr, 1);
+							resume();
 						}
 						engine.loadRequested(callback);
 						let wait: any = 'wait';

@@ -33,17 +33,35 @@ export class AppComponent {
       let file = document.getElementById('gameImage')['files'][0];
 	  let reader = new FileReader();
 	  reader.onload = (ev) => {
-          	this.engineWrapper = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, false)
+          	this.engineWrapper = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, true)
           	this.process(this.engineWrapper.run());
 	  }
 	  reader.readAsArrayBuffer(file);
   }
   
   process(result: FyreVM.EngineWrapperState){
-      if (result.channelData){
+	  if (result.channelData){
           this.channelData = result.channelData;
       }
       this.engineState = result.state
+  	  switch(result.state){
+		case FyreVM.EngineState.waitingForGameSavedConfirmation: {
+			let key = `fyrevm_saved_game_${Base64.fromByteArray(result.gameBeingSaved.getIFhdChunk())}`
+            let q = result.gameBeingSaved.base64Encode()
+            localStorage[key] = q
+            this.process(this.engineWrapper.saveGameDone(true))
+        }
+		break;
+		case FyreVM.EngineState.waitingForLoadSaveGame: {
+			let key = `fyrevm_saved_game_${Base64.fromByteArray(this.engineWrapper.getIFhd())}`
+            let q = localStorage[key]
+            if (q) {
+                q = FyreVM.Quetzal.base64Decode(q)
+            }
+			this.process(this.engineWrapper.receiveSavedGame(q))
+		}
+		break;		
+	  }
   }
   
   getChannel(name: string){
