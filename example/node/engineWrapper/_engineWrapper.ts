@@ -77,8 +77,6 @@ do {
 } while (fs.existsSync(checkFile));
 guessTurn--;
 
-console.info("guessTurn: " + guessTurn);
-
 // if user specified a turn, load that file
 let loadFile = false;
 if (turnData === undefined){
@@ -99,9 +97,6 @@ if (turnData === undefined){
 if (fs.existsSync(saveFile)) {
     saveFile = sessionFile + ".1";
 }
-
-console.info("saveFile: " + saveFile);
-console.info("sessionFile: " + sessionFile);
 
 if (loadFile) {
     if (fs.existsSync(sessionFile)) {
