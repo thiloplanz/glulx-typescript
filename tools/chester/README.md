@@ -1,4 +1,4 @@
-## chester - node engineWrapper CLI utility
+## chester - FyreVM command line utility
 
 This is a command line tool that allows the author to test a FyreVM based Glulx story one turn at a time.
 
