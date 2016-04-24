@@ -1,0 +1,6 @@
+{
+	"compilerOptions": {
+		"out": "game2js.js"
+	},
+	"files" : [ "_game2js.ts"]
+}
