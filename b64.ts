@@ -19,7 +19,7 @@ function init () {
 
 init()
 
-export function toByteArray (b64) {
+export function toByteArray (b64) : Uint8Array {
   var i, j, l, tmp, placeHolders, arr
   var len = b64.length
 

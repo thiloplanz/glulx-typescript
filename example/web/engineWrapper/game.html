@@ -25,7 +25,7 @@
 </head>	
 	
 <body>
-	<div id='status'>please select the game image</div>
+	<div id='status'>Loading ...</div>
 	<h1 id='LOCN'></h1>
 	<div>
 		<b id='SCOR' class='header'></b>
@@ -33,12 +33,11 @@
 		<b id='TIME' class='header'></b>	
 	</div>
 	<div id='MAIN'></div>
-	<div id='PRPT'></div>
-	<div id='selectFile'>
-		<input type="file" id='gameImage' />
-		<button onclick='Example.loadGameImage()'>START</button>
-	</div>	
+	<div id='PRPT'></div>	
 </body>	
-	
+
+<script>
+	Example.loadGameImage('ifpress.ulx')
+</script>	
 
 </html>

@@ -14,18 +14,18 @@
 
 module Example {
 
-export function loadGameImage(){
-    var file = document.getElementById('gameImage')['files'][0];
-    setText("status", "loading game image");
-    setText('selectFile', '');
-    var reader = new FileReader();
-    reader.onload = function(ev){
-        w = FyreVM.EngineWrapper.loadFromFileReaderEvent(ev, true)
-        process(w.run())
-       
+export function loadGameImage(url: string){
+    setText("status", `loading game image ${url}`);
+    var reader = new XMLHttpRequest();
+    reader.open('GET', url);
+    reader.responseType = 'arraybuffer';
+    reader.onreadystatechange = function(ev){
+        if (reader.readyState === XMLHttpRequest.DONE) {
+            w = FyreVM.EngineWrapper.loadFromArrayBuffer(reader.response, true)
+            process(w.run())
+        }
     }
-    reader.readAsArrayBuffer(file);
-        
+    reader.send()       
 }
 
 

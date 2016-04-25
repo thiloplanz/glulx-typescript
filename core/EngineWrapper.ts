@@ -82,6 +82,15 @@ module FyreVM{
             return EngineWrapper.loadFromArrayBuffer(ev.target['result'], canSaveGames)
         }
         
+         /**
+         * convenience method to construct from a Base64 encoded string containing the game image
+         */
+        static loadFromBase64(base64: string, canSaveGames: boolean = false) : EngineWrapper {
+            return EngineWrapper.loadFromArrayBuffer(Base64.toByteArray(base64).buffer, canSaveGames)
+        }
+        
+        
+        
         // when the engine returns from processing
         // (because it is waiting for more input)
         // it will have invoked one of several callbacks
