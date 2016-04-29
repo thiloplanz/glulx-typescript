@@ -138,14 +138,18 @@ if (sessionData){
 // is there a command? If so, run it
 if (command){
     let result = engine.receiveLine(command);
-    console.info(JSON.stringify(result.channelData));   
+    console.info(JSON.stringify(result.channelData));
+     // inject a "look" to create the undo buffer for our command
+    engine.receiveLine("look")
+    // and update the session with the undo state
+    fs.writeFileSync(saveFile, new Buffer(new Uint8Array(engine.getUndoState().serialize())));
+    
 }
 else {
     // if not, print the initial output
     if (result.channelData){
         console.info(JSON.stringify(result.channelData));  
     }
+    // and save the game state
+    fs.writeFileSync(saveFile, new Buffer(new Uint8Array(engine.saveGame().serialize())));
 }
-
-// finally save the game
-fs.writeFileSync(saveFile, new Buffer(new Uint8Array(engine.saveGame().serialize())));

@@ -189,6 +189,15 @@ module FyreVM{
 		    return this.engine['image']['memory'].copy(0, 128).buffer;
 		}
         
+        getUndoState() : Quetzal {
+            let undoBuffers = this.engine['undoBuffers'];
+            if (undoBuffers && undoBuffers[undoBuffers.length-1]){
+                return undoBuffers[undoBuffers.length-1];
+            }
+            return null;
+        }
+        
+        
         /**
          * convenience method to run "restore" and then
          * feed it the given savegame
