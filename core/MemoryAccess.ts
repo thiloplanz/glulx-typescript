@@ -43,10 +43,10 @@ module FyreVM {
 		}
 		
 		/**
-		 * saves the heap state into a ArrayBuffer.
+		 * saves the heap state into a Uint8Array.
 		 * Does not include the memory itself, only the block allocation information.
 		 */
-		 save(): ArrayBuffer {
+		 save(): Uint8Array {
 			 let count = this.blockCount() ;
 			 let result = new MemoryAccess(8 + count * 8);
 			 result.writeInt32(0, this.heapAddress);
@@ -60,11 +60,11 @@ module FyreVM {
 		 }
 		 
 		 /**
-		  * restores the heap state from an ArrayBuffer (as created by the "save" method)
+		  * restores the heap state from an Uint8Array (as created by the "save" method)
 		  */
-		static restore(buffer: ArrayBuffer, memory: MemoryAccess) : HeapAllocator{
+		static restore(buffer: Uint8Array, memory: MemoryAccess) : HeapAllocator{
 			let m = new MemoryAccess(0);
-			m.buffer = new Uint8Array(buffer);
+			m.buffer = buffer;
 			let count = m.readInt32(4);
 		
 			if (count === 0)

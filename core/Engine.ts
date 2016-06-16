@@ -859,6 +859,7 @@ module FyreVM {
 						this.push(args.length);
 					}
 				} else if (type === CallType.localStorage){
+					if (!args) { args = [] }
 					this.enterFunction(address, ...args);
 				} else {
 					throw new Error(`Invalid function call type ${type}`);

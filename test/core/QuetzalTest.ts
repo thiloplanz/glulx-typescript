@@ -11,20 +11,18 @@ module FyreVM{
 	export module NodeUnit {
 
 		function bytes(x: string){
-			let b = new ArrayBuffer(x.length);
-			let a = new Uint8Array(b);
+			let a = new Uint8Array(x.length);
 			for (let i=0; i<x.length; i++){
 				a[i] = x.charCodeAt(i);
 			}
-			return b;
+			return a;
 		}
 		
-		function chars(x: ArrayBuffer) : string{
+		function chars(x: Uint8Array) : string{
 			let l = x.byteLength;
 			let s = '';
-			let b = new Uint8Array(x);
 			for (let i=0; i<l; i++){
-				s += String.fromCharCode(b[i]);
+				s += String.fromCharCode(x[i]);
 			}
 			return s;
 		}

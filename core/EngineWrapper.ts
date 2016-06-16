@@ -69,7 +69,7 @@ module FyreVM{
          */
         static loadFromArrayBuffer(arrayBuffer: ArrayBuffer, canSaveGames: boolean = false) : EngineWrapper {
             let image = new FyreVM.MemoryAccess(0,0)
-            image['buffer'] = new Uint8Array(arrayBuffer)
+            image.buffer = new Uint8Array(arrayBuffer)
 		    image['maxSize'] = arrayBuffer.byteLength
             return new EngineWrapper(image, canSaveGames)
         }

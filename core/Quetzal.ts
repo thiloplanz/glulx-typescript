@@ -16,25 +16,25 @@ module FyreVM {
     /// http://www.ifarchive.org/if-archive/infocom/interpreters/specification/savefile_14.txt
 	export class Quetzal {
 		
-		private chunks : { [  name : string ] : ArrayBuffer } = {};
+		private chunks : { [  name : string ] : Uint8Array } = {};
 		
-		setChunk(name: string, value: ArrayBuffer){
+		setChunk(name: string, value: Uint8Array){
 			if (name.length != 4){
 				throw new Error(`invalid chunk id ${name}, must be four ASCII chars`);
 			}
 			this.chunks[name] = value; 
 		}
 		
-		getChunk(name: string): ArrayBuffer {
+		getChunk(name: string): Uint8Array {
 			return this.chunks[name];
 		}
 		
-		getIFhdChunk(): ArrayBuffer {
+		getIFhdChunk(): Uint8Array {
 			return this.getChunk('IFhd')
 		}
 		
 		
-		serialize() : ArrayBuffer{
+		serialize() : Uint8Array{
 			// determine the buffer size
 			let size = 12;  // three int32 headers
 			let { chunks } = this;
@@ -63,13 +63,13 @@ module FyreVM {
 				pos += 8 + len;
 			}
 			
-			return m.buffer.buffer;
+			return m.buffer;
 		}
 		
-		static load(buffer: ArrayBuffer): Quetzal {
+		static load(buffer: Uint8Array): Quetzal {
 			let q = new Quetzal();
 			let m = new MemoryAccess(0);
-			m.buffer = new Uint8Array(buffer);
+			m.buffer = buffer;
 			let type = m.readASCII(0, 4);
 			if (type !== 'FORM' && type !== 'LIST' && type !== 'CAT_'){
 				throw new Error(`invalid IFF type ${type}`);
@@ -105,7 +105,7 @@ module FyreVM {
 		 * convenience method to decode a Quetzal file from Base64
 		 */
 		static base64Decode(base64: string) : Quetzal {
-			return Quetzal.load(Base64.toByteArray(base64).buffer)
+			return Quetzal.load(Base64.toByteArray(base64))
 		}
 	
 	}
