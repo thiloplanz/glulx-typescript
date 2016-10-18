@@ -218,7 +218,7 @@ module FyreVM {
 					
 	export class Engine{
 		
-		private image: UlxImage;
+		image: UlxImage;
 		private stack: MemoryAccess;
 		private decodingTable: number;
 		private SP: number;
