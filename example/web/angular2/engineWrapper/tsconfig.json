@@ -1,7 +1,8 @@
 {
 	"compilerOptions": {
 		"out": "engineWrapper.js",
-        "declaration": true
+		"declaration": true,
+		"target": "es6",
 	},
 	"files": [
 		"../../../../core/EngineWrapper.ts"

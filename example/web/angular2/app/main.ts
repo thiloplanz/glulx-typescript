@@ -4,7 +4,8 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 
-import {bootstrap}    from 'angular2/platform/browser';
-import {AppComponent} from './app'
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppComponent } from './app'
 
-bootstrap(AppComponent);
+
+platformBrowserDynamic().bootstrapModule(AppComponent);

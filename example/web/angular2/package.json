@@ -5,23 +5,26 @@
     "start": "tsc -p engineWrapper --out engineWrapper/engineWrapper.js && tsc && concurrently \"npm run tsc:w\" \"npm run lite\" ",
     "tsc": "tsc -p engineWrapper --out engineWrapper/engineWrapper.js && tsc",
     "tsc:w": "tsc -w",
-    "lite": "lite-server",
-    "typings": "typings",
-    "postinstall": "typings install"
+    "lite": "lite-server"
   },
   "license": " CC0-1.0",
   "dependencies": {
-    "angular2": "2.0.0-beta.15",
-    "systemjs": "0.19.26",
-    "es6-shim": "^0.35.0",
+    "@angular/common": "2.3.0",
+    "@angular/compiler": "2.3.0",
+    "@angular/core": "2.3.0",
+    "@angular/platform-browser": "2.3.0",
+    "@angular/platform-browser-dynamic": "2.3.0",
+    "es6-shim": "^0.35.6",
     "reflect-metadata": "0.1.2",
-    "rxjs": "5.0.0-beta.2",
+    "rxjs": "6.6.7",
+    "rxjs-compat": "^6.6.7",
+    "systemjs": "0.19.26",
     "zone.js": "0.6.10"
-   },
+  },
   "devDependencies": {
     "concurrently": "^2.0.0",
     "lite-server": "^2.2.0",
-    "typescript": "^1.8.10",
-    "typings":"^0.7.12"
+    "typescript": "^4.3.4",
+    "@types/core-js": "^2.5.4"
   }
 }
