@@ -4,42 +4,41 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 /// <reference path='../../core/Quetzal.ts' />
-/// <reference path='../nodeunit.d.ts' />
 
-module FyreVM{
-	
+module FyreVM {
+
 	export module NodeUnit {
 
-		function bytes(x: string){
+		function bytes(x: string) {
 			let a = new Uint8Array(x.length);
-			for (let i=0; i<x.length; i++){
+			for (let i = 0; i < x.length; i++) {
 				a[i] = x.charCodeAt(i);
 			}
 			return a;
 		}
-		
-		function chars(x: Uint8Array) : string{
+
+		function chars(x: Uint8Array): string {
 			let l = x.byteLength;
 			let s = '';
-			for (let i=0; i<l; i++){
+			for (let i = 0; i < l; i++) {
 				s += String.fromCharCode(x[i]);
 			}
 			return s;
 		}
 
-	
-		function testRoundtrip(test: nodeunit.Test){
+
+		function testRoundtrip(test) {
 			let q = new Quetzal();
-			q.setChunk('abcd', bytes('some text') );
+			q.setChunk('abcd', bytes('some text'));
 			let x = q.serialize();
 			q = Quetzal.load(x);
 			test.equal(chars(q.getChunk('abcd')), 'some text');
 			test.done();
 		}
-		
-		export function addQuetzalTests(tests){
+
+		export function addQuetzalTests(tests) {
 			tests.Quetzal = {
-				testRoundtrip : testRoundtrip
+				testRoundtrip: testRoundtrip
 			}
 		}
 	}

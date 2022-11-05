@@ -3,7 +3,6 @@
 // to this software to the public domain worldwide. This software is distributed without any warranty. 
 // http://creativecommons.org/publicdomain/zero/1.0/
 
-/// <reference path='../../node/node-0.11.d.ts' />
 /// <reference path='../core/MemoryAccessTest.ts' />
 /// <reference path='../core/UlxImageTest.ts' />
 /// <reference path='../core/EngineTest.ts' />
@@ -11,6 +10,8 @@
 /// <reference path='../core/QuetzalTest.ts' />
 
 let buffer = new FyreVM.MemoryAccess(1000, 10240);
+
+declare var exports: any
 
 FyreVM.NodeUnit.addMemoryTests(exports, buffer);
 

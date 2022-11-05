@@ -4,10 +4,9 @@ This is a command line tool that allows the author to test a FyreVM based Glulx 
 
 ### To compile engineWrapper...
 
-    $ npm install -g typescript
     $ git clone https://github.com/thiloplanz/glulx-typescript.git
     $ cd glulx-typescript/example/node/engineWrapper
-    $ tsc
+    $ npx tsc
 
 ### To start a story...
 

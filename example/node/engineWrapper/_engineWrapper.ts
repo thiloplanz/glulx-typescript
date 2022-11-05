@@ -31,24 +31,23 @@
  * 
  * 
  */
- 
- /// <reference path='../../../core/EngineWrapper.ts' />
- /// <reference path='../../../node/node-0.11.d.ts' />
+
+/// <reference path='../../../core/EngineWrapper.ts' />
 
 let imageFile = process.argv[2];
 
-if (imageFile === undefined){
+if (imageFile === undefined) {
     console.error("The first argument must be a valid FyreVM enabled Glulx story file. (GBlorb's are not supported at this time)");
     process.exit(1)
 }
 
-if (imageFile == "--help"){
+if (imageFile == "--help") {
     console.info("USAGE: chester story.ulx session \"command\" turn");
 }
 
 let sessionName = process.argv[3];
 
-if (sessionName === undefined){
+if (sessionName === undefined) {
     console.error("The second argument must be the name of the sessions stored ({sessionName}.{turn})");
     process.exit(1)
 }
@@ -57,9 +56,9 @@ let command = process.argv[4];
 
 let fs = require('fs');
 
-let sessionData : FyreVM.Quetzal = null;
+let sessionData: FyreVM.Quetzal = null;
 let turnData = process.argv[5];
-let turn:number = 0;
+let turn: number = 0;
 
 if (!(turnData === undefined)) {
     turn = Number(turnData);
@@ -69,7 +68,7 @@ let sessionFile = sessionName;
 let saveFile = "";
 
 // Look for previous session files...
-let guessTurn:number = 0;
+let guessTurn: number = 0;
 let checkFile = "";
 do {
     guessTurn++;
@@ -79,7 +78,7 @@ guessTurn--;
 
 // if user specified a turn, load that file
 let loadFile = false;
-if (turnData === undefined){
+if (turnData === undefined) {
     if (guessTurn > 0) {
         saveFile = sessionFile + "." + (guessTurn + 1);
         sessionFile = sessionFile + "." + guessTurn;
@@ -106,8 +105,8 @@ if (loadFile) {
     }
 }
 
-if (command === undefined){
-    if (sessionData){
+if (command === undefined) {
+    if (sessionData) {
         console.error("Please specify a command or start a new session. This one is already in progress.");
         process.exit(1);
     }
@@ -122,36 +121,36 @@ let engine = new FyreVM.EngineWrapper(game, true);
 
 let result = engine.run();
 
-if (result.state !== FyreVM.EngineState.waitingForLineInput){
+if (result.state !== FyreVM.EngineState.waitingForLineInput) {
     console.error(`engine does not accept input (state ${result.state})`);
-    if (result.channelData){
+    if (result.channelData) {
         console.error(JSON.stringify(result.channelData));
     }
     process.exit(result.state);
 }
 
 // did we have an existing session? If so, load it
-if (sessionData){
-   engine.restoreSaveGame(sessionData);
+if (sessionData) {
+    engine.restoreSaveGame(sessionData);
 }
 
 // is there a command? If so, run it
-if (command){
+if (command) {
     let result = engine.receiveLine(command);
     console.info(JSON.stringify(result.channelData));
-     // inject a "look" to create the undo buffer for our command
+    // inject a "look" to create the undo buffer for our command
     engine.receiveLine("look")
     // and update the session with the undo state
-    fs.writeFileSync(saveFile, new Buffer(new Uint8Array(engine.getUndoState().serialize())));
-    
+    fs.writeFileSync(saveFile, Buffer.from(new Uint8Array(engine.getUndoState().serialize())));
+
 }
 else {
     // if not, print the initial output
-    if (result.channelData){
-        console.info(JSON.stringify(result.channelData));  
+    if (result.channelData) {
+        console.info(JSON.stringify(result.channelData));
     }
     // inject a "look" to create the undo buffer for our command
     engine.receiveLine("look")
     // and update the session with the undo state
-    fs.writeFileSync(saveFile, new Buffer(new Uint8Array(engine.getUndoState().serialize())));
+    fs.writeFileSync(saveFile, Buffer.from(new Uint8Array(engine.getUndoState().serialize())));
 }

@@ -11,6 +11,9 @@ engineWrapper.js
 *.js.map
 engineWrapper.d.ts
 main.js
+b64.js
+mersenne-twister.js
+core/*.js
 .idea/encodings.xml
 .idea/glulx-typescript.iml
 .idea/misc.xml
